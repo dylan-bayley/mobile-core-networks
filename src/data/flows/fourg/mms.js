@@ -12,6 +12,8 @@ export const steps = compose(
     smsSteps,
     notifyStepId: 'nas-delivery',
     pdnAnchorId: 'user-plane-traffic',
+    pdnPath: ['ue', 'enb', 'sgw', 'pgw'],
+    trafficPath: ['ue', 'enb', 'sgw', 'pgw', 'inet'],
   }),
 );
 

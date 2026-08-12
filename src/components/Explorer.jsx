@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { NETWORKS, SESSIONS, resolveScenario } from '../data/index.js';
 import { validateData } from '../data/validate.js';
-import { NODE_MAP_4G } from '../data/reference/nodeNaming.js';
-import { QCI } from '../data/reference/qos.js';
+import { NODE_MAP_4G, NODE_MAP_5GC } from '../data/reference/nodeNaming.js';
+import { QCI, FIVE_QI } from '../data/reference/qos.js';
 import { EIR_STATUS } from '../data/reference/eirStatus.js';
 import { makeGeometry } from '../engine/geometry.js';
 import { useStepPlayer } from '../engine/useStepPlayer.js';
@@ -112,7 +112,12 @@ export default function Explorer() {
 
         <Legend />
 
-        <ReferencePanel nodeNaming={NODE_MAP_4G} qci={QCI} fiveQi={null} eirStatus={EIR_STATUS} />
+        <ReferencePanel
+          nodeNaming={networkId === '4g' ? NODE_MAP_4G : [...NODE_MAP_4G, ...NODE_MAP_5GC]}
+          qci={QCI}
+          fiveQi={networkId === '4g' ? null : FIVE_QI}
+          eirStatus={EIR_STATUS}
+        />
 
         <p className="mt-4 text-xs leading-relaxed" style={{ color: '#4d618a' }}>
           Roaming swaps S5 for S8 with the P-GW in the home network. CUPS splits the EPG into EPG-C and EPG-U over

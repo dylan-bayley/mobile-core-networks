@@ -8,6 +8,11 @@ import * as nsaVoice from './nsa/voice.js';
 import * as nsaVideo from './nsa/video.js';
 import * as nsaSms from './nsa/sms.js';
 import * as nsaMms from './nsa/mms.js';
+import * as saData from './sa/data.js';
+import * as saVoice from './sa/voice.js';
+import * as saVideo from './sa/video.js';
+import * as saSms from './sa/sms.js';
+import * as saMms from './sa/mms.js';
 
 const asFlow = (mod, { topologyId } = {}) => ({
   label: mod.label,
@@ -31,5 +36,12 @@ export const FLOWS = {
     video: asFlow(nsaVideo),
     sms: asFlow(nsaSms),
     mms: asFlow(nsaMms),
+  },
+  sa: {
+    data: asFlow(saData),
+    voice: asFlow(saVoice),
+    video: asFlow(saVideo),
+    sms: asFlow(saSms),
+    mms: asFlow(saMms),
   },
 };

@@ -17,3 +17,15 @@ export const NODE_MAP_4G = [
   ['MSC Server', 'MSC-S Blade Cluster', 'CSFB over SGs, SRVCC over Sv, legacy SMS'],
   ['Management', 'ENM — Ericsson Network Manager', 'Successor to OSS-RC'],
 ];
+
+export const NODE_MAP_5GC = [
+  ['AMF', 'Access & Mobility Management Function', 'The AMF role Ericsson\'s dual-mode 5GC hosts alongside the MME'],
+  ['SMF', 'Session Management Function', 'The control-plane half of the CUPS split — see EPG-C above'],
+  ['UPF', 'User Plane Function', 'The user-plane half — the same silicon as the EPG-U in a dual-mode deployment'],
+  ['UDM / UDR', 'Converged with HSS-FE + CUDB', 'Same UDC platform as 4G; one subscriber record, both access types'],
+  ['AUSF', 'Authentication Server Function', 'Splits 5G-AKA out of the UDM — no direct 4G equivalent'],
+  ['5G-EIR', 'Same CUDB-backed platform as the 4G EIR', 'Reachable over N17 instead of S13/Gf'],
+  ['PCF', 'Unified Policy Control Function', 'Converges PCRF (Gx/Rx) into one set of SBI-based policy services'],
+  ['CHF', 'Converged Charging Function', 'Nchf replaces the OCS\'s Gy/Gz for both online and offline charging'],
+  ['SMSF', 'SMS Function', 'Terminates SMS over NAS for the AMF; still hands off to the SMS-C over SGd'],
+];
