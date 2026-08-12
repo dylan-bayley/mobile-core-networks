@@ -16,22 +16,43 @@ import StepList from './StepList.jsx';
 import Legend from './Legend.jsx';
 import ReferencePanel from './ReferencePanel.jsx';
 
+const paramsFromUrl = () => {
+  if (typeof window === 'undefined') return {};
+  const p = new URLSearchParams(window.location.search);
+  return { net: p.get('net'), session: p.get('session') };
+};
+
 export default function Explorer() {
   useEffect(() => {
     if (import.meta.env.DEV) validateData();
   }, []);
 
-  const [networkId, setNetworkId] = useState(NETWORKS[0].id);
-  const [sessionId, setSessionId] = useState(SESSIONS[0].id);
+  const initial = paramsFromUrl();
+  const [networkId, setNetworkId] = useState(
+    NETWORKS.some((n) => n.id === initial.net) ? initial.net : NETWORKS[0].id,
+  );
+  const [sessionId, setSessionId] = useState(
+    SESSIONS.some((s) => s.id === initial.session) ? initial.session : SESSIONS[0].id,
+  );
   const [playing, setPlaying] = useState(true);
   const [speed, setSpeed] = useState(1);
   const [focus, setFocus] = useState(true);
+  const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
       setPlaying(false);
+      setReducedMotion(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    url.searchParams.set('net', networkId);
+    url.searchParams.set('session', sessionId);
+    window.history.replaceState(null, '', url);
+  }, [networkId, sessionId]);
 
   const scenario = useMemo(() => resolveScenario(networkId, sessionId), [networkId, sessionId]);
   const geo = useMemo(() => makeGeometry(scenario.topology), [scenario.topology]);
@@ -50,6 +71,22 @@ export default function Explorer() {
   const go = useCallback((i) => player.go(i), [player]);
   const switchNetwork = (id) => setNetworkId(id);
   const switchSession = (id) => setSessionId(id);
+
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.target instanceof HTMLElement && ['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        setPlaying((p) => !p);
+      } else if (e.code === 'ArrowRight') {
+        go(Math.min(scenario.steps.length - 1, step + 1));
+      } else if (e.code === 'ArrowLeft') {
+        go(Math.max(0, step - 1));
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [go, step, scenario.steps.length]);
 
   return (
     <div style={{ background: BG, fontFamily: SANS, color: '#dbe4f3', minHeight: '100%' }} className="w-full">
@@ -84,6 +121,7 @@ export default function Explorer() {
           progress={player.progress}
           ambient={scenario.ambient}
           focus={focus}
+          reducedMotion={reducedMotion}
         />
 
         <Transport

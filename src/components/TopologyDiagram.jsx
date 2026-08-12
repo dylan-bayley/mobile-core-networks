@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { K, MONO, SANS, PANEL, EDGE } from '../theme.js';
 
-export default function TopologyDiagram({ topology, geo, steps, step, progress, ambient, focus }) {
+export default function TopologyDiagram({ topology, geo, steps, step, progress, ambient, focus, reducedMotion }) {
   const cur = steps[step];
   const [clock, setClock] = useState(0);
 
   useEffect(() => {
+    if (reducedMotion) return undefined;
     let raf;
     let last = performance.now();
     const tick = (now) => {
@@ -16,7 +17,7 @@ export default function TopologyDiagram({ topology, geo, steps, step, progress, 
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [reducedMotion]);
 
   const activeLinks = useMemo(() => new Set(geo.routeLinks(cur.p)), [geo, cur]);
   const activeNodes = useMemo(() => new Set(cur.p), [cur]);
@@ -29,7 +30,7 @@ export default function TopologyDiagram({ topology, geo, steps, step, progress, 
   const t = cur.rt ? (progress < 0.5 ? progress * 2 : (1 - progress) * 2) : progress;
   const pos = geo.pointOnRoute(cur.p, t);
   const accent = K[cur.k].c;
-  const flows = ambient.filter((f) => step >= f.after);
+  const flows = reducedMotion ? [] : ambient.filter((f) => step >= f.after);
 
   return (
     <div className="overflow-x-auto rounded" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
