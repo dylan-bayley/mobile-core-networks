@@ -13,12 +13,18 @@ export function useStepPlayer(steps, { playing, setPlaying, speed }) {
   const rafRef = useRef(null);
   const lastRef = useRef(null);
 
+  // `steps` can change identity (switching network/session) in the same
+  // render that resets `state.step` via restart() — but that dispatch hasn't
+  // committed yet, so state.step may briefly index past the end of a
+  // shorter `steps` array. Clamp everywhere below rather than trust it.
+  const clampedStep = Math.min(state.step, steps.length - 1);
+
   useEffect(() => {
     if (!playing) {
       lastRef.current = null;
       return undefined;
     }
-    const step = steps[state.step];
+    const step = steps[clampedStep];
     const dur = (step.dur ?? durationFor(step)) / speed;
 
     const tick = (now) => {
@@ -30,7 +36,7 @@ export function useStepPlayer(steps, { playing, setPlaying, speed }) {
     };
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [playing, speed, state.step, steps]);
+  }, [playing, speed, clampedStep, steps]);
 
   useEffect(() => {
     if (state.done) setPlaying(false);
@@ -39,5 +45,5 @@ export function useStepPlayer(steps, { playing, setPlaying, speed }) {
   const go = useCallback((step) => dispatch({ type: 'goto', step }), []);
   const restart = useCallback(() => dispatch({ type: 'restart' }), []);
 
-  return { step: state.step, progress: state.progress, done: state.done, go, restart };
+  return { step: clampedStep, progress: state.progress, done: state.done, go, restart };
 }

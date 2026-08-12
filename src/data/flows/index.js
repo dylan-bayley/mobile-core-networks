@@ -3,6 +3,11 @@ import * as fourgVoice from './fourg/voice.js';
 import * as fourgVideo from './fourg/video.js';
 import * as fourgSms from './fourg/sms.js';
 import * as fourgMms from './fourg/mms.js';
+import * as nsaData from './nsa/data.js';
+import * as nsaVoice from './nsa/voice.js';
+import * as nsaVideo from './nsa/video.js';
+import * as nsaSms from './nsa/sms.js';
+import * as nsaMms from './nsa/mms.js';
 
 const asFlow = (mod, { topologyId } = {}) => ({
   label: mod.label,
@@ -19,5 +24,12 @@ export const FLOWS = {
     video: asFlow(fourgVideo),
     sms: asFlow(fourgSms),
     mms: asFlow(fourgMms),
+  },
+  nsa: {
+    data: asFlow(nsaData),
+    voice: asFlow(nsaVoice),
+    video: asFlow(nsaVideo),
+    sms: asFlow(nsaSms),
+    mms: asFlow(nsaMms),
   },
 };
