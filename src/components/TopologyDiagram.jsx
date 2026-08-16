@@ -1,7 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
 import { K, MONO, SANS, PANEL, EDGE } from '../theme.js';
+import { GLOSSARY } from '../data/reference/glossary.js';
+import { resolveGlossaryKey } from '../lib/resolveGlossaryKey.js';
+import { svgTermProps } from '../lib/svgTermProps.js';
 
-export default function TopologyDiagram({ topology, geo, steps, step, progress, ambient, focus, reducedMotion }) {
+export default function TopologyDiagram({
+  topology,
+  geo,
+  steps,
+  step,
+  progress,
+  ambient,
+  focus,
+  reducedMotion,
+  onGlossaryOpen,
+  activeGlossaryKey,
+}) {
   const cur = steps[step];
   const [clock, setClock] = useState(0);
 
@@ -63,6 +77,8 @@ export default function TopologyDiagram({ topology, geo, steps, step, progress, 
           const col = on ? accent : K[l.k].c;
           const op = on ? 0.95 : focus ? 0.16 : 0.34;
           const mid = geo.linkMid(l);
+          const linkKey = resolveGlossaryKey(l.l, GLOSSARY);
+          const linkTermProps = svgTermProps(linkKey, activeGlossaryKey, onGlossaryOpen);
           return (
             <g key={i}>
               <path
@@ -78,9 +94,10 @@ export default function TopologyDiagram({ topology, geo, steps, step, progress, 
                 x={mid.x}
                 y={mid.y - 5}
                 textAnchor="middle"
-                style={{ fontFamily: MONO, fontSize: 10 }}
+                style={{ fontFamily: MONO, fontSize: 10, cursor: linkTermProps ? 'help' : 'default' }}
                 fill={on ? '#ffffff' : '#6d82a5'}
                 opacity={on ? 1 : focus ? 0.3 : 0.6}
+                {...(linkTermProps ?? {})}
               >
                 {l.l}
               </text>
@@ -104,6 +121,8 @@ export default function TopologyDiagram({ topology, geo, steps, step, progress, 
           const lit = litNodes.has(id);
           const stroke = on ? accent : lit ? '#33507d' : EDGE;
           const dim = focus && !on && !lit ? 0.42 : 1;
+          const nodeKey = resolveGlossaryKey(n.t, GLOSSARY);
+          const nodeTermProps = svgTermProps(nodeKey, activeGlossaryKey, onGlossaryOpen);
           return (
             <g key={id} opacity={dim}>
               {on && (
@@ -134,8 +153,9 @@ export default function TopologyDiagram({ topology, geo, steps, step, progress, 
                 x={n.cx}
                 y={n.cy - 5}
                 textAnchor="middle"
-                style={{ fontSize: 13, fontWeight: 600, fontFamily: SANS }}
+                style={{ fontSize: 13, fontWeight: 600, fontFamily: SANS, cursor: nodeTermProps ? 'help' : 'default' }}
                 fill={on ? '#ffffff' : lit ? '#c6d4ea' : '#8ea1bf'}
+                {...(nodeTermProps ?? {})}
               >
                 {n.t}
               </text>

@@ -1,5 +1,6 @@
 import { memo, useState } from 'react';
 import { K, PANEL, EDGE, MONO } from '../theme.js';
+import GlossaryPanel from './GlossaryPanel.jsx';
 
 function QosTable({ title, rows, colorFor }) {
   return (
@@ -24,7 +25,7 @@ function QosTable({ title, rows, colorFor }) {
 const qciColor = (row) => (row[0] === '1' ? K.media.c : row[0] === '5' ? K.ims.c : K.user.c);
 const fiveQiColor = (row) => (row[0] === '1' ? K.media.c : row[0] === '5' ? K.ims.c : K.user.c);
 
-function ReferencePanel({ nodeNaming, qci, fiveQi, eirStatus }) {
+function ReferencePanel({ nodeNaming, qci, fiveQi, eirStatus, glossary }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -34,7 +35,7 @@ function ReferencePanel({ nodeNaming, qci, fiveQi, eirStatus }) {
         className="mt-3 w-full rounded px-3 py-2 text-left text-sm"
         style={{ background: PANEL, border: `1px solid ${EDGE}`, color: '#8ea1bf', fontFamily: MONO }}
       >
-        {open ? '▾' : '▸'} node naming, QoS values and how the EIR decides
+        {open ? '▾' : '▸'} node naming, QoS values, acronym glossary and how the EIR decides
       </button>
 
       {open && (
@@ -90,6 +91,8 @@ function ReferencePanel({ nodeNaming, qci, fiveQi, eirStatus }) {
           </div>
         </div>
       )}
+
+      {open && <GlossaryPanel glossary={glossary} />}
     </>
   );
 }

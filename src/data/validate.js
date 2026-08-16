@@ -2,6 +2,8 @@ import { NETWORKS } from './networks.js';
 import { SESSIONS } from './sessions.js';
 import { FLOWS } from './flows/index.js';
 import { TOPOLOGIES } from './topologies/index.js';
+import { GLOSSARY } from './reference/glossary.js';
+import { resolveGlossaryKey } from '../lib/resolveGlossaryKey.js';
 
 /**
  * Dev-only sanity checks across every network/session combination. 15 flows
@@ -16,6 +18,10 @@ export function validateData() {
     for (const link of topology.links) {
       if (!topology.nodes[link.a]) warnings.push(`Topology "${topologyId}": link references missing node "${link.a}"`);
       if (!topology.nodes[link.b]) warnings.push(`Topology "${topologyId}": link references missing node "${link.b}"`);
+      if (!resolveGlossaryKey(link.l, GLOSSARY)) warnings.push(`Topology "${topologyId}": link label "${link.l}" has no glossary entry`);
+    }
+    for (const [nodeId, node] of Object.entries(topology.nodes)) {
+      if (!resolveGlossaryKey(node.t, GLOSSARY)) warnings.push(`Topology "${topologyId}": node "${nodeId}" label "${node.t}" has no glossary entry`);
     }
   }
 

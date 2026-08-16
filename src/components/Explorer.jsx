@@ -4,6 +4,8 @@ import { validateData } from '../data/validate.js';
 import { NODE_MAP_4G, NODE_MAP_5GC } from '../data/reference/nodeNaming.js';
 import { QCI, FIVE_QI } from '../data/reference/qos.js';
 import { EIR_STATUS } from '../data/reference/eirStatus.js';
+import { GLOSSARY } from '../data/reference/glossary.js';
+import { autolinkAcronyms } from '../lib/autolinkAcronyms.jsx';
 import { makeGeometry } from '../engine/geometry.js';
 import { useStepPlayer } from '../engine/useStepPlayer.js';
 import { K, BG, MONO, SANS } from '../theme.js';
@@ -15,6 +17,7 @@ import StepDetail from './StepDetail.jsx';
 import StepList from './StepList.jsx';
 import Legend from './Legend.jsx';
 import ReferencePanel from './ReferencePanel.jsx';
+import GlossaryPopover from './GlossaryPopover.jsx';
 
 const paramsFromUrl = () => {
   if (typeof window === 'undefined') return {};
@@ -38,6 +41,10 @@ export default function Explorer() {
   const [speed, setSpeed] = useState(1);
   const [focus, setFocus] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [glossaryTarget, setGlossaryTarget] = useState(null);
+
+  const openGlossaryTerm = useCallback((key, el) => setGlossaryTarget({ key, anchorEl: el }), []);
+  const closeGlossaryTerm = useCallback(() => setGlossaryTarget(null), []);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
@@ -122,6 +129,8 @@ export default function Explorer() {
           ambient={scenario.ambient}
           focus={focus}
           reducedMotion={reducedMotion}
+          onGlossaryOpen={openGlossaryTerm}
+          activeGlossaryKey={glossaryTarget?.key ?? null}
         />
 
         <Transport
@@ -144,7 +153,15 @@ export default function Explorer() {
         <ProgressBar step={step} progress={player.progress} stepsLength={scenario.steps.length} accent={accent} />
 
         <div className="mt-4 grid gap-3 lg:grid-cols-5">
-          <StepDetail cur={cur} step={step} stepsLength={scenario.steps.length} topology={scenario.topology} accent={accent} />
+          <StepDetail
+            cur={cur}
+            step={step}
+            stepsLength={scenario.steps.length}
+            topology={scenario.topology}
+            accent={accent}
+            onGlossaryOpen={openGlossaryTerm}
+            activeGlossaryKey={glossaryTarget?.key ?? null}
+          />
           <StepList steps={scenario.steps} step={step} blurb={scenario.blurb} onGo={go} />
         </div>
 
@@ -155,14 +172,19 @@ export default function Explorer() {
           qci={QCI}
           fiveQi={networkId === '4g' ? null : FIVE_QI}
           eirStatus={EIR_STATUS}
+          glossary={GLOSSARY}
         />
 
         <p className="mt-4 text-xs leading-relaxed" style={{ color: '#4d618a' }}>
-          Roaming swaps S5 for S8 with the P-GW in the home network. CUPS splits the EPG into EPG-C and EPG-U over
-          Sx, which is the same control/user separation you'll meet again as SMF and UPF in 5G — where the EIR
-          becomes the 5G-EIR on N17, and SMS keeps working over NAS through the AMF and an SMSF.
+          {autolinkAcronyms(
+            "Roaming swaps S5 for S8 with the P-GW in the home network. CUPS splits the EPG into EPG-C and EPG-U over Sx, which is the same control/user separation you'll meet again as SMF and UPF in 5G — where the EIR becomes the 5G-EIR on N17, and SMS keeps working over NAS through the AMF and an SMSF.",
+            GLOSSARY,
+            { activeKey: glossaryTarget?.key, onOpen: openGlossaryTerm },
+          )}
         </p>
       </div>
+
+      <GlossaryPopover target={glossaryTarget} glossary={GLOSSARY} onClose={closeGlossaryTerm} />
     </div>
   );
 }
