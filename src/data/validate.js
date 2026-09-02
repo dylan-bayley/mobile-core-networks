@@ -6,7 +6,7 @@ import { GLOSSARY } from './reference/glossary.js';
 import { resolveGlossaryKey } from '../lib/resolveGlossaryKey.js';
 import { makeGeometry } from '../engine/geometry.js';
 
-const LABEL_CHAR_W = 6;
+const LABEL_CHAR_W = 6.9;
 const LABEL_H = 10;
 
 /** Approximate bounding box of a link label as drawn by TopologyDiagram (centred text, baseline at y-5). */

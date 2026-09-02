@@ -1,15 +1,21 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { K, PANEL, EDGE, MONO, SANS } from '../theme.js';
+import { K, PANEL, EDGE, MONO, SANS, MUTED } from '../theme.js';
+import { resolveGlossaryKey } from '../lib/resolveGlossaryKey.js';
 
 const MARGIN = 8;
 const WIDTH = 280;
 
-export default function GlossaryPopover({ target, glossary, onClose }) {
+export default function GlossaryPopover({ target, glossary, onClose, topology, onShowNode }) {
   const cardRef = useRef(null);
   const [pos, setPos] = useState(null);
 
   const entry = target ? glossary[target.key] : null;
+  // If the term is a node on the current diagram, offer to point at it.
+  const nodeId =
+    entry && topology && onShowNode
+      ? Object.keys(topology.nodes).find((id) => resolveGlossaryKey(topology.nodes[id].t, glossary) === target.key)
+      : null;
 
   useLayoutEffect(() => {
     if (!entry || !target.anchorEl) {
@@ -18,10 +24,11 @@ export default function GlossaryPopover({ target, glossary, onClose }) {
     }
     const r = target.anchorEl.getBoundingClientRect();
     const cardHeight = cardRef.current?.offsetHeight ?? 120;
-    const left = Math.min(Math.max(r.left, MARGIN), window.innerWidth - WIDTH - MARGIN);
+    const width = Math.min(WIDTH, window.innerWidth - MARGIN * 2);
+    const left = Math.min(Math.max(r.left, MARGIN), window.innerWidth - width - MARGIN);
     const fitsBelow = r.bottom + MARGIN + cardHeight <= window.innerHeight;
     const top = fitsBelow ? r.bottom + MARGIN : Math.max(MARGIN, r.top - MARGIN - cardHeight);
-    setPos({ top, left });
+    setPos({ top, left, width });
   }, [target, entry]);
 
   useLayoutEffect(() => {
@@ -70,7 +77,7 @@ export default function GlossaryPopover({ target, glossary, onClose }) {
         position: 'fixed',
         top: pos.top,
         left: pos.left,
-        width: WIDTH,
+        width: pos.width,
         zIndex: 1000,
         background: PANEL,
         border: `1px solid ${EDGE}`,
@@ -100,7 +107,7 @@ export default function GlossaryPopover({ target, glossary, onClose }) {
           onClick={onClose}
           aria-label="Close definition"
           className="rounded"
-          style={{ color: '#63799c', background: 'none', border: 0, fontSize: 14, lineHeight: 1, padding: 2 }}
+          style={{ color: MUTED, background: 'none', border: 0, fontSize: 14, lineHeight: 1, padding: 2 }}
         >
           ×
         </button>
@@ -109,9 +116,19 @@ export default function GlossaryPopover({ target, glossary, onClose }) {
         {entry.expansion}
       </p>
       {entry.note && (
-        <p className="mt-1 text-xs leading-relaxed" style={{ color: '#8ea1bf' }}>
+        <p className="mt-1 text-xs leading-relaxed" style={{ color: MUTED }}>
           {entry.note}
         </p>
+      )}
+      {nodeId && (
+        <button
+          type="button"
+          onClick={() => onShowNode(nodeId)}
+          className="mt-2 rounded px-2 py-1 text-xs"
+          style={{ background: 'transparent', border: `1px solid ${EDGE}`, color: '#dbe4f3', fontFamily: MONO }}
+        >
+          show on diagram →
+        </button>
       )}
     </div>,
     document.body,

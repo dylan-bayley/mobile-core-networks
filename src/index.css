@@ -10,3 +10,11 @@ body {
   margin: 0;
   background: #070b14;
 }
+
+/* Keyboard focus must be visible on the dark palette — inline-styled buttons
+   otherwise fall back to the browser default, which is nearly invisible here. */
+:focus-visible {
+  outline: 2px solid #7cc4ff;
+  outline-offset: 2px;
+  border-radius: 4px;
+}

@@ -2,7 +2,7 @@
 
 An animated, interactive explainer of 4G, 5G NSA and 5G SA signalling flows —
 voice (originating, terminating, EPS fallback), video, data (attach, idle mode
-and TAU), SMS and MMS — hosted on GitHub Pages. Built to *learn* from: every
+and TAU), SMS and MMS — hosted on GitHub Pages. Built to *learn* from, whether or not you already know the mobile core: every
 step has a description, a clickable acronym glossary, an "in practice" note
 where there is one, and a link to the same step in the other generation.
 
@@ -70,11 +70,15 @@ npm run preview
 
 ## Runtime
 
-- **Playback**: each step's duration is derived from its description length (≈200 wpm, clamped 3–20 s). Speeds 0.5×–2×. "Pause after each step" holds at the end of every step; Play/Space continues.
-- **Views**: Topology (animated) or Sequence (ladder diagram of the same steps).
-- **Quiz**: ten questions generated from the current flow (which interface carries a message, where a step ends up, order four steps).
-- **Keyboard**: Space play/pause, ←/→ step, Home/End first/last.
+- **First visit**: an intro card explains the site, lists the suggested learning order and holds playback until *Start*. Dismissed state lives in `localStorage` (`mcn.introSeen`); the header **? help** button reopens it. The default landing flow is 4G data attach (`DEFAULT_FLOW` in `sessions.js`).
+- **Playback**: each step's duration is derived from its description length (≈200 wpm, clamped 3–20 s). Speeds 0.5×–2×. The *auto-advance* switch, when off, holds at the end of every step; Play/Space continues.
+- **Views**: Topology (animated) or Sequence (ladder diagram of the same steps). On screens narrower than the `xl` breakpoint the step text is rendered under the transport controls and the diagram scrolls horizontally to follow the current step.
+- **Progress**: furthest step and completion per (network, flow), plus best quiz score, in `localStorage` (`mcn.progress`, see `src/lib/progress.js`). Completed flows get a tick in the selector; *reset progress* is in the reference panel.
+- **Quiz**: ten questions generated from the current flow (which interface carries a message, where a step ends up, order four steps). Each answer is followed by the step's own description as the explanation.
+- **Glossary**: every acronym in prose, node and link labels is clickable; the header search (`/`) looks up any term; a node definition offers *show on diagram*.
+- **Keyboard**: Space play/pause, ←/→ step, Home/End first/last, `/` glossary search, `?` shortcut help.
 - **URL**: `?net=&session=&variant=&step=&view=` — every step is deep-linkable ("copy link" in the step panel); browser back/forward works for user-initiated jumps.
+- **Sessions** carry a `tagline` (plain-language one-liner shown under the selector) and a `path` number (suggested learning order); see `src/data/sessions.js`.
 
 ## Deployment
 

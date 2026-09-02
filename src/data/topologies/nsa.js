@@ -12,7 +12,7 @@ const gnb = { cx: 300, cy: 372, w: 104, h: 52, t: 'gNB', s: 'Secondary node (SgN
 const nrLinks = [
   { a: 'ue', b: 'gnb', l: 'NR-Uu (SCG)', k: 'radio', curve: 50 },
   { a: 'enb', b: 'gnb', l: 'X2-C', k: 'control', curve: 0, lx: 28, ly: -2 },
-  { a: 'gnb', b: 'sgw', l: 'S1-U (SCG)', k: 'user', curve: 0, labelT: 0.3, lx: 60, ly: 6 },
+  { a: 'gnb', b: 'sgw', l: 'S1-U (SCG)', k: 'user', curve: 0, labelT: 0.3, lx: 68, ly: 6 },
 ];
 
 const userPlaneZoneNsa = {

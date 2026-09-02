@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { K, MONO, SANS, PANEL, EDGE } from '../theme.js';
+import { K, MONO, SANS, PANEL, EDGE, MUTED, FAINT } from '../theme.js';
 import { GLOSSARY } from '../data/reference/glossary.js';
 import { resolveGlossaryKey } from '../lib/resolveGlossaryKey.js';
 import { svgTermProps } from '../lib/svgTermProps.js';
@@ -7,7 +7,7 @@ import { svgTermProps } from '../lib/svgTermProps.js';
 const LANE_W = 104;
 const LEFT = 40;
 const HEAD = 48;
-const ROW_H = 34;
+const ROW_H = 38;
 const END_GAP = 9; // keep arrowheads off the lifelines
 
 function Arrow({ x1, x2, y, colour, dashed, opacity }) {
@@ -28,7 +28,7 @@ function Arrow({ x1, x2, y, colour, dashed, opacity }) {
  * hop coloured by protocol family. Current row is highlighted; future rows
  * dimmed — the same visual grammar as the topology view.
  */
-export default function SequenceDiagram({ topology, steps, step, onGo, onGlossaryOpen, activeGlossaryKey, maxHeight }) {
+export default function SequenceDiagram({ topology, steps, step, onGo, onGlossaryOpen, activeGlossaryKey, maxHeight, reducedMotion }) {
   const wrapRef = useRef(null);
   const svgRef = useRef(null);
 
@@ -52,15 +52,26 @@ export default function SequenceDiagram({ topology, steps, step, onGo, onGlossar
     const top = (HEAD + step * ROW_H) * scale;
     const bottom = top + ROW_H * scale;
     const headPx = HEAD * scale;
-    if (top - headPx < wrap.scrollTop) wrap.scrollTop = Math.max(0, top - headPx - 4);
-    else if (bottom > wrap.scrollTop + wrap.clientHeight) wrap.scrollTop = bottom - wrap.clientHeight + 4;
+    let scrollTop = wrap.scrollTop;
+    if (top - headPx < wrap.scrollTop) scrollTop = Math.max(0, top - headPx - 4);
+    else if (bottom > wrap.scrollTop + wrap.clientHeight) scrollTop = bottom - wrap.clientHeight + 4;
+
+    // Horizontal follow on narrow screens: centre the current step's arrows.
+    let scrollLeft = wrap.scrollLeft;
+    if (wrap.scrollWidth > wrap.clientWidth + 2) {
+      const xs = cur.p.map(laneX);
+      const mid = ((Math.min(...xs) + Math.max(...xs)) / 2) * scale;
+      scrollLeft = Math.max(0, mid - wrap.clientWidth / 2);
+    }
+    wrap.scrollTo({ top: scrollTop, left: scrollLeft, behavior: reducedMotion ? 'auto' : 'smooth' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, width]);
 
   return (
     <div
       ref={wrapRef}
       className="overflow-auto rounded"
-      style={{ background: PANEL, border: `1px solid ${EDGE}`, maxHeight }}
+      style={{ background: PANEL, border: `1px solid ${EDGE}`, maxHeight, touchAction: 'pan-x pan-y' }}
     >
       <svg
         ref={svgRef}
@@ -79,18 +90,20 @@ export default function SequenceDiagram({ topology, steps, step, onGo, onGlossar
           return (
             <g key={id}>
               <line x1={x} y1={HEAD - 4} x2={x} y2={height - 6} stroke={touched ? `${accent}66` : EDGE} strokeWidth={touched ? 1.4 : 1} strokeDasharray="3 4" />
-              <rect x={x - LANE_W / 2 + 4} y={6} width={LANE_W - 8} height={HEAD - 14} rx={6} fill={touched ? '#16233d' : '#0f1830'} stroke={touched ? accent : EDGE} />
+              <rect x={x - LANE_W / 2 + 4} y={6} width={LANE_W - 8} height={HEAD - 14} rx={6} fill={touched ? '#16233d' : '#0f1830'} stroke={touched ? accent : EDGE}>
+                {key && <title>{`${n.t} — ${GLOSSARY[key].expansion}`}</title>}
+              </rect>
               <text
                 x={x}
                 y={22}
                 textAnchor="middle"
                 style={{ fontFamily: SANS, fontSize: 12, fontWeight: 600, cursor: termProps ? 'help' : 'default' }}
-                fill={touched ? '#ffffff' : '#8ea1bf'}
+                fill={touched ? '#ffffff' : '#a3b3cf'}
                 {...(termProps ?? {})}
               >
                 {n.t}
               </text>
-              <text x={x} y={34} textAnchor="middle" style={{ fontFamily: MONO, fontSize: 8 }} fill="#63799c">
+              <text x={x} y={34} textAnchor="middle" style={{ fontFamily: MONO, fontSize: 8 }} fill={FAINT}>
                 {n.s.length > 18 ? `${n.s.slice(0, 17)}…` : n.s}
               </text>
             </g>
@@ -100,18 +113,23 @@ export default function SequenceDiagram({ topology, steps, step, onGo, onGlossar
         {/* rows */}
         {steps.map((s, i) => {
           const rowTop = HEAD + i * ROW_H;
-          const y = rowTop + ROW_H / 2 + 5;
+          const y = rowTop + ROW_H / 2 + 6;
           const colour = K[s.k].c;
           const isCur = i === step;
-          const opacity = i > step ? 0.35 : 1;
+          const opacity = i > step ? 0.4 : 1;
           const xs = s.p.map(laneX);
           const midX = (Math.min(...xs) + Math.max(...xs)) / 2;
           return (
             <g key={s.id}>
               {isCur && <rect x={4} y={rowTop + 1} width={width - 8} height={ROW_H - 2} rx={5} fill={`${accent}14`} stroke={`${accent}88`} />}
-              <text x={LEFT / 2} y={y + 3} textAnchor="middle" style={{ fontFamily: MONO, fontSize: 9 }} fill={isCur ? colour : '#4d618a'} opacity={opacity}>
+              <text x={LEFT / 2} y={y + 3} textAnchor="middle" style={{ fontFamily: MONO, fontSize: 9.5 }} fill={isCur ? colour : FAINT} opacity={opacity}>
                 {String(i + 1).padStart(2, '0')}
               </text>
+              {s.tag && (
+                <text x={LEFT / 2} y={y - 8} textAnchor="middle" style={{ fontFamily: MONO, fontSize: 7.5, letterSpacing: '0.08em' }} fill={colour} opacity={opacity}>
+                  {s.tag.toUpperCase()}
+                </text>
+              )}
               {s.p.slice(0, -1).map((a, h) => (
                 <Arrow key={h} x1={laneX(a)} x2={laneX(s.p[h + 1])} y={s.rt ? y - 3 : y} colour={isCur ? accent : colour} opacity={opacity} />
               ))}
@@ -121,7 +139,7 @@ export default function SequenceDiagram({ topology, steps, step, onGo, onGlossar
                   .map((a, h) => (
                     <Arrow key={`r${h}`} x1={laneX(s.p[h + 1])} x2={laneX(a)} y={y + 5} colour={isCur ? accent : colour} dashed opacity={opacity * 0.8} />
                   ))}
-              <text x={midX} y={y - 8} textAnchor="middle" style={{ fontFamily: MONO, fontSize: 9.5 }} fill={isCur ? '#ffffff' : '#8ea1bf'} opacity={opacity}>
+              <text x={midX} y={y - 9} textAnchor="middle" style={{ fontFamily: MONO, fontSize: 10.5 }} fill={isCur ? '#ffffff' : MUTED} opacity={opacity}>
                 {s.m}
               </text>
               <rect
