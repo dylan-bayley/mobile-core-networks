@@ -31,13 +31,26 @@ export function makeGeometry(topology) {
     return `M ${p0.x} ${p0.y} Q ${c.x} ${c.y} ${p1.x} ${p1.y}`;
   };
 
-  const linkMid = (l) => {
+  const pointOnLink = (l, t) => {
     const p0 = ctr(l.a), p1 = ctr(l.b), c = control(p0, p1, l.curve);
-    return bez(p0, c, p1, 0.5);
+    return bez(p0, c, p1, t);
+  };
+
+  const linkMid = (l) => pointOnLink(l, 0.5);
+
+  /**
+   * Where a link's label is drawn: at `labelT` (default midpoint) along the
+   * curve, nudged by optional `lx`/`ly` offsets. These are authored per link
+   * to steer labels out of node boxes and away from each other.
+   */
+  const labelPos = (l) => {
+    const p = pointOnLink(l, l.labelT ?? 0.5);
+    return { x: p.x + (l.lx ?? 0), y: p.y + (l.ly ?? 0) };
   };
 
   const pointOnRoute = (route, t) => {
     const hops = route.length - 1;
+    if (hops < 1) return ctr(route[0]);
     const raw = Math.min(t, 0.999999) * hops;
     const i = Math.floor(raw);
     const local = raw - i;
@@ -57,5 +70,5 @@ export function makeGeometry(topology) {
     return out;
   };
 
-  return { ctr, linkFor, linkPathD, linkMid, pointOnRoute, routeLinks };
+  return { ctr, linkFor, linkPathD, linkMid, pointOnLink, labelPos, pointOnRoute, routeLinks };
 }

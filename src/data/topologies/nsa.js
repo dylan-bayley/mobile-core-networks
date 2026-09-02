@@ -5,16 +5,18 @@ import { epc } from './epc.js';
    gNB reachable from the eNodeB over X2 and from the UE over its own NR
    radio leg, added purely for user-plane throughput. */
 
-const gnb = { cx: 320, cy: 365, w: 104, h: 52, t: 'gNB', s: 'Secondary node (SgNB)' };
+const gnb = { cx: 300, cy: 372, w: 104, h: 52, t: 'gNB', s: 'Secondary node (SgNB)' };
 
+// Label positions (labelT / lx / ly) are hand-tuned so none of the three NR
+// labels lands inside the eNodeB, gNB or S-GW boxes.
 const nrLinks = [
-  { a: 'ue', b: 'gnb', l: 'NR-Uu (SCG)', k: 'radio', curve: -60 },
-  { a: 'enb', b: 'gnb', l: 'X2-C (SgNB Add)', k: 'control', curve: 40 },
-  { a: 'gnb', b: 'sgw', l: 'S1-U (SCG bearer)', k: 'user', curve: -25 },
+  { a: 'ue', b: 'gnb', l: 'NR-Uu (SCG)', k: 'radio', curve: 50 },
+  { a: 'enb', b: 'gnb', l: 'X2-C', k: 'control', curve: 0, lx: 28, ly: -2 },
+  { a: 'gnb', b: 'sgw', l: 'S1-U (SCG)', k: 'user', curve: 0, labelT: 0.3, lx: 60, ly: 6 },
 ];
 
 const userPlaneZoneNsa = {
-  x: 14, y: 240, w: 1152, h: 160, rx: 10, fill: '#0a1220',
+  x: 14, y: 240, w: 1152, h: 168, rx: 10, fill: '#0a1220',
   label: 'USER PLANE — BEARER PATH (EN-DC)', labelX: 26, labelY: 258, labelColor: '#41547a',
 };
 
