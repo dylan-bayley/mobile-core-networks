@@ -14,7 +14,7 @@ const epcCore = {
     inet: { cx: 940, cy: 310, w: 112, h: 48, t: 'Internet', s: 'SGi / APN' },
   },
   links: [
-    { a: 'ue', b: 'enb', l: 'LTE-Uu', k: 'radio', curve: 0 },
+    { a: 'ue', b: 'enb', l: 'LTE-Uu', k: 'radio', curve: 0, ly: -26 },
     { a: 'enb', b: 'mme', l: 'S1-MME', k: 'control', curve: 0 },
     { a: 'enb', b: 'sgw', l: 'S1-U', k: 'user', curve: 0 },
     { a: 'mme', b: 'eir', l: 'S13', k: 'diameter', curve: 0 },
@@ -35,12 +35,12 @@ const epcCore = {
 /** Seam links: connect the EPC core, IMS core and CS/messaging fragments together. */
 const seams = {
   links: [
-    { a: 'mme', b: 'smsc', l: 'SGd', k: 'diameter', curve: 45 },
-    { a: 'mme', b: 'msc', l: 'SGs / Sv', k: 'tdm', curve: 0, dash: '5 5' },
+    { a: 'mme', b: 'smsc', l: 'SGd', k: 'diameter', curve: 45, labelT: 0.78 },
+    { a: 'mme', b: 'msc', l: 'SGs / Sv', k: 'tdm', curve: 0, dash: '5 5', labelT: 0.7 },
     { a: 'ue', b: 'sbg', l: 'Gm', k: 'ims', curve: 160, dash: '6 6' },
     { a: 'sbg', b: 'pcrf', l: 'Rx', k: 'diameter', curve: -200 },
     { a: 'cscf', b: 'hss', l: 'Cx', k: 'diameter', curve: 120 },
-    { a: 'mtas', b: 'hss', l: 'Sh', k: 'diameter', curve: 150, dash: '4 6' },
+    { a: 'mtas', b: 'hss', l: 'Sh', k: 'diameter', curve: 150, dash: '4 6', labelT: 0.3 },
     { a: 'smsc', b: 'hss', l: 'S6c / MAP-C', k: 'diameter', curve: -40, dash: '4 6' },
     { a: 'smsc', b: 'ipsmgw', l: 'MAP / SGd', k: 'diameter', curve: 0 },
     { a: 'msc', b: 'smsc', l: 'MAP-E', k: 'tdm', curve: -300, dash: '5 5' },

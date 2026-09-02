@@ -22,7 +22,7 @@ const fiveGcCore = {
     inet: { cx: 940, cy: 310, w: 112, h: 48, t: 'Internet', s: 'N6 / DN' },
   },
   links: [
-    { a: 'ue', b: 'gnb', l: 'NR-Uu', k: 'radio', curve: 0 },
+    { a: 'ue', b: 'gnb', l: 'NR-Uu', k: 'radio', curve: 0, ly: -26 },
     { a: 'gnb', b: 'amf', l: 'N2', k: 'control', curve: 0 },
     { a: 'gnb', b: 'upf', l: 'N3', k: 'user', curve: 0 },
     { a: 'amf', b: 'eir', l: 'N17', k: 'sbi', curve: 0 },
@@ -35,7 +35,7 @@ const fiveGcCore = {
     { a: 'smf', b: 'hss', l: 'N10', k: 'sbi', curve: 40 },
     { a: 'smf', b: 'chf', l: 'Nchf', k: 'sbi', curve: 30 },
     { a: 'upf', b: 'inet', l: 'N6', k: 'user', curve: 0 },
-    { a: 'amf', b: 'smsf', l: 'Namf / Nsmsf (SMS)', k: 'sbi', curve: 0 },
+    { a: 'amf', b: 'smsf', l: 'Nsmsf (SMS)', k: 'sbi', curve: 0, labelT: 0.62 },
     { a: 'smsf', b: 'smsc', l: 'SGd', k: 'diameter', curve: 0 },
   ],
   zones: [
@@ -51,7 +51,7 @@ const seams = {
     { a: 'sbg', b: 'pcf', l: 'N5', k: 'sbi', curve: -220 },
     { a: 'cscf', b: 'hss', l: 'Cx', k: 'diameter', curve: 90 },
     { a: 'mtas', b: 'hss', l: 'Sh', k: 'diameter', curve: 130, dash: '4 6' },
-    { a: 'smsc', b: 'hss', l: 'S6c / MAP-C', k: 'diameter', curve: -60, dash: '4 6' },
+    { a: 'smsc', b: 'hss', l: 'S6c / MAP-C', k: 'diameter', curve: -60, dash: '4 6', labelT: 0.8, lx: 10, ly: -6 },
   ],
 };
 

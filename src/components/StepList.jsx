@@ -1,20 +1,33 @@
 import { memo, useEffect, useRef } from 'react';
 import { K, PANEL, EDGE, MONO } from '../theme.js';
 
-function StepList({ steps, step, blurb, onGo }) {
+function StepList({ steps, step, onGo }) {
   const listRef = useRef(null);
+  const firstRender = useRef(true);
 
+  // Scroll the *list container* only. `scrollIntoView` would also scroll the
+  // document, which yanked the page down to the list on load and on every
+  // auto-advance while the learner was watching the diagram above.
   useEffect(() => {
-    const el = listRef.current && listRef.current.querySelector(`[data-step="${step}"]`);
-    if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' });
+    const list = listRef.current;
+    const el = list && list.querySelector(`[data-step="${step}"]`);
+    if (!list || !el) return;
+    if (firstRender.current) {
+      firstRender.current = false;
+      if (step === 0) return;
+    }
+    const top = el.offsetTop - list.offsetTop;
+    const bottom = top + el.offsetHeight;
+    if (top < list.scrollTop) list.scrollTop = top - 4;
+    else if (bottom > list.scrollTop + list.clientHeight) list.scrollTop = bottom - list.clientHeight + 4;
   }, [step]);
 
   return (
-    <div className="lg:col-span-2 rounded" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
-      <div className="px-3 py-2" style={{ borderBottom: `1px solid ${EDGE}`, fontFamily: MONO, fontSize: 11, color: '#63799c' }}>
-        {blurb}
+    <div className="flex min-h-0 flex-col rounded" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
+      <div className="px-3 py-1.5" style={{ borderBottom: `1px solid ${EDGE}`, fontFamily: MONO, fontSize: 10, letterSpacing: '0.12em', color: '#4d618a' }}>
+        STEPS · click to jump
       </div>
-      <div ref={listRef} className="max-h-64 overflow-y-auto p-1">
+      <div ref={listRef} className="relative min-h-0 overflow-y-auto p-1" style={{ maxHeight: '16rem' }}>
         {steps.map((s, i) => {
           const on = i === step;
           return (
@@ -22,6 +35,7 @@ function StepList({ steps, step, blurb, onGo }) {
               key={s.id}
               data-step={i}
               onClick={() => onGo(i)}
+              aria-current={on ? 'step' : undefined}
               className="flex w-full items-start gap-2 rounded px-2 py-1.5 text-left"
               style={{ background: on ? '#152441' : 'transparent', opacity: i <= step ? 1 : 0.5 }}
             >

@@ -3,6 +3,13 @@ import { K, MONO, SANS, PANEL, EDGE } from '../theme.js';
 import { GLOSSARY } from '../data/reference/glossary.js';
 import { resolveGlossaryKey } from '../lib/resolveGlossaryKey.js';
 import { svgTermProps } from '../lib/svgTermProps.js';
+import { DOT_PHASE } from '../engine/useStepPlayer.js';
+
+const BUBBLE_MARGIN = 6;
+const CHAR_W = 6.8;
+
+/** Splits a message label into tokens, keeping delimiters, so glossary-known tokens can be made clickable. */
+const tokenise = (m) => m.split(/(\s+|\/|→|\(|\))/).filter((t) => t !== '');
 
 export default function TopologyDiagram({
   topology,
@@ -15,9 +22,11 @@ export default function TopologyDiagram({
   reducedMotion,
   onGlossaryOpen,
   activeGlossaryKey,
+  maxHeight,
 }) {
   const cur = steps[step];
   const [clock, setClock] = useState(0);
+  const [, , vbW] = useMemo(() => topology.viewBox.split(/\s+/).map(Number), [topology.viewBox]);
 
   useEffect(() => {
     if (reducedMotion) return undefined;
@@ -41,14 +50,34 @@ export default function TopologyDiagram({
     return s;
   }, [step, steps]);
 
-  const t = cur.rt ? (progress < 0.5 ? progress * 2 : (1 - progress) * 2) : progress;
+  // The dot travels during the first DOT_PHASE of the step, then holds at its
+  // destination while the learner reads.
+  const travel = Math.min(progress / DOT_PHASE, 1);
+  const t = cur.rt ? (travel < 0.5 ? travel * 2 : (1 - travel) * 2) : travel;
   const pos = geo.pointOnRoute(cur.p, t);
   const accent = K[cur.k].c;
   const flows = reducedMotion ? [] : ambient.filter((f) => step >= f.after);
 
+  // Message bubble, clamped inside the viewBox so long labels near the edge
+  // (e.g. "PDU Session Establishment Request" leaving the UE) stay legible.
+  const bubbleW = cur.m.length * CHAR_W + 24;
+  const bubbleX = Math.min(Math.max(pos.x - bubbleW / 2, BUBBLE_MARGIN), vbW - bubbleW - BUBBLE_MARGIN);
+  const above = pos.y - 34 >= BUBBLE_MARGIN;
+  const bubbleY = above ? pos.y - 34 : pos.y + 16;
+  const tokens = tokenise(cur.m);
+
+  const describe = `${topology.label} topology. Step ${step + 1} of ${steps.length}: ${cur.t}, ${cur.m}, path ${cur.p
+    .map((n) => topology.nodes[n].t)
+    .join(cur.rt ? ' and back from ' : ' to ')}.`;
+
   return (
     <div className="overflow-x-auto rounded" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
-      <svg viewBox={topology.viewBox} style={{ minWidth: topology.minWidth, width: '100%', display: 'block' }}>
+      <svg
+        viewBox={topology.viewBox}
+        role="img"
+        aria-label={describe}
+        style={{ minWidth: topology.minWidth, width: '100%', height: 'auto', maxHeight, display: 'block', margin: '0 auto' }}
+      >
         <defs>
           <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
             <feGaussianBlur stdDeviation="4" result="b" />
@@ -76,7 +105,7 @@ export default function TopologyDiagram({
           const on = activeLinks.has(l);
           const col = on ? accent : K[l.k].c;
           const op = on ? 0.95 : focus ? 0.16 : 0.34;
-          const mid = geo.linkMid(l);
+          const lp = geo.labelPos(l);
           const linkKey = resolveGlossaryKey(l.l, GLOSSARY);
           const linkTermProps = svgTermProps(linkKey, activeGlossaryKey, onGlossaryOpen);
           return (
@@ -91,8 +120,8 @@ export default function TopologyDiagram({
                 filter={on ? 'url(#glow)' : undefined}
               />
               <text
-                x={mid.x}
-                y={mid.y - 5}
+                x={lp.x}
+                y={lp.y - 5}
                 textAnchor="middle"
                 style={{ fontFamily: MONO, fontSize: 10, cursor: linkTermProps ? 'help' : 'default' }}
                 fill={on ? '#ffffff' : '#6d82a5'}
@@ -169,18 +198,19 @@ export default function TopologyDiagram({
         <g>
           <circle cx={pos.x} cy={pos.y} r={7} fill={accent} filter="url(#glow)" />
           <circle cx={pos.x} cy={pos.y} r={13} fill="none" stroke={accent} strokeWidth="1" opacity={0.35} />
-          <rect
-            x={pos.x - (cur.m.length * 3.4 + 12)}
-            y={pos.y - 34}
-            width={cur.m.length * 6.8 + 24}
-            height={20}
-            rx={5}
-            fill="#0a1324"
-            stroke={accent}
-            strokeWidth="1"
-          />
-          <text x={pos.x} y={pos.y - 20} textAnchor="middle" style={{ fontFamily: MONO, fontSize: 11 }} fill="#ffffff">
-            {cur.m}
+          <rect x={bubbleX} y={bubbleY} width={bubbleW} height={20} rx={5} fill="#0a1324" stroke={accent} strokeWidth="1" />
+          <text x={bubbleX + bubbleW / 2} y={bubbleY + 14} textAnchor="middle" style={{ fontFamily: MONO, fontSize: 11 }} fill="#ffffff">
+            {tokens.map((tok, i) => {
+              const key = GLOSSARY[tok] ? tok : null;
+              const props = svgTermProps(key, activeGlossaryKey, onGlossaryOpen);
+              return props ? (
+                <tspan key={i} {...props} style={{ cursor: 'help', textDecoration: 'underline dotted' }}>
+                  {tok}
+                </tspan>
+              ) : (
+                <tspan key={i}>{tok}</tspan>
+              );
+            })}
           </text>
         </g>
       </svg>

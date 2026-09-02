@@ -16,6 +16,7 @@ export const steps = compose(
       m: 'N2 Request → RRC Reconfig (5QI 2)',
       p: ['amf', 'gnb', 'ue'],
       k: 'control',
+      analog: { net: '4g', flow: 'video', id: 'video-bearer' },
       d: 'A second N2 PDU Session Resource Modify follows the first, this time for 5QI 2 — conversational video, GBR, a looser 150 ms delay budget than voice. The gNB admission-controls and radio-configures it exactly as it did the 5QI 1 flow.',
     },
   }),

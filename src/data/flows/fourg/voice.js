@@ -3,7 +3,8 @@ export const blurb = 'IMS registration, call setup and a dedicated QCI 1 bearer'
 
 export const steps = [
   { id: 'ims-pdn', t: 'Second PDN to the ims APN', m: 'IMS PDN connectivity', p: ['ue', 'enb', 'sgw', 'pgw'], k: 'control',
-    d: 'VoLTE needs its own PDN connection to the ims APN, with a default bearer on QCI 5 — non-GBR, priority 1 — reserved for SIP. The P-CSCF address is returned to the UE in the PCO of the Create Session Response.' },
+    d: 'VoLTE needs its own PDN connection to the ims APN, with a default bearer on QCI 5 — non-GBR, priority 1 — reserved for SIP. The P-CSCF address is returned to the UE in the PCO of the Create Session Response.',
+    pitfall: "If the ims APN's PCO carries no P-CSCF address, the handset silently gives up on VoLTE and falls back to CS voice (or has none). It is the most common VoLTE provisioning miss." },
   { id: 'sip-register', t: 'SIP REGISTER', m: 'REGISTER', p: ['ue', 'sbg'], k: 'ims',
     d: 'The UE registers over the QCI 5 bearer. Gm terminates on the Ericsson SBG, which hosts the P-CSCF signalling function alongside the IMS-AGW that will later handle the media.' },
   { id: 'scscf-assignment', t: 'S-CSCF assignment', m: 'Mw + Cx UAR / UAA', p: ['sbg', 'cscf', 'hss'], rt: true, k: 'ims',
@@ -23,7 +24,8 @@ export const steps = [
   { id: 'gx-rar', t: 'PCC rule pushed to the P-GW', m: 'Gx RAR / RAA', p: ['pcrf', 'pgw'], rt: true, k: 'diameter',
     d: 'SAPC sends an unsolicited Re-Auth Request installing a rule for a dedicated GBR bearer: QCI 1, ARP per operator policy, GBR and MBR sized from the codec, and a TFT matching the RTP flow.' },
   { id: 'create-bearer-request', t: 'Create Bearer Request', m: 'Create Bearer Req', p: ['pgw', 'sgw', 'mme'], k: 'control',
-    d: 'The P-GW initiates the dedicated bearer downwards through S5 and S11. Note the direction: unlike attach, the network pushes this one, not the UE.' },
+    d: 'The P-GW initiates the dedicated bearer downwards through S5 and S11.',
+    pitfall: 'Note the direction: unlike attach, the network pushes this bearer, not the UE. If the QCI 1 bearer never appears, look at Rx and Gx before blaming the radio.' },
   { id: 'e-rab-setup', t: 'E-RAB setup on the radio', m: 'E-RAB Setup Request', p: ['mme', 'enb', 'ue'], k: 'control',
     d: 'The eNodeB admission-controls the GBR bearer and reconfigures the radio: dedicated bearer on QCI 1, RoHC to compress the IP/UDP/RTP header, and typically semi-persistent scheduling or TTI bundling at cell edge.' },
   { id: 'alerting-answer', t: 'Alerting and answer', m: '180 → 200 OK → ACK', p: ['ue', 'sbg', 'cscf'], rt: true, k: 'ims',

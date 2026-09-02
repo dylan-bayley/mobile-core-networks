@@ -1,4 +1,4 @@
-import { insertAfter, insertBefore, append, patch } from '../compose.js';
+import { insertAfter, insertBefore, patch } from '../compose.js';
 
 /**
  * EN-DC (5G NSA): once the UE has attached and its default bearer is up over
@@ -50,7 +50,8 @@ export function makeNrLegReleaseDelta({ beforeId, afterId }) {
       p: ['enb', 'gnb'],
       k: 'control',
       tag: 'nsa',
-      d: "Many EN-DC deployments release or suspend the NR secondary before a voice call sets up: the eNodeB alone can't guarantee QCI 1's scheduling budget across two independently-scheduled cells, so it's simpler to drop to LTE-only for the call's duration. This is an implementation choice, not a 3GPP mandate — some networks leave the SCG up throughout. Either way, the call itself is plain VoLTE: IMS already registered over the LTE anchor, nothing 5G-specific about the signalling that follows.",
+      d: "Many EN-DC deployments release or suspend the NR secondary before a voice call sets up: the eNodeB alone can't guarantee QCI 1's scheduling budget across two independently-scheduled cells, so it's simpler to drop to LTE-only for the call's duration. Either way, the call itself is plain VoLTE: IMS already registered over the LTE anchor, nothing 5G-specific about the signalling that follows.",
+      pitfall: 'This is an implementation choice, not a 3GPP mandate — some networks leave the SCG up throughout. If VoLTE call quality differs between 4G-only and NSA handsets on the same network, this setting is the first place to look.',
     }),
     insertAfter(afterId, {
       id: 'sgnb-readd',
