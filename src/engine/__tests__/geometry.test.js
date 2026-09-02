@@ -27,3 +27,16 @@ describe('makeGeometry', () => {
     expect(geo.routeLinks(['a', 'c'])).toEqual([]);
   });
 });
+
+import { nodeAt } from '../geometry.js';
+
+describe('nodeAt', () => {
+  const nodes = { ue: { cx: 60, cy: 300, w: 80, h: 50 }, enb: { cx: 200, cy: 300, w: 100, h: 50 } };
+  it('finds the node a point sits inside, honouring padding', () => {
+    expect(nodeAt({ x: 60, y: 300 }, nodes)).toBe('ue');
+    expect(nodeAt({ x: 101, y: 300 }, nodes)).toBe(null);
+    expect(nodeAt({ x: 101, y: 300 }, nodes, 4)).toBe('ue');
+    expect(nodeAt({ x: 130, y: 300 }, nodes)).toBe(null);
+    expect(nodeAt({ x: 240, y: 320 }, nodes)).toBe('enb');
+  });
+});

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { K, PANEL, EDGE, MONO } from '../theme.js';
+import { K, PANEL, EDGE, MONO, MUTED, FAINT, TEXT_2, ACTIVE_BG } from '../theme.js';
 import { GLOSSARY } from '../data/reference/glossary.js';
 import { resolveGlossaryKey } from '../lib/resolveGlossaryKey.js';
 import { autolinkAcronyms } from '../lib/autolinkAcronyms.jsx';
@@ -26,13 +26,19 @@ function CopyLink({ url }) {
       onClick={copy}
       title="Copy a link to this exact step"
       className="ml-auto rounded px-2 py-0.5"
-      style={{ fontFamily: MONO, fontSize: 10, color: copied ? '#3fd6a0' : '#63799c', border: `1px solid ${EDGE}`, background: 'transparent' }}
+      style={{ fontFamily: MONO, fontSize: 10, color: copied ? '#3fd6a0' : MUTED, border: `1px solid ${EDGE}`, background: 'transparent' }}
     >
       {copied ? 'copied ✓' : 'copy link'}
     </button>
   );
 }
 
+/**
+ * The reading surface for the current step. `announce` controls whether
+ * this instance carries the aria-live region — the step detail is rendered
+ * twice (aside on wide screens, under the controls on narrow ones) and only
+ * the visible copy should speak.
+ */
 export default function StepDetail({
   cur,
   step,
@@ -44,6 +50,7 @@ export default function StepDetail({
   analogs = [],
   onJumpAnalog,
   shareUrl,
+  announce = true,
 }) {
   const linkOpts = { activeKey: activeGlossaryKey, onOpen: onGlossaryOpen };
   return (
@@ -56,19 +63,23 @@ export default function StepDetail({
           {K[cur.k].n}
         </span>
         {cur.tag && (
-          <span className="rounded px-2 py-0.5" style={{ fontFamily: MONO, fontSize: 10, color: '#8ea1bf', border: `1px solid ${EDGE}` }}>
+          <span
+            className="rounded px-2 py-0.5"
+            style={{ fontFamily: MONO, fontSize: 10, color: MUTED, border: `1px solid ${EDGE}` }}
+            title="This step is specific to this variant"
+          >
             {cur.tag}
           </span>
         )}
         {shareUrl && <CopyLink url={shareUrl} />}
       </div>
-      <div aria-live="polite" aria-atomic="true">
+      <div aria-live={announce ? 'polite' : undefined} aria-atomic={announce ? 'true' : undefined}>
         <h2 className="mt-2 text-lg font-semibold text-white">{autolinkAcronyms(cur.t, GLOSSARY, linkOpts)}</h2>
-        <p className="mt-2 text-sm leading-relaxed" style={{ color: '#a8b8d4' }}>
+        <p className="mt-2 text-sm leading-relaxed" style={{ color: TEXT_2 }}>
           {autolinkAcronyms(cur.d, GLOSSARY, linkOpts)}
         </p>
       </div>
-      <p className="mt-3" style={{ fontFamily: MONO, fontSize: 11, color: '#63799c' }}>
+      <p className="mt-3" style={{ fontFamily: MONO, fontSize: 11, color: MUTED }}>
         {cur.p.map((n, i) => {
           const label = topology.nodes[n].t;
           const key = resolveGlossaryKey(label, GLOSSARY);
@@ -99,14 +110,16 @@ export default function StepDetail({
 
       {analogs.length > 0 && (
         <div className="mt-3 rounded p-2" style={{ border: `1px dashed ${EDGE}` }}>
-          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', color: '#4d618a' }}>COMPARE — THE SAME STEP ELSEWHERE</div>
+          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', color: FAINT }}>COMPARE — THE SAME STEP IN ANOTHER GENERATION</div>
           {analogs.map((a) => (
             <button
               key={a.key}
               type="button"
               onClick={() => onJumpAnalog(a)}
-              className="mt-1 flex w-full items-start gap-2 rounded px-2 py-1 text-left hover:bg-[#152441]"
+              className="mt-1 flex w-full items-start gap-2 rounded px-2 py-1 text-left"
               style={{ background: 'transparent', border: 0 }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = ACTIVE_BG)}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
               title={`Switch to ${a.network.label} · ${a.flowLabel} at this step`}
             >
               <span className="shrink-0" style={{ fontFamily: MONO, fontSize: 10, color: K[a.step.k].c, paddingTop: 2, minWidth: 28 }}>
@@ -114,10 +127,10 @@ export default function StepDetail({
               </span>
               <span className="text-xs leading-snug">
                 <span style={{ color: '#e6edfa' }}>{a.step.t}</span>
-                <span style={{ color: '#63799c' }}> · {a.step.m}</span>
-                <span style={{ color: '#4d618a' }}> · {a.flowLabel}</span>
+                <span style={{ color: MUTED }}> · {a.step.m}</span>
+                <span style={{ color: FAINT }}> · {a.flowLabel}</span>
               </span>
-              <span className="ml-auto shrink-0" style={{ color: '#63799c' }}>→</span>
+              <span className="ml-auto shrink-0" style={{ color: MUTED }}>→</span>
             </button>
           ))}
         </div>

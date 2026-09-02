@@ -15,3 +15,14 @@ export const K = {
 export const BG = '#070b14';
 export const PANEL = '#0d1424';
 export const EDGE = '#1e2a42';
+
+/* Text tokens, all checked against PANEL for WCAG AA (≥ 4.5:1 for body text). */
+export const TEXT = '#e6edfa'; // headings, primary
+export const TEXT_2 = '#a8b8d4'; // body copy
+export const MUTED = '#8ea1bf'; // secondary (≈7:1)
+export const FAINT = '#7d92b5'; // section labels, step numbers (≈5.8:1)
+
+/* Interactive states. */
+export const ACTIVE_BG = '#152441';
+export const ACTIVE_EDGE = '#3d6ba8';
+export const FOCUS = '#7cc4ff';

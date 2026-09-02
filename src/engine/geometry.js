@@ -72,3 +72,16 @@ export function makeGeometry(topology) {
 
   return { ctr, linkFor, linkPathD, linkMid, pointOnLink, labelPos, pointOnRoute, routeLinks };
 }
+
+/**
+ * The node whose box (padded by `pad`) contains `pos`, or null. Used to lift
+ * the message bubble above a node instead of drawing it over the node's
+ * title while the dot rests there.
+ */
+export function nodeAt(pos, nodes, pad = 0) {
+  for (const [id, n] of Object.entries(nodes)) {
+    if (n.w == null || n.h == null) continue;
+    if (Math.abs(pos.x - n.cx) <= n.w / 2 + pad && Math.abs(pos.y - n.cy) <= n.h / 2 + pad) return id;
+  }
+  return null;
+}

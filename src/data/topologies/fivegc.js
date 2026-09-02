@@ -27,7 +27,7 @@ const fiveGcCore = {
     { a: 'gnb', b: 'upf', l: 'N3', k: 'user', curve: 0 },
     { a: 'amf', b: 'eir', l: 'N17', k: 'sbi', curve: 0 },
     { a: 'amf', b: 'hss', l: 'N8', k: 'sbi', curve: 0 },
-    { a: 'amf', b: 'ausf', l: 'N12', k: 'sbi', curve: -20 },
+    { a: 'amf', b: 'ausf', l: 'N12', k: 'sbi', curve: -20, lx: -8 },
     { a: 'ausf', b: 'hss', l: 'N13', k: 'sbi', curve: 0 },
     { a: 'amf', b: 'smf', l: 'N11', k: 'sbi', curve: 0 },
     { a: 'smf', b: 'upf', l: 'N4', k: 'control', curve: 0 },
@@ -51,7 +51,7 @@ const seams = {
     { a: 'sbg', b: 'pcf', l: 'N5', k: 'sbi', curve: -220 },
     { a: 'cscf', b: 'hss', l: 'Cx', k: 'diameter', curve: 90 },
     { a: 'mtas', b: 'hss', l: 'Sh', k: 'diameter', curve: 130, dash: '4 6' },
-    { a: 'smsc', b: 'hss', l: 'S6c / MAP-C', k: 'diameter', curve: -60, dash: '4 6', labelT: 0.8, lx: 10, ly: -6 },
+    { a: 'smsc', b: 'hss', l: 'S6c / MAP-C', k: 'diameter', curve: -60, dash: '4 6', labelT: 0.7, ly: -6 },
   ],
 };
 

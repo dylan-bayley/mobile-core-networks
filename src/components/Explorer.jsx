@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { NETWORKS, SESSIONS, FLOWS, resolveScenario, analogsOf, stepIndexOf, sessionForFlow } from '../data/index.js';
+import { DEFAULT_FLOW, LEARNING_PATH, taglineFor } from '../data/sessions.js';
 import { validateData } from '../data/validate.js';
 import { NODE_MAP_4G, NODE_MAP_5GC } from '../data/reference/nodeNaming.js';
 import { QCI, FIVE_QI } from '../data/reference/qos.js';
 import { EIR_STATUS } from '../data/reference/eirStatus.js';
 import { GLOSSARY } from '../data/reference/glossary.js';
 import { autolinkAcronyms } from '../lib/autolinkAcronyms.jsx';
+import { countCompleted, flowProgress, readProgress, recordQuiz, recordStep, resetProgress, writeProgress } from '../lib/progress.js';
 import { makeGeometry } from '../engine/geometry.js';
 import { useStepPlayer } from '../engine/useStepPlayer.js';
-import { K, BG, MONO, SANS } from '../theme.js';
+import { K, BG, MONO, SANS, MUTED, FAINT, EDGE, PANEL } from '../theme.js';
 import SelectorBar from './SelectorBar.jsx';
 import TopologyDiagram from './TopologyDiagram.jsx';
 import SequenceDiagram from './SequenceDiagram.jsx';
@@ -21,8 +23,16 @@ import Quiz from './Quiz.jsx';
 import Legend from './Legend.jsx';
 import ReferencePanel from './ReferencePanel.jsx';
 import GlossaryPopover from './GlossaryPopover.jsx';
+import IntroCard from './IntroCard.jsx';
+import ShortcutsHelp from './ShortcutsHelp.jsx';
+import GlossarySearch from './GlossarySearch.jsx';
 
-const DIAGRAM_MAX_HEIGHT = 'max(360px, calc(100vh - 250px))';
+const DIAGRAM_MAX_HEIGHT_WIDE = 'max(360px, calc(100vh - 250px))';
+const DIAGRAM_MAX_HEIGHT_NARROW = '48vh';
+const WIDE_QUERY = '(min-width: 1280px)'; // Tailwind `xl` — where the aside moves beside the diagram
+
+const BEYOND =
+  "Roaming swaps S5 for S8 with the P-GW in the home network. CUPS splits the EPG into EPG-C and EPG-U over Sx, which is the same control/user separation you'll meet again as SMF and UPF in 5G — where the EIR becomes the 5G-EIR on N17, and SMS keeps working over NAS through the AMF and an SMSF.";
 
 const readUrl = () => {
   if (typeof window === 'undefined') return {};
@@ -52,8 +62,21 @@ const store = (key, value) => {
 };
 
 const validNet = (id) => (NETWORKS.some((n) => n.id === id) ? id : NETWORKS[0].id);
-const validFlow = (id) => (sessionForFlow(id) ? id : SESSIONS[0].id);
+const validFlow = (id) => (sessionForFlow(id) ? id : DEFAULT_FLOW);
 const validView = (v) => (v === 'sequence' ? 'sequence' : 'topology');
+
+function useMediaQuery(query) {
+  const get = () => typeof window !== 'undefined' && !!window.matchMedia?.(query).matches;
+  const [matches, setMatches] = useState(get);
+  useEffect(() => {
+    const mq = window.matchMedia?.(query);
+    if (!mq) return undefined;
+    const onChange = () => setMatches(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, [query]);
+  return matches;
+}
 
 export default function Explorer() {
   useEffect(() => {
@@ -64,25 +87,35 @@ export default function Explorer() {
   const reducedMotion = useRef(
     typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
   ).current;
+  const isWide = useMediaQuery(WIDE_QUERY);
 
   const [networkId, setNetworkId] = useState(() => validNet(initial.net));
   const [flowId, setFlowId] = useState(() => validFlow(initial.flow));
   const [view, setView] = useState(() => validView(initial.view));
   const [quizOpen, setQuizOpen] = useState(false);
-  const [playing, setPlaying] = useState(() => !reducedMotion && !initial.step);
+  // First visit: show the intro and hold playback until the learner presses
+  // Start. (Not keyed on the URL — the app writes ?step= into it on load, so
+  // a plain reload would otherwise look like a deep link.)
+  const [introOpen, setIntroOpen] = useState(() => !readStored('mcn.introSeen', false));
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [playing, setPlaying] = useState(() => !reducedMotion && !initial.step && !introOpen);
   const [speed, setSpeed] = useState(() => readStored('mcn.speed', 1));
   const [pauseEach, setPauseEach] = useState(() => readStored('mcn.pauseEach', false));
   const [focus, setFocus] = useState(true);
   const [glossaryTarget, setGlossaryTarget] = useState(null);
+  const [highlightNode, setHighlightNode] = useState(null);
+  const [progress, setProgress] = useState(() => readProgress());
 
   const pendingStepRef = useRef(initial.step ?? null);
   const firstScenarioRun = useRef(true);
+  const searchRef = useRef(null);
 
   const openGlossaryTerm = useCallback((key, el) => setGlossaryTarget({ key, anchorEl: el }), []);
   const closeGlossaryTerm = useCallback(() => setGlossaryTarget(null), []);
 
   useEffect(() => store('mcn.speed', speed), [speed]);
   useEffect(() => store('mcn.pauseEach', pauseEach), [pauseEach]);
+  useEffect(() => writeProgress(progress), [progress]);
 
   const scenario = useMemo(() => resolveScenario(networkId, flowId), [networkId, flowId]);
   const geo = useMemo(() => makeGeometry(scenario.topology), [scenario.topology]);
@@ -96,7 +129,7 @@ export default function Explorer() {
 
   // On a scenario change: jump to a pending deep-linked step (paused), or
   // restart from the top. Skipped on first mount so the initial paused /
-  // reduced-motion choice above isn't overridden.
+  // reduced-motion / intro choice above isn't overridden.
   useEffect(() => {
     const id = pendingStepRef.current;
     pendingStepRef.current = null;
@@ -111,7 +144,7 @@ export default function Explorer() {
       return;
     }
     player.restart();
-    setPlaying(!reducedMotion);
+    setPlaying(!reducedMotion && !introOpen);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scenario.steps]);
 
@@ -119,6 +152,11 @@ export default function Explorer() {
   const cur = scenario.steps[step];
   const accent = K[cur.k].c;
   const last = scenario.steps.length - 1;
+
+  // Learning progress: furthest step reached per flow, completion on the last one.
+  useEffect(() => {
+    setProgress((p) => recordStep(p, networkId, scenario.flowId, step, scenario.steps.length));
+  }, [networkId, scenario.flowId, step, scenario.steps.length]);
 
   // URL reflects the current view: net / session / variant / step / view.
   const shareUrl = useMemo(() => {
@@ -185,6 +223,12 @@ export default function Explorer() {
     markHistory();
     setFlowId(id);
   };
+  const switchTo = (net, flow) => {
+    if (net === networkId && flow === flowId) return;
+    markHistory();
+    setNetworkId(net);
+    setFlowId(flow);
+  };
   const jumpToAnalog = (a) => {
     markHistory();
     pendingStepRef.current = a.id;
@@ -207,12 +251,50 @@ export default function Explorer() {
     setPlaying(true);
   };
 
+  const closeIntro = () => {
+    setIntroOpen(false);
+    store('mcn.introSeen', true);
+  };
+  const startFromIntro = (targetFlowId) => {
+    closeIntro();
+    if (targetFlowId && targetFlowId !== flowId) {
+      switchFlow(targetFlowId); // the scenario-change effect restarts and plays
+      return;
+    }
+    player.restart();
+    setPlaying(!reducedMotion);
+  };
+
+  const showNode = useCallback((id) => {
+    setGlossaryTarget(null);
+    setHighlightNode(id);
+  }, []);
+  useEffect(() => {
+    if (!highlightNode) return undefined;
+    const t = setTimeout(() => setHighlightNode(null), 2200);
+    return () => clearTimeout(t);
+  }, [highlightNode]);
+
+  const onQuizScore = useCallback(
+    (score, total) => setProgress((p) => recordQuiz(p, networkId, scenario.flowId, score, total)),
+    [networkId, scenario.flowId],
+  );
+  const onResetProgress = () => setProgress(resetProgress());
+
   useEffect(() => {
     const isTyping = (e) => e.target instanceof HTMLElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName);
     const isButton = (e) => e.target instanceof HTMLElement && e.target.closest('button, [role="button"]');
     const onKeyDown = (e) => {
       if (isTyping(e)) return;
-      if (e.code === 'Space') {
+      if (e.key === '?') {
+        e.preventDefault();
+        setShortcutsOpen((o) => !o);
+      } else if (e.key === '/') {
+        e.preventDefault();
+        searchRef.current?.focus();
+      } else if (e.key === 'Escape') {
+        if (introOpen) closeIntro();
+      } else if (e.code === 'Space') {
         if (isButton(e)) return; // let the focused button take Space; don't also toggle playback
         e.preventDefault();
         togglePlay();
@@ -232,24 +314,82 @@ export default function Explorer() {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [go, step, last, togglePlay]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [go, step, last, togglePlay, introOpen]);
 
   const analogs = useMemo(() => analogsOf(cur, { networkId, flowId: scenario.flowId }), [cur, networkId, scenario.flowId]);
   const networkFlows = FLOWS[networkId] ?? {};
+  const network = NETWORKS.find((n) => n.id === networkId) ?? NETWORKS[0];
+  const pathForNetwork = LEARNING_PATH.filter((f) => networkFlows[f.id]);
+  const allFlowKeys = NETWORKS.flatMap((n) => Object.keys(FLOWS[n.id] ?? {}).map((f) => [n.id, f]));
+  const completedTotal = allFlowKeys.filter(([n, f]) => countCompleted(progress, n, [f]) === 1).length;
+  const bestQuiz = flowProgress(progress, networkId, scenario.flowId)?.bestQuiz ?? null;
+  const diagramMaxHeight = isWide ? DIAGRAM_MAX_HEIGHT_WIDE : DIAGRAM_MAX_HEIGHT_NARROW;
+
+  const stepDetail = (announce) => (
+    <StepDetail
+      cur={cur}
+      step={step}
+      stepsLength={scenario.steps.length}
+      topology={scenario.topology}
+      accent={accent}
+      onGlossaryOpen={openGlossaryTerm}
+      activeGlossaryKey={glossaryTarget?.key ?? null}
+      analogs={analogs}
+      onJumpAnalog={jumpToAnalog}
+      shareUrl={shareUrl}
+      announce={announce}
+    />
+  );
 
   return (
     <div style={{ background: BG, fontFamily: SANS, color: '#dbe4f3', minHeight: '100%' }} className="w-full">
-      <div className="mx-auto max-w-[1500px] px-4 py-4">
-        <header className="mb-3 flex flex-wrap items-baseline gap-x-4 gap-y-1">
-          <h1 className="text-xl font-semibold tracking-tight text-white">How a mobile core actually carries a session</h1>
-          <p style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.16em', color: '#63799c' }}>
-            4G EPC · 5G NSA / SA · IMS · MESSAGING — ERICSSON NODE NAMING
+      <div className="mx-auto max-w-[1500px] px-3 py-3 sm:px-4 sm:py-4">
+        <header className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1">
+          <h1 className="text-lg font-semibold tracking-tight text-white sm:text-xl">How a mobile core actually carries a session</h1>
+          <p className="hidden md:block" style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.16em', color: FAINT }}>
+            4G EPC · 5G NSA / SA · IMS · MESSAGING
           </p>
-          <p className="basis-full text-xs" style={{ color: '#6d82a5' }}>
+          <div className="ml-auto flex items-center gap-2">
+            <GlossarySearch glossary={GLOSSARY} onPick={openGlossaryTerm} ref={searchRef} />
+            <button
+              type="button"
+              onClick={() => setShortcutsOpen(true)}
+              title="Keyboard shortcuts (?)"
+              aria-label="Keyboard shortcuts"
+              className="hidden rounded px-2 py-1.5 text-xs sm:block"
+              style={{ background: PANEL, border: `1px solid ${EDGE}`, color: MUTED, fontFamily: MONO }}
+            >
+              ⌨ keys
+            </button>
+            <button
+              type="button"
+              onClick={() => setIntroOpen((o) => !o)}
+              aria-pressed={introOpen}
+              title="What is this site and where should I start?"
+              className="rounded px-2 py-1.5 text-xs"
+              style={{ background: PANEL, border: `1px solid ${EDGE}`, color: MUTED, fontFamily: MONO }}
+            >
+              ? help
+            </button>
+          </div>
+          <p className="basis-full text-xs" style={{ color: MUTED }}>
             Pick a network and a session type, then watch the signalling walk the reference points one message at a time.
-            <span style={{ fontFamily: MONO, color: '#4d618a' }}> Space play/pause · ←/→ step · Home/End</span>
+            <span className="hidden sm:inline" style={{ fontFamily: MONO, color: FAINT }}> Space play/pause · ←/→ step · ? for all shortcuts</span>
           </p>
         </header>
+
+        {introOpen && (
+          <IntroCard
+            path={pathForNetwork}
+            progress={progress}
+            networkId={networkId}
+            networkLabel={network.label}
+            currentFlowId={scenario.flowId}
+            onStart={startFromIntro}
+            onClose={closeIntro}
+          />
+        )}
 
         <SelectorBar
           networks={NETWORKS}
@@ -265,6 +405,7 @@ export default function Explorer() {
           onView={setView}
           quizOpen={quizOpen}
           onToggleQuiz={() => setQuizOpen((q) => !q)}
+          progress={progress}
         />
 
         <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_380px] xl:items-start xl:gap-3">
@@ -277,7 +418,8 @@ export default function Explorer() {
                 onGo={go}
                 onGlossaryOpen={openGlossaryTerm}
                 activeGlossaryKey={glossaryTarget?.key ?? null}
-                maxHeight={DIAGRAM_MAX_HEIGHT}
+                maxHeight={diagramMaxHeight}
+                reducedMotion={reducedMotion}
               />
             ) : (
               <TopologyDiagram
@@ -291,7 +433,8 @@ export default function Explorer() {
                 reducedMotion={reducedMotion}
                 onGlossaryOpen={openGlossaryTerm}
                 activeGlossaryKey={glossaryTarget?.key ?? null}
-                maxHeight={DIAGRAM_MAX_HEIGHT}
+                highlightNode={highlightNode}
+                maxHeight={diagramMaxHeight}
               />
             )}
 
@@ -315,28 +458,38 @@ export default function Explorer() {
 
             <ProgressBar steps={scenario.steps} step={step} progress={player.progress} accent={accent} onGo={go} />
 
+            {/* Narrow screens: the reading surface sits right under the controls. */}
+            {!quizOpen && <div className="mt-3 xl:hidden">{stepDetail(!isWide)}</div>}
+
             <Legend />
           </div>
 
           <aside className="mt-3 flex min-h-0 flex-col gap-3 xl:sticky xl:top-3 xl:mt-0 xl:max-h-[calc(100vh-1.5rem)] xl:overflow-y-auto xl:pr-0.5">
             {quizOpen ? (
-              <Quiz scenario={scenario} geo={geo} onGo={go} onClose={() => setQuizOpen(false)} />
+              <Quiz
+                scenario={scenario}
+                geo={geo}
+                onGo={go}
+                onClose={() => setQuizOpen(false)}
+                best={bestQuiz}
+                onScore={onQuizScore}
+                onGlossaryOpen={openGlossaryTerm}
+                activeGlossaryKey={glossaryTarget?.key ?? null}
+              />
             ) : (
               <>
-                <FlowOverview scenario={scenario} onGlossaryOpen={openGlossaryTerm} activeGlossaryKey={glossaryTarget?.key ?? null} />
-                <StepDetail
-                  cur={cur}
-                  step={step}
-                  stepsLength={scenario.steps.length}
-                  topology={scenario.topology}
-                  accent={accent}
+                <FlowOverview
+                  scenario={scenario}
+                  networks={NETWORKS}
+                  flows={FLOWS}
+                  networkId={networkId}
+                  onSwitch={switchTo}
                   onGlossaryOpen={openGlossaryTerm}
                   activeGlossaryKey={glossaryTarget?.key ?? null}
-                  analogs={analogs}
-                  onJumpAnalog={jumpToAnalog}
-                  shareUrl={shareUrl}
+                  tagline={taglineFor(scenario.flowId)}
                 />
                 <StepList steps={scenario.steps} step={step} onGo={go} />
+                <div className="hidden xl:block">{stepDetail(isWide)}</div>
               </>
             )}
           </aside>
@@ -348,18 +501,21 @@ export default function Explorer() {
           fiveQi={networkId === '4g' ? null : FIVE_QI}
           eirStatus={EIR_STATUS}
           glossary={GLOSSARY}
+          beyond={autolinkAcronyms(BEYOND, GLOSSARY, { activeKey: glossaryTarget?.key, onOpen: openGlossaryTerm })}
+          completed={completedTotal}
+          totalFlows={allFlowKeys.length}
+          onResetProgress={onResetProgress}
         />
-
-        <p className="mt-4 text-xs leading-relaxed" style={{ color: '#4d618a' }}>
-          {autolinkAcronyms(
-            "Roaming swaps S5 for S8 with the P-GW in the home network. CUPS splits the EPG into EPG-C and EPG-U over Sx, which is the same control/user separation you'll meet again as SMF and UPF in 5G — where the EIR becomes the 5G-EIR on N17, and SMS keeps working over NAS through the AMF and an SMSF.",
-            GLOSSARY,
-            { activeKey: glossaryTarget?.key, onOpen: openGlossaryTerm },
-          )}
-        </p>
       </div>
 
-      <GlossaryPopover target={glossaryTarget} glossary={GLOSSARY} onClose={closeGlossaryTerm} />
+      <GlossaryPopover
+        target={glossaryTarget}
+        glossary={GLOSSARY}
+        onClose={closeGlossaryTerm}
+        topology={scenario.topology}
+        onShowNode={view === 'topology' ? showNode : null}
+      />
+      <ShortcutsHelp open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
     </div>
   );
 }

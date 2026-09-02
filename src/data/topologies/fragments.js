@@ -35,7 +35,7 @@ export const imsPstn = {
     mgcf: { cx: 740, cy: 580, w: 150, h: 52, t: 'MGCF', s: 'M-MGw' },
     pstn: { cx: 920, cy: 580, w: 112, h: 48, t: 'PSTN', s: 'ISUP / BICC' },
   },
-  links: [{ a: 'mgcf', b: 'pstn', l: 'ISUP', k: 'tdm', curve: 0 }],
+  links: [{ a: 'mgcf', b: 'pstn', l: 'ISUP', k: 'tdm', curve: 0, labelT: 0.55 }],
 };
 
 /** The CSCF-to-MGCF seam is identical everywhere the IMS core and PSTN breakout both exist. */
