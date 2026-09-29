@@ -1,4 +1,4 @@
-/* The Learn path: four architecture lessons, then the Flows explorer. The
+/* The Learn path: five architecture lessons, then the Flows explorer. The
    order matters — each lesson assumes the one before it. Scenes and
    diagrams live in the per-lesson modules and are attached in ./index.js. */
 export const LESSON_META = [
@@ -33,6 +33,14 @@ export const LESSON_META = [
     short: 'SA vs NSA',
     blurb: 'Non-standalone adds 5G radio to a 4G core; standalone swaps the core too. See where the user plane flows in each.',
     minutes: 7,
+  },
+  {
+    id: 'ims',
+    n: 5,
+    title: 'IMS: voice over any core',
+    short: 'IMS',
+    blurb: 'The SIP servers that carry voice over 4G and 5G: registration, service triggers, the voice bearer, and the way out to other networks.',
+    minutes: 9,
   },
 ];
 

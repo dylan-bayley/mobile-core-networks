@@ -4,7 +4,8 @@
    5G functions each EPC node became. Grid cells are [col, row]. */
 
 const USER_WIDE = { ue: [0.3, 4.6], gnb: [2, 4.6], upf: [3.9, 4.6], dn: [6, 4.6] };
-const USER_NARROW = { ue: [0, 6.4], gnb: [1, 6.4], upf: [2, 6.4], dn: [3, 6.4] };
+// Staggered so each link label has room between neighbouring boxes.
+const USER_NARROW = { ue: [0, 6.3], gnb: [1.05, 7.35], upf: [2.1, 6.3], dn: [3.1, 7.35] };
 const BANDS = {
   wide: { control: [0, 3.25], user: [3.5, 6] },
   narrow: { control: [0, 5.65], user: [5.85, 8] },
@@ -72,7 +73,7 @@ export const diagram = {
       narrow: {
         ...USER_NARROW,
         nssf: [0.35, 0.3], nef: [0.35, 1.1], nrf: [0.35, 1.9], pcf: [0.35, 2.7], ausf: [0.35, 3.5], amf: [0.35, 4.3],
-        udm: [2.65, 0.3], udr: [2.65, 1.1], af: [2.65, 1.9], chf: [2.65, 2.7], scp: [2.65, 3.5], sepp: [2.65, 4.3], smf: [2.65, 5.1],
+        udm: [2.65, 0.3], udr: [2.65, 1.1], af: [2.65, 1.9], chf: [2.65, 2.7], scp: [2.65, 3.5], sepp: [2.65, 4.3], smf: [2.65, 4.95],
       },
       bus: { wide: 1.35, narrow: { col: 1.5 } },
       bands: BANDS,
@@ -80,8 +81,8 @@ export const diagram = {
     slice: {
       extends: 'sba',
       hide: ['sepp'],
-      wide: { scp: [6.3, 2.35], smf2: [5.1, 2.35], upf2: [5.1, 4.6], dn: [6.7, 4.6] },
-      narrow: { scp: [2.65, 3.5], smf: [2.65, 4.3], smf2: [2.65, 5.1], upf2: [2, 7.2], dn: [3, 6.9] },
+      wide: { scp: [6.3, 2.35], smf2: [5.1, 2.35], upf: [3.9, 4], upf2: [4.4, 5.2], dn: [6.7, 4.6] },
+      narrow: { scp: [2.65, 3.5], smf: [2.65, 4.3], smf2: [3.1, 4.95], upf: [2, 6.2], upf2: [3.1, 6.2], dn: [3, 7.33] },
     },
     refpoint: {
       wide: {
@@ -91,8 +92,8 @@ export const diagram = {
       },
       narrow: {
         ...USER_NARROW,
-        nssf: [0, 0.4], ausf: [1, 0.4], udm: [2.05, 0.4],
-        amf: [0.6, 1.9], smf: [1.85, 1.9], pcf: [3.05, 1.9], af: [3.05, 3.3],
+        nssf: [0, 0.4], ausf: [1, 0.4], udm: [2.45, 0.4],
+        amf: [0.45, 1.9], smf: [1.85, 1.5], pcf: [3.12, 1.9], af: [3.05, 3.3],
       },
       bands: BANDS,
     },
@@ -100,7 +101,7 @@ export const diagram = {
       extends: 'refpoint',
       hide: ['nssf', 'af'],
       wide: { udr: [5.5, 0.45], chf: [7.1, 0.45] },
-      narrow: { udr: [3.05, 0.4], chf: [3.05, 3.3] },
+      narrow: { udr: [3.05, 1.15], chf: [3.05, 3.3] },
     },
     epc: {
       wide: {
@@ -109,9 +110,9 @@ export const diagram = {
         sgw: [3.2, 3.5], pgw: [4.6, 3.5],
       },
       narrow: {
-        ue: [0, 6.4], enb: [1, 6.4], dn: [3, 6.4],
-        mme: [0.6, 1.9], hss: [1.6, 0.4], pcrf: [3.05, 1.9], ocs: [3.05, 0.4],
-        sgw: [1.4, 4.8], pgw: [2.6, 4.8],
+        ue: [0, 6.3], enb: [1.05, 7.35], dn: [3.1, 7.35],
+        mme: [0.6, 1.9], hss: [1.6, 0.4], pcrf: [2, 1.9], ocs: [3.05, 0.4],
+        sgw: [1.5, 5], pgw: [2.8, 4.5],
       },
       bands: BANDS,
     },
@@ -125,7 +126,7 @@ export const diagram = {
     { a: 'upf', b: 'dn', l: 'N6', k: 'user' },
     { a: 'amf', b: 'ausf', l: 'N12', k: 'sbi', in: ['refpoint', 'analog'] },
     { a: 'ausf', b: 'udm', l: 'N13', k: 'sbi', in: ['refpoint', 'analog'] },
-    { a: 'amf', b: 'udm', l: 'N8', k: 'sbi', in: ['refpoint', 'analog'] },
+    { a: 'amf', b: 'udm', l: 'N8', k: 'sbi', labelT: 0.35, in: ['refpoint', 'analog'] },
     { a: 'smf', b: 'udm', l: 'N10', k: 'sbi', in: ['refpoint', 'analog'] },
     { a: 'amf', b: 'smf', l: 'N11', k: 'sbi', in: ['refpoint', 'analog'] },
     { a: 'smf', b: 'pcf', l: 'N7', k: 'sbi', in: ['refpoint', 'analog'] },
@@ -143,7 +144,7 @@ export const diagram = {
     { a: 'pgw', b: 'dn', l: 'SGi', k: 'user', in: ['epc'] },
     { a: 'mme', b: 'hss', l: 'S6a', k: 'diameter', in: ['epc'] },
     { a: 'pgw', b: 'pcrf', l: 'Gx', k: 'diameter', in: ['epc'] },
-    { a: 'pgw', b: 'ocs', l: 'Gy', k: 'diameter', curve: -40, in: ['epc'] },
+    { a: 'pgw', b: 'ocs', l: 'Gy', k: 'diameter', curve: 140, in: ['epc'] },
   ],
 };
 

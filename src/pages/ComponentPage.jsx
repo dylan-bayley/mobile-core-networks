@@ -211,7 +211,7 @@ export default function ComponentPage({ component: c }) {
           </Panel>
 
           {c.analog && (
-            <Panel title={c.gen === '4g' || c.id === 'enb' ? 'In 5G' : 'In 4G'}>
+            <Panel title={c.analog.title ?? (c.gen === '4g' || c.id === 'enb' ? 'In 5G' : 'In 4G')}>
               <p className="mt-1.5 text-sm leading-relaxed" style={{ color: TEXT_2 }}>
                 {link(c.analog.text)}
               </p>

@@ -39,6 +39,12 @@ export const SOURCES = {
     version: 'V18.0.0 (Rel-18)',
     url: 'https://www.etsi.org/deliver/etsi_ts/123200_123299/123203/18.00.00_60/ts_123203v180000p.pdf',
   },
+  ts23228: {
+    doc: 'TS 23.228',
+    title: 'IP Multimedia Subsystem (IMS); Stage 2',
+    version: 'V18.10.0 (Rel-18)',
+    url: 'https://www.etsi.org/deliver/etsi_ts/123200_123299/123228/18.10.00_60/ts_123228v181000p.pdf',
+  },
   ts23214: {
     doc: 'TS 23.214',
     title: 'Control and user plane separation of EPC nodes (CUPS)',
@@ -56,6 +62,12 @@ export const SOURCES = {
     title: 'Security architecture and procedures for 5G System',
     version: 'V18.8.0 (Rel-18)',
     url: 'https://www.etsi.org/deliver/etsi_ts/133500_133599/133501/18.08.00_60/ts_133501v180800p.pdf',
+  },
+  ts33203: {
+    doc: 'TS 33.203',
+    title: '3G security; access security for IP-based services (IMS)',
+    version: 'V18.1.0 (Rel-18)',
+    url: 'https://www.etsi.org/deliver/etsi_ts/133200_133299/133203/18.01.00_60/ts_133203v180100p.pdf',
   },
   ts37340: {
     doc: 'TS 37.340',

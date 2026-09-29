@@ -26,10 +26,12 @@ export const FAINT = '#7d92b5'; // section labels, step numbers (≈5.8:1)
    accent so a 4G node and its 5G successor read as different families. */
 export const CONTROL_BAND = '#0c1630';
 export const USER_BAND = '#0a1d22';
+export const IMS_BAND = '#141a14';
 export const GEN = {
   '4g': { c: '#6f9be6', n: '4G EPC' },
   '5g': { c: '#b48cff', n: '5G Core' },
   ran: { c: '#f5b544', n: 'Radio access' },
+  ims: { c: '#c3d96b', n: 'IMS' },
   ext: { c: '#8fa3bf', n: 'Outside the core' },
 };
 export const NODE_FILL = '#0f1830';

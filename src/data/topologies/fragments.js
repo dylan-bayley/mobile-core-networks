@@ -2,7 +2,7 @@
    Shared topology fragments.
 
    A fragment only contains links whose *both* endpoints are inside it.
-   Anything crossing a fragment boundary (Gm, Rx, Cx, Sh, Mj, SGd, ...) is a
+   Anything crossing a fragment boundary (Gm, Rx, Cx, Sh, Mg, SGd, ...) is a
    "seam" link declared by the individual topology file that assembles the
    fragments — that's what lets the IMS core be written once instead of once
    per network type, while still letting each network's core attach to it
@@ -40,7 +40,7 @@ export const imsPstn = {
 
 /** The CSCF-to-MGCF seam is identical everywhere the IMS core and PSTN breakout both exist. */
 export const imsPstnLink = {
-  links: [{ a: 'cscf', b: 'mgcf', l: 'Mj', k: 'ims', curve: 0 }],
+  links: [{ a: 'cscf', b: 'mgcf', l: 'Mg', k: 'ims', curve: 0 }],
 };
 
 /** Legacy CS-domain anchor for CSFB/SRVCC. 4G and NSA only. */

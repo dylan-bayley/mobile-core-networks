@@ -65,9 +65,9 @@ export default function Home() {
             See how the 4G and 5G core actually fit together.
           </h1>
           <p className="mt-3 max-w-[60ch] text-base leading-relaxed" style={{ color: TEXT_2 }}>
-            Four short animated lessons build up the 4G Evolved Packet Core, the 5G core, how the two work together, and what
-            really differs between 5G standalone and non-standalone. Then watch real procedures, one message at a time. Every
-            fact links to the 3GPP specification it comes from.
+            Five short animated lessons build up the 4G Evolved Packet Core, the 5G core, how the two work together, what
+            really differs between 5G standalone and non-standalone, and the IMS that carries voice over both. Then watch real
+            procedures, one message at a time. Every fact links to the 3GPP specification it comes from.
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
             <a href={`#/learn/${next.id}`} className="rounded px-4 py-2.5 text-sm font-semibold" style={{ background: GEN['5g'].c, color: '#0b0717' }}>

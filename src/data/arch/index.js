@@ -4,8 +4,9 @@ import * as epc from './epc.js';
 import * as fivegc from './fivegc.js';
 import * as interworking from './interworking.js';
 import * as sansa from './sansa.js';
+import * as ims from './ims.js';
 
-const MODULES = { epc, '5gc': fivegc, interworking, 'sa-nsa': sansa };
+const MODULES = { epc, '5gc': fivegc, interworking, 'sa-nsa': sansa, ims };
 
 /** Every lesson: its metadata plus diagram, scenes (pre-resolved), takeaways, quick check and extras. */
 export const LESSONS = Object.fromEntries(

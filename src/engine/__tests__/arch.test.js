@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveScenes, targetState, interpolate, layoutFor, pointAlong, easeInOut } from '../arch.js';
+import { resolveScenes, targetState, interpolate, layoutFor, pointAlong, easeInOut, labelTFor } from '../arch.js';
 
 const diagram = {
   id: 't',
@@ -60,5 +60,12 @@ describe('architecture engine', () => {
     expect(easeInOut(1)).toBe(1);
     const p = pointAlong([{ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 30 }], 0.5);
     expect(p).toEqual({ x: 10, y: 10 });
+  });
+
+  it('places link labels at the midpoint unless labelT says otherwise, per width mode', () => {
+    expect(labelTFor({}, 'wide')).toBe(0.5);
+    expect(labelTFor({ labelT: 0.3 }, 'narrow')).toBe(0.3);
+    expect(labelTFor({ labelT: { wide: 0.62, narrow: 0.5 } }, 'wide')).toBe(0.62);
+    expect(labelTFor({ labelT: { wide: 0.62 } }, 'narrow')).toBe(0.5);
   });
 });

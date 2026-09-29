@@ -35,10 +35,10 @@ export const diagram = {
       wide: {
         eir: [0.6, 0.5], hss: [2.4, 0.5], pcrf: [5, 0.5], ocs: [6.7, 0.5],
         mme: [2.4, 2.1],
-        ue: [0, 4.6], enb: [1.3, 4.6], sgw: [3.3, 4.6], pgw: [5, 4.6], pdn: [6.8, 4.6],
+        ue: [0, 4.6], enb: [1.45, 4.6], sgw: [3.3, 4.6], pgw: [5, 4.6], pdn: [6.8, 4.6],
       },
       narrow: {
-        eir: [0, 0.4], hss: [1.3, 0.4], pcrf: [2.6, 1.9], ocs: [3.1, 0.4],
+        eir: [0, 0.4], hss: [1.3, 0.4], pcrf: [2, 1.9], ocs: [3.1, 0.4],
         mme: [0.8, 2.3],
         ue: [0, 6.4], enb: [0.7, 5.5], sgw: [1.8, 6.6], pgw: [2.7, 5.5], pdn: [3.05, 7.2],
       },
@@ -47,8 +47,8 @@ export const diagram = {
     cups: {
       extends: 'epc',
       hide: ['sgw', 'pgw'],
-      wide: { sgwc: [3.3, 2.3], pgwc: [5, 2.3], sgwu: [3.3, 4.6], pgwu: [5, 4.6] },
-      narrow: { sgwc: [1.8, 3.6], pgwc: [3.1, 3.6], sgwu: [1.8, 6.6], pgwu: [2.7, 5.5] },
+      wide: { sgwc: [3.6, 2.3], pgwc: [5, 2.3], sgwu: [3.3, 4.6], pgwu: [5, 4.6] },
+      narrow: { sgwc: [1.6, 3.6], pgwc: [3.1, 3.6], sgwu: [1.8, 6.6], pgwu: [2.7, 5.5] },
     },
   },
   links: [

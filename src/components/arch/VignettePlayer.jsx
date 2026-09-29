@@ -13,9 +13,9 @@ import Sources from '../SourceChip.jsx';
 
 const btn = { background: PANEL, border: `1px solid ${EDGE}`, color: TEXT, fontFamily: MONO };
 
-/** A short, self-contained animation of one thing a component does, on the 5G core diagram. */
+/** A short, self-contained animation of one thing a component does, on a lesson diagram (the 5G core by default). */
 export default function VignettePlayer({ vignette, highlight }) {
-  const lesson = LESSONS['5gc'];
+  const lesson = LESSONS[vignette.lesson ?? '5gc'];
   const reducedMotion = useReducedMotion();
   const { openTerm, activeKey } = useGlossary();
   const [ref, width] = useElementWidth();
@@ -25,7 +25,7 @@ export default function VignettePlayer({ vignette, highlight }) {
         // Default focus: the component itself plus whoever the message travels between.
         const talking = (s.traffic ?? []).flatMap((t) => t.p.map((x) => x.replace(/^@/, '')));
         const nodes = [...new Set([...(highlight && vignette.show.includes(highlight) ? [highlight] : []), ...talking])];
-        return { ...s, layout: 'sba', show: vignette.show, focus: s.focus ?? { nodes } };
+        return { ...s, layout: vignette.layout ?? 'sba', show: vignette.show, focus: s.focus ?? { nodes } };
       }),
     [vignette, highlight],
   );
