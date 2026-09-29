@@ -22,6 +22,19 @@ export const TEXT_2 = '#a8b8d4'; // body copy
 export const MUTED = '#8ea1bf'; // secondary (≈7:1)
 export const FAINT = '#7d92b5'; // section labels, step numbers (≈5.8:1)
 
+/* Architecture lessons: plane bands behind the diagrams, and a generation
+   accent so a 4G node and its 5G successor read as different families. */
+export const CONTROL_BAND = '#0c1630';
+export const USER_BAND = '#0a1d22';
+export const GEN = {
+  '4g': { c: '#6f9be6', n: '4G EPC' },
+  '5g': { c: '#b48cff', n: '5G Core' },
+  ran: { c: '#f5b544', n: 'Radio access' },
+  ext: { c: '#8fa3bf', n: 'Outside the core' },
+};
+export const NODE_FILL = '#0f1830';
+export const NODE_FILL_ON = '#16233d';
+
 /* Interactive states. */
 export const ACTIVE_BG = '#152441';
 export const ACTIVE_EDGE = '#3d6ba8';
