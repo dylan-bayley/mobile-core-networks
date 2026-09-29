@@ -5,6 +5,7 @@ import { TOPOLOGIES } from './topologies/index.js';
 import { GLOSSARY } from './reference/glossary.js';
 import { resolveGlossaryKey } from '../lib/resolveGlossaryKey.js';
 import { makeGeometry } from '../engine/geometry.js';
+import { collectLearnWarnings } from './validateLearn.js';
 
 const LABEL_CHAR_W = 6.9;
 const LABEL_H = 10;
@@ -120,7 +121,7 @@ export function collectWarnings() {
 
 /** Dev-build entry point: logs any warnings to the console. */
 export function validateData() {
-  const warnings = collectWarnings();
+  const warnings = [...collectWarnings(), ...collectLearnWarnings()];
   if (warnings.length) {
     // eslint-disable-next-line no-console
     console.warn(`[validateData] ${warnings.length} issue(s) found:\n` + warnings.map((w) => ` - ${w}`).join('\n'));

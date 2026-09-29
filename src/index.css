@@ -18,3 +18,32 @@ body {
   outline-offset: 2px;
   border-radius: 4px;
 }
+
+/* Page headings take programmatic focus on navigation (for screen readers);
+   that shouldn't draw a ring around the title. */
+h1[tabindex="-1"]:focus {
+  outline: none;
+}
+
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -48px;
+  z-index: 100;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #7cc4ff;
+  color: #06101f;
+  font-size: 14px;
+  font-weight: 600;
+}
+.skip-link:focus {
+  top: 8px;
+}
+
+/* Architecture lessons: animated link drawing uses pathLength="1". */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+  }
+}

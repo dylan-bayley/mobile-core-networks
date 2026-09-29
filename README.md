@@ -1,6 +1,15 @@
-# Mobile core call-flow explorer
+# Mobile core
 
-An animated, interactive explainer of 4G, 5G NSA and 5G SA signalling flows —
+An animated, interactive guide to the mobile core network, in four sections:
+
+- **Learn** — four animated architecture lessons: the 4G EPC, the 5G core (service-based and reference-point views, CUPS, slicing), EPC/5GC interworking, and 5G SA vs NSA (options 2, 3, 3a, 3x).
+- **Components** — one page per network element (8 EPC, 18 5GC, plus the eNodeB and gNB): responsibilities, interfaces, services, 4G/5G counterparts, where it appears in the flows, and short animated vignettes.
+- **Flows** — the call-flow explorer described below.
+- **Glossary** — every acronym, each with its own link.
+
+Lesson and component content cites the official documents (3GPP specifications via their free ETSI copies, and the GSMA migration white paper) down to the clause; the registry is `src/data/reference/sources.js`. The diagrams are original.
+
+The Flows explorer is an animated, interactive explainer of 4G, 5G NSA and 5G SA signalling flows —
 voice (originating, terminating, EPS fallback), video, data (attach, idle mode
 and TAU), SMS and MMS — hosted on GitHub Pages. Built to *learn* from, whether or not you already know the mobile core: every
 step has a description, a clickable acronym glossary, an "in practice" note
@@ -30,6 +39,35 @@ npm run preview
 - `src/engine/` — the animation math (bezier interpolation along a topology's links) and the step-player reducer/hook. Topology-agnostic by design. Step duration is a reading-time model (see `durationFor`).
 - `src/lib/` — pure helpers: glossary resolution, prose auto-linking, quiz question generation.
 - `src/components/` — presentation only; all step/topology content lives in `src/data`.
+- `src/App.jsx`, `src/pages/` — the site shell and pages. Routing is a small hash router (`src/lib/route.js`, `useRoute.js`): `#/`, `#/learn/<lesson>?scene=<id>`, `#/components/<id>`, `#/flows?net=…`, `#/glossary/<term>`. Old `/?net=…` links redirect to `#/flows?…`.
+- `src/data/arch/` — the architecture lessons (see *Lesson data* below).
+- `src/data/components/` — component records and vignettes.
+- `src/data/reference/sources.js` — the citation registry.
+
+## Lesson data
+
+Each lesson module exports a `diagram`, `scenes`, `takeaways`, a quick `check`, and `links`. The diagram is drawn by `src/components/arch/ArchDiagram.jsx` from pure state computed in `src/engine/arch.js`:
+
+```js
+diagram = {
+  grid: { wide: { cols, rows, w, h }, narrow: { … } },     // viewBox and a placement grid per width mode
+  nodes: { amf: { t: 'AMF', s: 'Access & mobility', gen: '5g', g?: 'glossary key' } },
+  layouts: {                                                // named arrangements; scenes pick one
+    sba: { wide: { amf: [col, row] }, narrow: { … }, bus: { wide: row, narrow: { col } }, bands: { wide: { control: [r0, r1] } } },
+    slice: { extends: 'sba', hide: ['sepp'], wide: { … }, narrow: { … } },
+  },
+  links: [{ a, b, l: 'N11', k: 'sbi', in?: ['refpoint'], curve?, dash? }],
+  svc: { amf: 'Namf' },                                     // service-bus stub labels
+}
+scene = {
+  id, title, d /* caption; sets the reading-time duration */, cites: [{ src: 'ts23501', clause: '6.2.1' }],
+  layout: 'sba', show?: [...] | 'all', add?: [...], remove?: [...],   // visibility is cumulative scene to scene
+  focus?: { nodes, links }, traffic?: [{ p: ['ue', 'gnb', '@amf'], k, n, label }],   // '@x' = the bus point at node x
+  spawn?: { amf: 'mme' },                                   // new node grows out of an old one (the 4G→5G split)
+}
+```
+
+Moving between scenes tweens node positions and fades, draws new links in, and streams traffic dots along routes; under `prefers-reduced-motion` (tracked live) everything snaps to its end state and autoplay stops. Every diagram has a `wide` layout and a portrait `narrow` one for phones. `npm test` validates lessons, vignettes and components: known sources, nodes placed inside the viewBox in both modes, scenes that only reference drawn nodes and links, and cross-links that resolve.
 
 ### Authored vs. composed
 
@@ -76,8 +114,8 @@ npm run preview
 - **Progress**: furthest step and completion per (network, flow), plus best quiz score, in `localStorage` (`mcn.progress`, see `src/lib/progress.js`). Completed flows get a tick in the selector; *reset progress* is in the reference panel.
 - **Quiz**: ten questions generated from the current flow (which interface carries a message, where a step ends up, order four steps). Each answer is followed by the step's own description as the explanation.
 - **Glossary**: every acronym in prose, node and link labels is clickable; the header search (`/`) looks up any term; a node definition offers *show on diagram*.
-- **Keyboard**: Space play/pause, ←/→ step, Home/End first/last, `/` glossary search, `?` shortcut help.
-- **URL**: `?net=&session=&variant=&step=&view=` — every step is deep-linkable ("copy link" in the step panel); browser back/forward works for user-initiated jumps.
+- **Keyboard**: Space play/pause, ←/→ step, Home/End first/last, `/` glossary search, `?` shortcut help, `g` then `h`/`c`/`f`/`g` to jump between sections, `m` to switch the 5G core drawing in lessons.
+- **URL**: `#/flows?net=&session=&variant=&step=&view=` — every step is deep-linkable ("copy link" in the step panel); browser back/forward works for user-initiated jumps.
 - **Sessions** carry a `tagline` (plain-language one-liner shown under the selector) and a `path` number (suggested learning order); see `src/data/sessions.js`.
 
 ## Deployment

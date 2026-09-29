@@ -8,9 +8,13 @@ import { EIR_STATUS } from '../data/reference/eirStatus.js';
 import { GLOSSARY } from '../data/reference/glossary.js';
 import { autolinkAcronyms } from '../lib/autolinkAcronyms.jsx';
 import { countCompleted, flowProgress, readProgress, recordQuiz, recordStep, resetProgress, writeProgress } from '../lib/progress.js';
+import { hashQuery, urlWithHashQuery } from '../lib/route.js';
+import { useMediaQuery, useReducedMotion } from '../lib/useMediaQuery.js';
+import { useGlossary } from '../lib/glossaryContext.js';
+import { readStored, store } from '../lib/storage.js';
 import { makeGeometry } from '../engine/geometry.js';
 import { useStepPlayer } from '../engine/useStepPlayer.js';
-import { K, BG, MONO, SANS, MUTED, FAINT, EDGE, PANEL } from '../theme.js';
+import { K, MONO, MUTED, FAINT, EDGE, PANEL } from '../theme.js';
 import SelectorBar from './SelectorBar.jsx';
 import TopologyDiagram from './TopologyDiagram.jsx';
 import SequenceDiagram from './SequenceDiagram.jsx';
@@ -22,10 +26,7 @@ import StepList from './StepList.jsx';
 import Quiz from './Quiz.jsx';
 import Legend from './Legend.jsx';
 import ReferencePanel from './ReferencePanel.jsx';
-import GlossaryPopover from './GlossaryPopover.jsx';
 import IntroCard from './IntroCard.jsx';
-import ShortcutsHelp from './ShortcutsHelp.jsx';
-import GlossarySearch from './GlossarySearch.jsx';
 
 const DIAGRAM_MAX_HEIGHT_WIDE = 'max(360px, calc(100vh - 250px))';
 const DIAGRAM_MAX_HEIGHT_NARROW = '48vh';
@@ -36,7 +37,7 @@ const BEYOND =
 
 const readUrl = () => {
   if (typeof window === 'undefined') return {};
-  const p = new URLSearchParams(window.location.search);
+  const p = hashQuery();
   return {
     net: p.get('net'),
     flow: p.get('variant') ?? p.get('session'),
@@ -45,38 +46,9 @@ const readUrl = () => {
   };
 };
 
-const readStored = (key, fallback) => {
-  try {
-    const v = window.localStorage.getItem(key);
-    return v == null ? fallback : JSON.parse(v);
-  } catch {
-    return fallback;
-  }
-};
-const store = (key, value) => {
-  try {
-    window.localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    /* private mode etc. — a lost preference is fine */
-  }
-};
-
 const validNet = (id) => (NETWORKS.some((n) => n.id === id) ? id : NETWORKS[0].id);
 const validFlow = (id) => (sessionForFlow(id) ? id : DEFAULT_FLOW);
 const validView = (v) => (v === 'sequence' ? 'sequence' : 'topology');
-
-function useMediaQuery(query) {
-  const get = () => typeof window !== 'undefined' && !!window.matchMedia?.(query).matches;
-  const [matches, setMatches] = useState(get);
-  useEffect(() => {
-    const mq = window.matchMedia?.(query);
-    if (!mq) return undefined;
-    const onChange = () => setMatches(mq.matches);
-    mq.addEventListener('change', onChange);
-    return () => mq.removeEventListener('change', onChange);
-  }, [query]);
-  return matches;
-}
 
 export default function Explorer() {
   useEffect(() => {
@@ -84,10 +56,9 @@ export default function Explorer() {
   }, []);
 
   const initial = useRef(readUrl()).current;
-  const reducedMotion = useRef(
-    typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
-  ).current;
+  const reducedMotion = useReducedMotion();
   const isWide = useMediaQuery(WIDE_QUERY);
+  const { openTerm: openGlossaryTerm, closeTerm: closeGlossaryTerm, activeKey: activeGlossaryKey, setDiagram } = useGlossary();
 
   const [networkId, setNetworkId] = useState(() => validNet(initial.net));
   const [flowId, setFlowId] = useState(() => validFlow(initial.flow));
@@ -97,21 +68,20 @@ export default function Explorer() {
   // Start. (Not keyed on the URL — the app writes ?step= into it on load, so
   // a plain reload would otherwise look like a deep link.)
   const [introOpen, setIntroOpen] = useState(() => !readStored('mcn.introSeen', false));
-  const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [playing, setPlaying] = useState(() => !reducedMotion && !initial.step && !introOpen);
   const [speed, setSpeed] = useState(() => readStored('mcn.speed', 1));
   const [pauseEach, setPauseEach] = useState(() => readStored('mcn.pauseEach', false));
   const [focus, setFocus] = useState(true);
-  const [glossaryTarget, setGlossaryTarget] = useState(null);
   const [highlightNode, setHighlightNode] = useState(null);
   const [progress, setProgress] = useState(() => readProgress());
 
   const pendingStepRef = useRef(initial.step ?? null);
   const firstScenarioRun = useRef(true);
-  const searchRef = useRef(null);
 
-  const openGlossaryTerm = useCallback((key, el) => setGlossaryTarget({ key, anchorEl: el }), []);
-  const closeGlossaryTerm = useCallback(() => setGlossaryTarget(null), []);
+  // Reduced motion switched on mid-session: stop autoplay rather than wait for a reload.
+  useEffect(() => {
+    if (reducedMotion) setPlaying(false);
+  }, [reducedMotion]);
 
   useEffect(() => store('mcn.speed', speed), [speed]);
   useEffect(() => store('mcn.pauseEach', pauseEach), [pauseEach]);
@@ -161,16 +131,12 @@ export default function Explorer() {
   // URL reflects the current view: net / session / variant / step / view.
   const shareUrl = useMemo(() => {
     if (typeof window === 'undefined') return '';
-    const url = new URL(window.location.href);
     const session = sessionForFlow(scenario.flowId) ?? SESSIONS[0];
-    url.searchParams.set('net', networkId);
-    url.searchParams.set('session', session.id);
-    if (scenario.flowId !== session.id) url.searchParams.set('variant', scenario.flowId);
-    else url.searchParams.delete('variant');
-    url.searchParams.set('step', cur.id);
-    if (view === 'sequence') url.searchParams.set('view', 'sequence');
-    else url.searchParams.delete('view');
-    return url.toString();
+    const q = new URLSearchParams({ net: networkId, session: session.id });
+    if (scenario.flowId !== session.id) q.set('variant', scenario.flowId);
+    q.set('step', cur.id);
+    if (view === 'sequence') q.set('view', 'sequence');
+    return urlWithHashQuery('/flows', q);
   }, [networkId, scenario.flowId, cur.id, view]);
 
   useEffect(() => {
@@ -265,10 +231,19 @@ export default function Explorer() {
     setPlaying(!reducedMotion);
   };
 
-  const showNode = useCallback((id) => {
-    setGlossaryTarget(null);
-    setHighlightNode(id);
-  }, []);
+  const showNode = useCallback(
+    (id) => {
+      closeGlossaryTerm();
+      setHighlightNode(id);
+    },
+    [closeGlossaryTerm],
+  );
+
+  // Let the site-wide glossary popover offer "show on diagram" for this topology.
+  useEffect(() => {
+    setDiagram(view === 'topology' ? { topology: scenario.topology, onShowNode: showNode } : null);
+  }, [setDiagram, view, scenario.topology, showNode]);
+  useEffect(() => () => setDiagram(null), [setDiagram]);
   useEffect(() => {
     if (!highlightNode) return undefined;
     const t = setTimeout(() => setHighlightNode(null), 2200);
@@ -285,14 +260,8 @@ export default function Explorer() {
     const isTyping = (e) => e.target instanceof HTMLElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName);
     const isButton = (e) => e.target instanceof HTMLElement && e.target.closest('button, [role="button"]');
     const onKeyDown = (e) => {
-      if (isTyping(e)) return;
-      if (e.key === '?') {
-        e.preventDefault();
-        setShortcutsOpen((o) => !o);
-      } else if (e.key === '/') {
-        e.preventDefault();
-        searchRef.current?.focus();
-      } else if (e.key === 'Escape') {
+      if (isTyping(e) || e.defaultPrevented) return;
+      if (e.key === 'Escape') {
         if (introOpen) closeIntro();
       } else if (e.code === 'Space') {
         if (isButton(e)) return; // let the focused button take Space; don't also toggle playback
@@ -334,7 +303,7 @@ export default function Explorer() {
       topology={scenario.topology}
       accent={accent}
       onGlossaryOpen={openGlossaryTerm}
-      activeGlossaryKey={glossaryTarget?.key ?? null}
+      activeGlossaryKey={activeGlossaryKey}
       analogs={analogs}
       onJumpAnalog={jumpToAnalog}
       shareUrl={shareUrl}
@@ -343,25 +312,16 @@ export default function Explorer() {
   );
 
   return (
-    <div style={{ background: BG, fontFamily: SANS, color: '#dbe4f3', minHeight: '100%' }} className="w-full">
+    <div className="w-full">
       <div className="mx-auto max-w-[1500px] px-3 py-3 sm:px-4 sm:py-4">
         <header className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1">
-          <h1 className="text-lg font-semibold tracking-tight text-white sm:text-xl">How a mobile core actually carries a session</h1>
+          <h1 tabIndex={-1} className="text-lg font-semibold tracking-tight text-white outline-none sm:text-xl">
+            How a mobile core actually carries a session
+          </h1>
           <p className="hidden md:block" style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.16em', color: FAINT }}>
             4G EPC · 5G NSA / SA · IMS · MESSAGING
           </p>
           <div className="ml-auto flex items-center gap-2">
-            <GlossarySearch glossary={GLOSSARY} onPick={openGlossaryTerm} ref={searchRef} />
-            <button
-              type="button"
-              onClick={() => setShortcutsOpen(true)}
-              title="Keyboard shortcuts (?)"
-              aria-label="Keyboard shortcuts"
-              className="hidden rounded px-2 py-1.5 text-xs sm:block"
-              style={{ background: PANEL, border: `1px solid ${EDGE}`, color: MUTED, fontFamily: MONO }}
-            >
-              ⌨ keys
-            </button>
             <button
               type="button"
               onClick={() => setIntroOpen((o) => !o)}
@@ -417,7 +377,7 @@ export default function Explorer() {
                 step={step}
                 onGo={go}
                 onGlossaryOpen={openGlossaryTerm}
-                activeGlossaryKey={glossaryTarget?.key ?? null}
+                activeGlossaryKey={activeGlossaryKey}
                 maxHeight={diagramMaxHeight}
                 reducedMotion={reducedMotion}
               />
@@ -432,7 +392,7 @@ export default function Explorer() {
                 focus={focus}
                 reducedMotion={reducedMotion}
                 onGlossaryOpen={openGlossaryTerm}
-                activeGlossaryKey={glossaryTarget?.key ?? null}
+                activeGlossaryKey={activeGlossaryKey}
                 highlightNode={highlightNode}
                 maxHeight={diagramMaxHeight}
               />
@@ -474,7 +434,7 @@ export default function Explorer() {
                 best={bestQuiz}
                 onScore={onQuizScore}
                 onGlossaryOpen={openGlossaryTerm}
-                activeGlossaryKey={glossaryTarget?.key ?? null}
+                activeGlossaryKey={activeGlossaryKey}
               />
             ) : (
               <>
@@ -485,7 +445,7 @@ export default function Explorer() {
                   networkId={networkId}
                   onSwitch={switchTo}
                   onGlossaryOpen={openGlossaryTerm}
-                  activeGlossaryKey={glossaryTarget?.key ?? null}
+                  activeGlossaryKey={activeGlossaryKey}
                   tagline={taglineFor(scenario.flowId)}
                 />
                 <StepList steps={scenario.steps} step={step} onGo={go} />
@@ -501,21 +461,12 @@ export default function Explorer() {
           fiveQi={networkId === '4g' ? null : FIVE_QI}
           eirStatus={EIR_STATUS}
           glossary={GLOSSARY}
-          beyond={autolinkAcronyms(BEYOND, GLOSSARY, { activeKey: glossaryTarget?.key, onOpen: openGlossaryTerm })}
+          beyond={autolinkAcronyms(BEYOND, GLOSSARY, { activeKey: activeGlossaryKey, onOpen: openGlossaryTerm })}
           completed={completedTotal}
           totalFlows={allFlowKeys.length}
           onResetProgress={onResetProgress}
         />
       </div>
-
-      <GlossaryPopover
-        target={glossaryTarget}
-        glossary={GLOSSARY}
-        onClose={closeGlossaryTerm}
-        topology={scenario.topology}
-        onShowNode={view === 'topology' ? showNode : null}
-      />
-      <ShortcutsHelp open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
     </div>
   );
 }

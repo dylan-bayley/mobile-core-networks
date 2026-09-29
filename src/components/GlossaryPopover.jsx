@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { K, PANEL, EDGE, MONO, SANS, MUTED } from '../theme.js';
 import { resolveGlossaryKey } from '../lib/resolveGlossaryKey.js';
+import { componentForTerm } from '../data/components/index.js';
 
 const MARGIN = 8;
 const WIDTH = 280;
@@ -120,6 +121,16 @@ export default function GlossaryPopover({ target, glossary, onClose, topology, o
           {entry.note}
         </p>
       )}
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs" style={{ fontFamily: MONO }}>
+        {componentForTerm(target.key) && (
+          <a href={`#/components/${componentForTerm(target.key)}`} onClick={onClose} className="underline" style={{ color: '#dbe4f3' }}>
+            read the full page →
+          </a>
+        )}
+        <a href={`#/glossary/${encodeURIComponent(target.key)}`} onClick={onClose} className="underline" style={{ color: MUTED }}>
+          glossary
+        </a>
+      </div>
       {nodeId && (
         <button
           type="button"

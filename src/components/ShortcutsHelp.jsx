@@ -3,9 +3,14 @@ import { createPortal } from 'react-dom';
 import { PANEL, EDGE, MONO, MUTED, FAINT, TEXT_2 } from '../theme.js';
 
 const SHORTCUTS = [
-  ['Space', 'Play / pause (continues after a held step)'],
-  ['← / →', 'Previous / next step'],
-  ['Home / End', 'First / last step'],
+  ['Space', 'Play / pause a lesson or flow (continues after a held step)'],
+  ['← / →', 'Previous / next scene or step'],
+  ['Home / End', 'First / last scene or step'],
+  ['m', 'Lessons: switch the 5G core between service-based and reference-point drawings'],
+  ['g then h', 'Go to the start (learning path)'],
+  ['g then c', 'Go to components'],
+  ['g then f', 'Go to call flows'],
+  ['g then g', 'Go to the glossary'],
   ['/', 'Search the acronym glossary'],
   ['?', 'Show this help'],
   ['Esc', 'Close a definition, this help, or the intro'],
