@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { K, GEN, MONO, SANS, PANEL, EDGE, FAINT, MUTED, TEXT, CONTROL_BAND, USER_BAND, NODE_FILL, NODE_FILL_ON } from '../../theme.js';
+import { K, GEN, MONO, SANS, PANEL, EDGE, FAINT, MUTED, TEXT, CONTROL_BAND, USER_BAND, IMS_BAND, NODE_FILL, NODE_FILL_ON } from '../../theme.js';
 import { GLOSSARY } from '../../data/reference/glossary.js';
 import { resolveGlossaryKey } from '../../lib/resolveGlossaryKey.js';
 import { svgTermProps } from '../../lib/svgTermProps.js';
@@ -7,8 +7,8 @@ import { control, bez } from '../../engine/geometry.js';
 import { NODE_SIZE, targetState, interpolate, linksFor, linkKey, pointAlong, labelTFor } from '../../engine/arch.js';
 
 const TWEEN_MS = 1100;
-const BAND_FILL = { control: CONTROL_BAND, user: USER_BAND };
-const BAND_LABEL = { control: 'CONTROL PLANE', user: 'USER PLANE' };
+const BAND_FILL = { control: CONTROL_BAND, user: USER_BAND, ims: IMS_BAND, core: CONTROL_BAND };
+const BAND_LABEL = { control: 'CONTROL PLANE', user: 'USER PLANE', ims: 'IMS', core: 'RADIO AND PACKET CORE' };
 
 const termKey = (n) => (n.g && GLOSSARY[n.g] ? n.g : resolveGlossaryKey(n.t, GLOSSARY));
 

@@ -100,14 +100,22 @@ export function collectLearnWarnings() {
     for (const [i, q] of lesson.check.entries()) {
       if (q.answer < 0 || q.answer >= q.options.length) warnings.push(`${where}: quick-check question ${i + 1} has an out-of-range answer`);
     }
-    if (lesson.compare) checkCites(`${where} comparison table`, lesson.compare.cites, warnings);
+    if (lesson.compare) {
+      checkCites(`${where} comparison table`, lesson.compare.cites, warnings);
+      for (const id of lesson.compare.scenes ?? []) if (!lesson.scenes.some((s) => s.id === id)) warnings.push(`${where}: comparison names unknown scene "${id}"`);
+      if (lesson.compare.scenes?.length !== 2 || lesson.compare.labels?.length !== 2) warnings.push(`${where}: comparison needs two scenes and two labels`);
+    }
     if (lesson.options) checkCites(`${where} options table`, lesson.options.cites, warnings);
   }
 
-  const vignetteDiagram = LESSONS['5gc'].diagram;
   for (const [id, v] of Object.entries(VIGNETTES)) {
-    const scenes = v.steps.map((s) => ({ ...s, layout: 'sba', show: v.show }));
-    checkScenes(`Vignette "${id}"`, vignetteDiagram, scenes, warnings);
+    const lesson = LESSONS[v.lesson ?? '5gc'];
+    if (!lesson) {
+      warnings.push(`Vignette "${id}": unknown lesson "${v.lesson}"`);
+      continue;
+    }
+    const scenes = v.steps.map((s) => ({ ...s, layout: v.layout ?? 'sba', show: v.show }));
+    checkScenes(`Vignette "${id}"`, lesson.diagram, scenes, warnings);
   }
 
   const ids = new Set();

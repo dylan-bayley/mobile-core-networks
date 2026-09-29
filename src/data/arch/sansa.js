@@ -155,6 +155,9 @@ export const scenes = [
 ];
 
 export const compare = {
+  scenes: ['opt3x', 'opt2-data'],
+  labels: ['NSA', 'SA'],
+  title: 'What changes between NSA and SA',
   cites: [GSMA, c340('4.1.2'), { src: 'ts23501', clause: '4.2.3' }],
   columns: ['NSA (option 3, EN-DC)', 'SA (option 2)'],
   rows: [

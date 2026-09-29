@@ -1,12 +1,16 @@
 /* Short "what it does" animations for component pages. Each one is a few
-   scenes on the 5G core lesson diagram (service-based layout), with a single
-   message dot per scene. They are learning aids, not full call flows, and
-   don't appear in the Flows explorer. */
+   scenes on a lesson diagram (the 5G core's service-based layout unless the
+   vignette names another `lesson` and `layout`), with a single message dot
+   per scene. They are learning aids, not full call flows, and don't appear
+   in the Flows explorer. */
 
 const c502 = (clause) => ({ src: 'ts23502', clause });
 const c501 = (clause) => ({ src: 'ts23501', clause });
 const via = (a, b) => [a, `@${a}`, `@${b}`, b];
 const msg = (p, label, k = 'sbi') => [{ p, k, n: 1, speed: 0.32, label }];
+const c228 = (clause) => ({ src: 'ts23228', clause });
+const IMS_CORE = ['ue', 'gnb', 'amf', 'smf', 'upf', 'pcf', 'pcscf', 'icscf', 'scscf', 'hss', 'tas'];
+const UP = ['ue', 'gnb', 'upf', 'pcscf'];
 
 export const VIGNETTES = {
   nrf: {
@@ -234,6 +238,121 @@ export const VIGNETTES = {
         traffic: msg(via('nef', 'af'), 'Notify (external IDs)'),
         d: 'The NEF passes the notification on to the AF using external identifiers, keeping internal details hidden.',
         cites: [c502('4.15.3.2.3'), c501('6.2.5')],
+      },
+    ],
+  },
+  imsRegister: {
+    title: 'IMS registration',
+    lesson: 'ims',
+    layout: 'vonr',
+    show: IMS_CORE,
+    steps: [
+      {
+        id: 'register',
+        title: 'REGISTER reaches the home network',
+        traffic: msg([...UP, 'icscf'], 'REGISTER', 'ims'),
+        d: 'The phone sends a SIP REGISTER to its P-CSCF, which forwards it to the I-CSCF, the entry point of the user’s home network.',
+        cites: [c228('5.2.2.3')],
+      },
+      {
+        id: 'select',
+        title: 'The HSS helps choose an S-CSCF',
+        traffic: msg(['icscf', 'hss'], 'Cx query', 'diameter'),
+        d: 'The I-CSCF asks the HSS whether this user may register here, and gets back either the S-CSCF already serving them or the capabilities a new one needs.',
+        cites: [c228('5.2.2.3'), c228('4.6.2')],
+      },
+      {
+        id: 'forward',
+        title: 'On to the S-CSCF',
+        traffic: msg(['icscf', 'scscf'], 'REGISTER', 'ims'),
+        d: 'The I-CSCF resolves the S-CSCF’s name to an address and forwards the REGISTER. The S-CSCF records which P-CSCF the user came through.',
+        cites: [c228('5.2.2.3')],
+      },
+      {
+        id: 'challenge',
+        title: 'Challenge and response',
+        traffic: msg(['scscf', 'icscf', 'pcscf', 'upf', 'gnb', 'ue'], '401 challenge', 'ims'),
+        d: 'With an authentication vector from the HSS, the S-CSCF challenges the phone. The ISIM answers, the phone registers again, and IPsec security associations come up between the phone and the P-CSCF.',
+        cites: [{ src: 'ts33203', clause: '6.1.1' }, { src: 'ts33203', clause: '7.0' }],
+      },
+      {
+        id: 'profile',
+        title: 'The S-CSCF takes the profile',
+        traffic: msg(['hss', 'scscf'], 'Cx: profile', 'diameter'),
+        d: 'The S-CSCF tells the HSS it is now serving the user, and downloads their service profile, including the filter criteria for application servers. A 200 OK goes back to the phone.',
+        cites: [c228('5.2.2.3')],
+      },
+    ],
+  },
+  ifc: {
+    title: 'Filter criteria bring in the TAS',
+    lesson: 'ims',
+    layout: 'vonr',
+    show: IMS_CORE,
+    steps: [
+      {
+        id: 'invite',
+        title: 'An INVITE arrives at the S-CSCF',
+        traffic: msg([...UP, 'scscf'], 'INVITE', 'ims'),
+        d: 'A call starts with an INVITE from the phone. It reaches the S-CSCF that was assigned when the user registered.',
+        cites: [c228('4.6.3')],
+      },
+      {
+        id: 'match',
+        title: 'The S-CSCF checks the filter criteria',
+        focus: { nodes: ['scscf'] },
+        d: 'Before routing the request on, the S-CSCF compares it with the filter criteria in the user’s profile. Each criterion names an application server and says which requests it should see.',
+        cites: [c228('4.2.4')],
+      },
+      {
+        id: 'to-tas',
+        title: 'The TAS gets the request',
+        traffic: msg(['scscf', 'tas'], 'INVITE (ISC)', 'ims'),
+        d: 'A match sends the INVITE over ISC to the TAS, which applies the user’s telephony services, for example call barring or forwarding. It can read their settings from the HSS over Sh.',
+        cites: [c228('4.2.4'), c228('4.16.1')],
+      },
+      {
+        id: 'back',
+        title: 'Back to the S-CSCF',
+        traffic: msg(['tas', 'scscf'], 'INVITE', 'ims'),
+        d: 'The TAS sends the request, possibly changed, back to the S-CSCF, which moves on to the next matching server or routes the call towards the other party.',
+        cites: [c228('4.2.4')],
+      },
+    ],
+  },
+  mediaAuth: {
+    title: 'Getting a voice-grade QoS flow',
+    lesson: 'ims',
+    layout: 'vonr',
+    show: IMS_CORE,
+    steps: [
+      {
+        id: 'answer',
+        title: 'The SDP answer passes the P-CSCF',
+        traffic: msg(['scscf', 'pcscf'], '183 (SDP answer)', 'ims'),
+        d: 'When the far end answers the SDP offer, the P-CSCF sees the agreed codecs and media addresses on their way to the phone.',
+        cites: [c228('5.4.7.1a'), c228('4.6.1')],
+      },
+      {
+        id: 'n5',
+        title: 'The P-CSCF tells the PCF',
+        traffic: msg(['pcscf', 'pcf'], 'Media description (N5)'),
+        d: 'As an application function, the P-CSCF sends the session’s media information to the PCF over N5 (or Rx in some networks).',
+        cites: [c228('4.6.1'), c228('Y.2.3.1')],
+      },
+      {
+        id: 'policy',
+        title: 'The PCF instructs the SMF',
+        traffic: msg(['pcf', 'smf'], 'PCC rule (N7)'),
+        d: 'The PCF turns that into a policy rule for the voice media and pushes it to the SMF.',
+        cites: [c228('5.4.7.1a')],
+      },
+      {
+        id: 'flow',
+        title: 'The network builds the QoS flow',
+        traffic: msg(['smf', 'amf', 'gnb'], '5QI 1 QoS flow', 'control'),
+        d: 'The SMF sets up a guaranteed-bit-rate QoS flow on 5QI 1 through the AMF and gNB, and programmes the UPF. For IMS, the network always starts this, not the phone.',
+        cites: [c228('Y.2.3.1'), { src: 'ts23501', clause: '5.7.4' }],
       },
     ],
   },

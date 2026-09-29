@@ -6,12 +6,14 @@ const FILTERS = [
   { id: 'all', label: 'All' },
   { id: '4g', label: '4G EPC' },
   { id: '5g', label: '5G core' },
+  { id: 'ims', label: 'IMS' },
   { id: 'ran', label: 'Radio' },
 ];
 const SECTIONS = [
   { gen: 'ran', title: 'Radio access', blurb: 'The base stations the core connects to.' },
   { gen: '4g', title: '4G Evolved Packet Core', blurb: 'TS 23.401: a handful of large nodes, most speaking Diameter or GTP.' },
   { gen: '5g', title: '5G core network functions', blurb: 'TS 23.501: smaller functions offering services to each other over HTTP/2.' },
+  { gen: 'ims', title: 'IP Multimedia Subsystem', blurb: 'TS 23.228: the SIP servers that carry voice over 4G and 5G alike.' },
 ];
 const PLANE = { control: 'control plane', user: 'user plane', both: 'control + user' };
 
@@ -38,7 +40,7 @@ function Card({ c }) {
       </span>
       {peers.length > 0 && (
         <span className="mt-auto pt-2.5 text-xs" style={{ fontFamily: MONO, color: FAINT }}>
-          {c.gen === '5g' || c.id === 'gnb' ? 'was ' : 'becomes '}
+          {c.gen === 'ims' ? 'with ' : c.gen === '5g' || c.id === 'gnb' ? 'was ' : 'becomes '}
           {peers.map((p) => p.label).join(' + ')}
         </span>
       )}

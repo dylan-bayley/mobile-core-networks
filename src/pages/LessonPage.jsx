@@ -25,7 +25,7 @@ const REPS = [
   { id: 'refpoint', label: 'Reference points' },
 ];
 
-/** Lesson n of 4, as a row of chips that doubles as navigation. */
+/** Lesson n of N, as a row of chips that doubles as navigation. */
 export function LessonStepper({ current }) {
   const progress = readProgress();
   return (
@@ -60,12 +60,12 @@ export function LessonStepper({ current }) {
 }
 
 /** Two diagrams of the same lesson side by side (or a toggle between them on narrow screens). */
-function CompareDiagrams({ lesson, left, right, reducedMotion }) {
+function CompareDiagrams({ lesson, scenes, labels, reducedMotion }) {
   const [ref, width] = useElementWidth();
   const [pick, setPick] = useState(0);
   const { openTerm, activeKey } = useGlossary();
   const side = width >= 900;
-  const items = [left, right].map((id) => {
+  const items = scenes.map((id) => {
     const i = lesson.scenes.findIndex((s) => s.id === id);
     return { i, r: lesson.resolved[i] };
   });
@@ -89,7 +89,7 @@ function CompareDiagrams({ lesson, left, right, reducedMotion }) {
                 className="min-h-10 rounded px-2.5 py-1 text-xs sm:min-h-0"
                 style={{ background: pick === k ? ACTIVE_BG : 'transparent', border: `1px solid ${pick === k ? ACTIVE_EDGE : EDGE}`, color: pick === k ? TEXT : MUTED }}
               >
-                {k === 0 ? 'NSA' : 'SA'}
+                {labels[k]}
               </button>
             ))}
           </div>
@@ -316,7 +316,7 @@ export default function LessonPage({ lessonId }) {
                 />
               )}
             </div>
-            <Legend />
+            <Legend diagram={lesson.diagram} />
           </div>
 
           <Transport
@@ -373,12 +373,12 @@ export default function LessonPage({ lessonId }) {
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         {lesson.compare && (
           <div className="lg:col-span-2">
-            <CompareDiagrams lesson={lesson} left="opt3x" right="opt2-data" reducedMotion={reducedMotion} />
+            <CompareDiagrams lesson={lesson} scenes={lesson.compare.scenes} labels={lesson.compare.labels} reducedMotion={reducedMotion} />
           </div>
         )}
         {lesson.compare && (
           <div className="lg:col-span-2">
-            <DataTable title="What changes between NSA and SA" columns={['', ...lesson.compare.columns]} rows={lesson.compare.rows} cites={lesson.compare.cites} />
+            <DataTable title={lesson.compare.title} columns={['', ...lesson.compare.columns]} rows={lesson.compare.rows} cites={lesson.compare.cites} />
           </div>
         )}
         {lesson.options && (
@@ -441,16 +441,27 @@ export default function LessonPage({ lessonId }) {
   );
 }
 
-/** Key for the lesson diagrams: generation outline colours and the protocol line colours used. */
-function Legend() {
+/** Key for a lesson diagram: the generation outline colours and protocol line colours it actually uses. */
+const LEGEND_BOXES = [
+  ['4G EPC', '4g'],
+  ['5G core', '5g'],
+  ['IMS', 'ims'],
+  ['Radio', 'ran'],
+];
+const LEGEND_LINES = [
+  ['User plane', 'user'],
+  ['Control', 'control'],
+  ['Service-based (HTTP/2)', 'sbi'],
+  ['Diameter', 'diameter'],
+  ['SIP', 'ims'],
+  ['Voice media', 'media'],
+];
+function Legend({ diagram }) {
+  const gens = new Set(Object.values(diagram.nodes).map((n) => n.gen));
+  const kinds = new Set(diagram.links.map((l) => l.k));
   const items = [
-    ['4G EPC', GEN['4g'].c, 'box'],
-    ['5G core', GEN['5g'].c, 'box'],
-    ['Radio', GEN.ran.c, 'box'],
-    ['User plane', K.user.c, 'line'],
-    ['Control', K.control.c, 'line'],
-    ['Service-based (HTTP/2)', K.sbi.c, 'line'],
-    ['Diameter', K.diameter.c, 'line'],
+    ...LEGEND_BOXES.filter(([, g]) => gens.has(g)).map(([label, g]) => [label, GEN[g].c, 'box']),
+    ...LEGEND_LINES.filter(([, k]) => kinds.has(k)).map(([label, k]) => [label, K[k].c, 'line']),
   ];
   return (
     <ul className="flex flex-wrap gap-x-4 gap-y-1 px-3 pb-2.5" aria-label="Diagram key">

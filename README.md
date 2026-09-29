@@ -2,8 +2,8 @@
 
 An animated, interactive guide to the mobile core network, in four sections:
 
-- **Learn** — four animated architecture lessons: the 4G EPC, the 5G core (service-based and reference-point views, CUPS, slicing), EPC/5GC interworking, and 5G SA vs NSA (options 2, 3, 3a, 3x).
-- **Components** — one page per network element (8 EPC, 18 5GC, plus the eNodeB and gNB): responsibilities, interfaces, services, 4G/5G counterparts, where it appears in the flows, and short animated vignettes.
+- **Learn** — five animated architecture lessons: the 4G EPC, the 5G core (service-based and reference-point views, CUPS, slicing), EPC/5GC interworking, 5G SA vs NSA (options 2, 3, 3a, 3x), and IMS (registration, service triggers, VoLTE vs VoNR QoS, breakout and interconnect).
+- **Components** — one page per network element (8 EPC, 18 5GC, 9 IMS, plus the eNodeB and gNB): responsibilities, interfaces, services, 4G/5G counterparts, where it appears in the flows, and short animated vignettes.
 - **Flows** — the call-flow explorer described below.
 - **Glossary** — every acronym, each with its own link.
 
@@ -66,6 +66,8 @@ scene = {
   spawn?: { amf: 'mme' },                                   // new node grows out of an old one (the 4G→5G split)
 }
 ```
+
+A lesson may also export `compare = { scenes: [a, b], labels, title, columns, rows, cites }`: the two scenes are drawn side by side (a toggle on narrow screens) above a comparison table. Component vignettes (`src/data/components/vignettes.js`) play on the 5G core diagram unless they name another `lesson` and `layout`.
 
 Moving between scenes tweens node positions and fades, draws new links in, and streams traffic dots along routes; under `prefers-reduced-motion` (tracked live) everything snaps to its end state and autoplay stops. Every diagram has a `wide` layout and a portrait `narrow` one for phones. `npm test` validates lessons, vignettes and components: known sources, nodes placed inside the viewBox in both modes, scenes that only reference drawn nodes and links, and cross-links that resolve.
 

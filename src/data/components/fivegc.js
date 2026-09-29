@@ -370,7 +370,7 @@ export const FIVEGC_COMPONENTS = [
       { name: 'N33', peer: 'NEF', protocol: 'SBI' },
     ],
     services: ['Naf_EventExposure'],
-    analog: { text: 'Plays the role of the 4G AF on Rx, e.g. the P-CSCF.', ids: ['pcrf'] },
+    analog: { text: 'Plays the role of the 4G AF on Rx. The best-known AF is the IMS P-CSCF, which asks for voice QoS on either core.', ids: ['pcrf', 'pcscf'] },
     diagram: SBA('af'),
     vignette: 'exposure',
     sources: [c501('6.2.10'), c501('4.2.7')],
