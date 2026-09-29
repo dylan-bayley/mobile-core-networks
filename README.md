@@ -56,7 +56,7 @@ diagram = {
     sba: { wide: { amf: [col, row] }, narrow: { … }, bus: { wide: row, narrow: { col } }, bands: { wide: { control: [r0, r1] } } },
     slice: { extends: 'sba', hide: ['sepp'], wide: { … }, narrow: { … } },
   },
-  links: [{ a, b, l: 'N11', k: 'sbi', in?: ['refpoint'], curve?, dash? }],
+  links: [{ a, b, l: 'N11', k: 'sbi', in?: ['refpoint'], curve?, dash?, labelT? }],   // labelT: 0–1 along a→b, or { wide, narrow }
   svc: { amf: 'Namf' },                                     // service-bus stub labels
 }
 scene = {

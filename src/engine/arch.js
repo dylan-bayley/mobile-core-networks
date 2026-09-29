@@ -10,7 +10,7 @@
  *     nodes: { id: { t, s?, gen, g? } },                     // g = glossary key override
  *     layouts: { name: { extends?, wide: {id:[col,row]}, narrow: {...},
  *                        bus?: {wide: row, narrow: row}, bands?: {wide: {control:[r0,r1], user:[r0,r1]}, narrow} } },
- *     links: [{ a, b, l, k, in?: [layout…], curve?, dash? }],
+ *     links: [{ a, b, l, k, in?: [layout…], curve?, dash?, labelT? }],   // labelT: 0–1, or { wide, narrow }
  *     svc: { nodeId: 'Namf' } }                               // SBI labels for bus stubs
  *
  * Scene:
@@ -77,6 +77,9 @@ export const linksFor = (diagram, layoutName, visible) =>
   diagram.links.filter((l) => (!l.in || l.in.includes(layoutName)) && visible.has(l.a) && visible.has(l.b));
 
 export const linkKey = (l) => `${l.a}|${l.b}|${l.l}`;
+
+/** Where along a link its label sits (0–1 from `a`); `labelT` may differ per width mode. */
+export const labelTFor = (l, mode) => (typeof l.labelT === 'object' ? l.labelT[mode] : l.labelT) ?? 0.5;
 
 /**
  * The drawable target state for one resolved scene at a width mode:

@@ -4,7 +4,7 @@ import { GLOSSARY } from '../../data/reference/glossary.js';
 import { resolveGlossaryKey } from '../../lib/resolveGlossaryKey.js';
 import { svgTermProps } from '../../lib/svgTermProps.js';
 import { control, bez } from '../../engine/geometry.js';
-import { NODE_SIZE, targetState, interpolate, linksFor, linkKey, pointAlong } from '../../engine/arch.js';
+import { NODE_SIZE, targetState, interpolate, linksFor, linkKey, pointAlong, labelTFor } from '../../engine/arch.js';
 
 const TWEEN_MS = 1100;
 const BAND_FILL = { control: CONTROL_BAND, user: USER_BAND };
@@ -254,7 +254,7 @@ export default function ArchDiagram({
         const on = focusLinks.has(l.l) || routeLinks.has(k) || (focusNode && (l.a === focusNode || l.b === focusNode));
         const dim = hasFocus && !on;
         const col = K[l.k].c;
-        const mid = bez(p0, c, p1, l.labelT ?? 0.5);
+        const mid = bez(p0, c, p1, labelTFor(l, mode));
         const lw = l.l.length * smallFont * 0.62 + 10;
         const lkey = resolveGlossaryKey(l.l, GLOSSARY);
         const props = liveLinks.has(k) ? svgTermProps(lkey, activeKey, onOpenTerm) : null;
