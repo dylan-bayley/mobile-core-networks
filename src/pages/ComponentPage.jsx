@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { LESSONS } from '../data/arch/index.js';
+import { lessonMeta } from '../data/arch/lessons.js';
 import { COMPONENTS, VIGNETTES, componentById, flowAppearances } from '../data/components/index.js';
 import { sessionForFlow } from '../data/index.js';
 import { GLOSSARY } from '../data/reference/glossary.js';
@@ -95,6 +96,9 @@ function flowHref(a) {
   return hrefFor('/flows', q);
 }
 
+/** The lesson that introduces each group of components, for ones no lesson draws. */
+const HOME_LESSON = { '4g': 'epc', '5g': '5gc', ext: '5gc', ims: 'ims', ran: 'sa-nsa' };
+
 export default function ComponentPage({ component: c }) {
   const { openTerm, activeKey } = useGlossary();
   const gen = GEN[c.gen] ?? GEN.ext;
@@ -105,6 +109,7 @@ export default function ComponentPage({ component: c }) {
   const idx = COMPONENTS.findIndex((x) => x.id === c.id);
   const prev = COMPONENTS[idx - 1];
   const next = COMPONENTS[idx + 1];
+  const homeLesson = lessonMeta(HOME_LESSON[c.gen] ?? '5gc');
 
   return (
     <div className="mx-auto max-w-[1300px] px-3 py-5 sm:px-4 sm:py-6">
@@ -145,7 +150,11 @@ export default function ComponentPage({ component: c }) {
           ) : (
             <p className="rounded p-3 text-sm" style={{ border: `1px dashed ${EDGE}`, color: MUTED }}>
               The {c.label} isn’t drawn in the architecture lessons, which, like the TS 23.501 overview figures, leave out some
-              specialised functions for clarity.
+              specialised functions for clarity. The functions around it are covered in{' '}
+              <a href={`#/learn/${homeLesson.id}`} className="underline" style={{ color: TEXT_2 }}>
+                {homeLesson.title}
+              </a>
+              .
             </p>
           )}
 
@@ -266,13 +275,16 @@ export default function ComponentPage({ component: c }) {
       <nav aria-label="Other components" className="mt-6 flex flex-wrap justify-between gap-3">
         {prev ? (
           <a href={`#/components/${prev.id}`} className="rounded px-4 py-2 text-sm" style={{ border: `1px solid ${EDGE}`, color: MUTED }}>
-            ← {prev.label}
+            ← {prev.gen !== c.gen && <span style={{ color: FAINT }}>{(GEN[prev.gen] ?? GEN.ext).n} · </span>}
+            {prev.label}
           </a>
         ) : (
           <span />
         )}
         {next && (
           <a href={`#/components/${next.id}`} className="rounded px-4 py-2 text-sm" style={{ border: `1px solid ${EDGE}`, color: TEXT }}>
+            {/* Crossing into another group (4G → 5G → IMS) is said out loud. */}
+            {next.gen !== c.gen && <span style={{ color: FAINT }}>{(GEN[next.gen] ?? GEN.ext).n} · </span>}
             {next.label} →
           </a>
         )}

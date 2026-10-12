@@ -1,4 +1,4 @@
-import { PANEL, EDGE, MONO, MUTED, FAINT, ACTIVE_BG, ACTIVE_EDGE } from '../theme.js';
+import { PANEL, EDGE, MONO, MUTED, FAINT, ACTIVE_BG, ACTIVE_EDGE, TEXT } from '../theme.js';
 import { sessionForFlow, variantsFor, taglineFor } from '../data/sessions.js';
 import { isCompleted } from '../lib/progress.js';
 import Switch from './Switch.jsx';
@@ -106,7 +106,7 @@ export default function SelectorBar({
             aria-pressed={quizOpen}
             title="Ten questions generated from this flow"
             className="min-h-10 rounded px-3 py-2 text-xs sm:min-h-0"
-            style={{ background: PANEL, border: `1px solid ${quizOpen ? ACTIVE_EDGE : EDGE}`, color: quizOpen ? '#dbe4f3' : MUTED, fontFamily: MONO }}
+            style={{ background: PANEL, border: `1px solid ${quizOpen ? ACTIVE_EDGE : EDGE}`, color: quizOpen ? TEXT : MUTED, fontFamily: MONO }}
           >
             {quizOpen ? '✕ close quiz' : '? quiz me'}
           </button>

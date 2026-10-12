@@ -4,9 +4,12 @@ import { GLOSSARY } from '../../data/reference/glossary.js';
 import { resolveGlossaryKey } from '../../lib/resolveGlossaryKey.js';
 import { svgTermProps } from '../../lib/svgTermProps.js';
 import { control, bez } from '../../engine/geometry.js';
-import { NODE_SIZE, targetState, interpolate, linksFor, linkKey, pointAlong, labelTFor } from '../../engine/arch.js';
+import { NODE_SIZE, MIN_TITLE_FONT, nodeBoxWidth, targetState, interpolate, linksFor, linkKey, pointAlong, labelTFor } from '../../engine/arch.js';
 
 const TWEEN_MS = 1100;
+// How long a scene's new nodes pulse: four pulses, ending on a peak so the
+// node settles at full highlight without a jump.
+const PULSE_S = (7 * Math.PI) / 4;
 const BAND_FILL = { control: CONTROL_BAND, user: USER_BAND, ims: IMS_BAND, core: CONTROL_BAND };
 const BAND_LABEL = { control: 'CONTROL PLANE', user: 'USER PLANE', ims: 'IMS', core: 'RADIO AND PACKET CORE' };
 
@@ -49,8 +52,12 @@ export default function ArchDiagram({
   const [, setFrame] = useState(0);
   const lastMode = useRef(mode);
 
+  const clockRef = useRef(0);
+  const pulseFrom = useRef(0); // clock time the current scene's new nodes started pulsing
+
   if (!anim.current) anim.current = { from: target, to: target, start: 0, spawn: {} };
   if (anim.current.to !== target) {
+    pulseFrom.current = clockRef.current;
     const instant = reducedMotion || lastMode.current !== mode;
     anim.current = {
       from: instant ? target : shown.current,
@@ -62,9 +69,21 @@ export default function ArchDiagram({
     lastMode.current = mode;
   }
 
+  // Pause every animation loop while the diagram is scrolled out of view
+  // (a component page or the compare view can hold several at once).
+  const svgRef = useRef(null);
+  const [onScreen, setOnScreen] = useState(true);
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return undefined;
+    const io = new IntersectionObserver(([e]) => setOnScreen(e.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   const traffic = scene.traffic ?? [];
-  const needsClock = !reducedMotion && (traffic.length > 0 || (current.added.length > 0 && !first));
-  const clockRef = useRef(0);
+  const pulsing = !reducedMotion && current.added.length > 0 && !first;
+  const needsClock = onScreen && !reducedMotion && (traffic.length > 0 || pulsing);
 
   useEffect(() => {
     let raf;
@@ -74,12 +93,15 @@ export default function ArchDiagram({
       last = now;
       clockRef.current += dt;
       const tweening = !anim.current.instant && now - anim.current.start < TWEEN_MS;
+      const stillPulsing = pulsing && clockRef.current - pulseFrom.current < PULSE_S;
       // Always render once more after the tween ends, so it lands exactly on its target.
       setFrame((f) => (f + 1) % 1e6);
-      if (tweening || needsClock) raf = requestAnimationFrame(tick);
+      if (tweening || (needsClock && (traffic.length > 0 || stillPulsing))) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
+    // traffic.length and pulsing follow `target`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target, needsClock]);
 
   const now = typeof performance !== 'undefined' ? performance.now() : 0;
@@ -91,12 +113,12 @@ export default function ArchDiagram({
   const g = diagram.grid[mode];
   // The rendered scale: limited by width, and by height when a max height is set.
   const scale = width ? Math.min(width / g.w, maxHeight ? maxHeight / g.h : Infinity) : 1;
-  const titleFont = Math.max(13, 12 / scale);
+  const titleFont = Math.max(MIN_TITLE_FONT, 12 / scale);
   const smallFont = Math.max(10.5, 10 / scale);
   const showSub = mode === 'wide' && scale >= 0.85;
   const base = NODE_SIZE[mode];
   const sizeOf = (n) => {
-    const w = Math.max(base.w, n.t.length * titleFont * 0.62 + 18);
+    const w = nodeBoxWidth(n, mode, titleFont);
     return { w, h: showSub && n.s ? base.h : base.h - 8 };
   };
 
@@ -168,10 +190,14 @@ export default function ArchDiagram({
     .filter(Boolean)
     .join(' ');
   const descId = useId();
+  // Filter ids unique to this instance: the compare view draws the same
+  // lesson diagram twice on one page.
+  const fid = `${diagram.id}${descId.replace(/[^A-Za-z0-9_-]/g, '')}`;
   const clock = clockRef.current;
 
   return (
     <svg
+      ref={svgRef}
       viewBox={`0 0 ${g.w} ${g.h}`}
       role="group"
       aria-label={aria}
@@ -180,7 +206,7 @@ export default function ArchDiagram({
     >
       {desc && <desc id={descId}>{desc}</desc>}
       <defs>
-        <filter id={`glow-${diagram.id}`} x="-60%" y="-60%" width="220%" height="220%">
+        <filter id={`glow-${fid}`} x="-60%" y="-60%" width="220%" height="220%">
           <feGaussianBlur stdDeviation="4" result="b" />
           <feMerge>
             <feMergeNode in="b" />
@@ -190,7 +216,7 @@ export default function ArchDiagram({
         {/* Links need a user-space filter region: a perfectly horizontal or
             vertical path has a zero-height (or zero-width) bounding box, and
             a bounding-box filter would make it vanish. */}
-        <filter id={`glowline-${diagram.id}`} filterUnits="userSpaceOnUse" x={-40} y={-40} width={g.w + 80} height={g.h + 80}>
+        <filter id={`glowline-${fid}`} filterUnits="userSpaceOnUse" x={-40} y={-40} width={g.w + 80} height={g.h + 80}>
           <feGaussianBlur stdDeviation="3.5" result="b" />
           <feMerge>
             <feMergeNode in="b" />
@@ -285,7 +311,7 @@ export default function ArchDiagram({
               pathLength={drawIn ? 1 : undefined}
               strokeDasharray={drawIn ? '1 1' : l.dash || undefined}
               strokeDashoffset={drawIn ? 1 - ls.draw : undefined}
-              filter={on ? `url(#glowline-${diagram.id})` : undefined}
+              filter={on ? `url(#glowline-${fid})` : undefined}
             />
             {ls.draw > 0.6 && (
               <g {...(props ?? {})} style={{ cursor: props ? 'help' : 'default' }}>
@@ -312,7 +338,8 @@ export default function ArchDiagram({
         const key = termKey(n);
         const live = current.visible.has(id);
         const props = live ? svgTermProps(key, activeKey, onOpenTerm) : null;
-        const pulse = isNew && !reducedMotion ? 0.5 + 0.5 * Math.sin(clock * 4) : isNew ? 1 : 0;
+        // New nodes pulse for a few seconds, then hold at full highlight.
+        const pulse = isNew && !reducedMotion && clock - pulseFrom.current < PULSE_S ? 0.5 + 0.5 * Math.sin((clock - pulseFrom.current) * 4 - Math.PI / 2) : isNew ? 1 : 0;
         return (
           <g
             key={id}
@@ -333,7 +360,7 @@ export default function ArchDiagram({
                 stroke={gen.c}
                 strokeWidth={1.4}
                 opacity={on ? 0.7 : 0.25 + pulse * 0.5}
-                filter={`url(#glow-${diagram.id})`}
+                filter={`url(#glow-${fid})`}
               />
             )}
             <rect
@@ -381,7 +408,7 @@ export default function ArchDiagram({
         return (
           <g key={`t${ti}`} opacity={fade} aria-hidden="true">
             {dots.map((p, d) => (
-              <circle key={d} cx={p.x} cy={p.y} r={tr.k === 'user' ? 4.5 : 5.5} fill={col} filter={`url(#glow-${diagram.id})`} opacity={0.95} />
+              <circle key={d} cx={p.x} cy={p.y} r={tr.k === 'user' ? 4.5 : 5.5} fill={col} filter={`url(#glow-${fid})`} opacity={0.95} />
             ))}
             {lp && (
               <g>

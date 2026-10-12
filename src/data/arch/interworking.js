@@ -164,4 +164,6 @@ export const check = [
 
 export const links = [
   { label: 'Watch EPS fallback for a 5G voice call', href: '#/flows?net=sa&session=voice&variant=voice-epsfb' },
+  { label: 'The SMF (and its PGW-C role), in detail', href: '#/components/smf' },
+  { label: 'The MME, in detail', href: '#/components/mme' },
 ];

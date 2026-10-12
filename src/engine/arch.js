@@ -20,6 +20,12 @@
  */
 
 export const NODE_SIZE = { wide: { w: 116, h: 50 }, narrow: { w: 96, h: 44 } };
+
+/** Smallest title font a node box is drawn with (it grows when the diagram is scaled down). */
+export const MIN_TITLE_FONT = 13;
+
+/** A node box's drawn width: the base size, widened to fit a long title at the given font size. */
+export const nodeBoxWidth = (node, mode, titleFont = MIN_TITLE_FONT) => Math.max(NODE_SIZE[mode].w, node.t.length * titleFont * 0.62 + 18);
 const PAD = { wide: 10, narrow: 8 };
 
 /** Merge a layout with the one it extends, per width mode. */

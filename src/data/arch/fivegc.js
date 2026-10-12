@@ -324,5 +324,7 @@ export const check = [
 
 export const links = [
   { label: 'Watch a 5G registration and PDU session', href: '#/flows?net=sa&session=data' },
-  { label: 'Browse every 5G core function', href: '#/components' },
+  { label: 'The AMF, in detail', href: '#/components/amf' },
+  { label: 'The SMF, in detail', href: '#/components/smf' },
+  { label: 'Browse every 5G core function', href: '#/components?gen=5g' },
 ];

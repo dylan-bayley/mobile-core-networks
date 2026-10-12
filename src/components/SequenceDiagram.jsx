@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { K, MONO, SANS, PANEL, EDGE, MUTED, FAINT } from '../theme.js';
+import { K, MONO, SANS, PANEL, EDGE, MUTED, FAINT, TEXT_2 } from '../theme.js';
 import { GLOSSARY } from '../data/reference/glossary.js';
 import { resolveGlossaryKey } from '../lib/resolveGlossaryKey.js';
 import { svgTermProps } from '../lib/svgTermProps.js';
@@ -100,7 +100,7 @@ export default function SequenceDiagram({ topology, steps, step, onGo, onGlossar
                 y={22}
                 textAnchor="middle"
                 style={{ fontFamily: SANS, fontSize: 12, fontWeight: 600, cursor: termProps ? 'help' : 'default' }}
-                fill={touched ? '#ffffff' : '#a3b3cf'}
+                fill={touched ? '#ffffff' : TEXT_2}
                 {...(termProps ?? {})}
               >
                 {n.t}

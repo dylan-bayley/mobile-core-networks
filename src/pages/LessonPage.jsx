@@ -105,17 +105,20 @@ function CompareDiagrams({ lesson, scenes, labels, reducedMotion }) {
             <figcaption className="px-3 pt-2 text-sm font-medium" style={{ color: TEXT }}>
               {it.r.scene.title}
             </figcaption>
-            <ArchDiagram
-              diagram={lesson.diagram}
-              current={it.r}
-              first
-              mode={mode}
-              width={colW}
-              maxHeight={mode === 'narrow' ? 520 : 420}
-              reducedMotion={reducedMotion}
-              onOpenTerm={openTerm}
-              activeKey={activeKey}
-            />
+            {/* Wait for the measured width, or the first frame draws the narrow layout. */}
+            {width > 0 && (
+              <ArchDiagram
+                diagram={lesson.diagram}
+                current={it.r}
+                first
+                mode={mode}
+                width={colW}
+                maxHeight={mode === 'narrow' ? 520 : 420}
+                reducedMotion={reducedMotion}
+                onOpenTerm={openTerm}
+                activeKey={activeKey}
+              />
+            )}
           </figure>
         ))}
       </div>
@@ -205,13 +208,16 @@ export default function LessonPage({ lessonId, query }) {
   }, [lesson, index, rep, sceneRep]);
   const shownRep = sceneRep ? rep ?? sceneRep : null;
 
-  const go = useCallback((i) => player.go(Math.max(0, Math.min(last, i))), [player, last]);
+  // Depend on the player's stable functions, not the player object, which
+  // changes every frame while playing (and would re-bind the key handler).
+  const { go: playerGo, restart: playerRestart, done: playerDone, held: playerHeld } = player;
+  const go = useCallback((i) => playerGo(Math.max(0, Math.min(last, i))), [playerGo, last]);
   const togglePlay = useCallback(() => {
     if (playing) return setPlaying(false);
-    if (player.done) player.restart();
-    else if (player.held && index < last) player.go(index + 1);
+    if (playerDone) playerRestart();
+    else if (playerHeld && index < last) playerGo(index + 1);
     setPlaying(true);
-  }, [playing, player, index, last]);
+  }, [playing, playerDone, playerHeld, playerRestart, playerGo, index, last]);
 
   useEffect(() => {
     const isButton = (e) => e.target instanceof HTMLElement && e.target.closest('button, [role="button"], a');
@@ -260,6 +266,19 @@ export default function LessonPage({ lessonId, query }) {
         {autolinkAcronyms(scene.d, GLOSSARY, { activeKey, onOpen: openTerm })}
       </p>
       <Sources cites={scene.cites} className="mt-3" />
+      {/* At the end of the last scene, offer the next step right here rather
+          than leave it at the bottom of a long page. */}
+      {player.done && index === last && (
+        <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t pt-3 text-sm" style={{ borderColor: EDGE, color: TEXT_2 }}>
+          That’s the lesson.
+          <a href={next ? `#/learn/${next.id}` : '#/flows'} className="rounded px-3 py-1.5 font-semibold" style={{ background: GEN['5g'].c, color: '#0b0717' }}>
+            {next ? `Next: ${next.n}. ${next.title} →` : 'Next: watch real call flows →'}
+          </a>
+          <a href="#check-title" onClick={(e) => { e.preventDefault(); document.getElementById('check-title')?.scrollIntoView({ block: 'start' }); }} className="underline" style={{ color: MUTED }}>
+            or try the quick check
+          </a>
+        </p>
+      )}
     </section>
   );
 

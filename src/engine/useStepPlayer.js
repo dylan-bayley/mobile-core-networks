@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import { initPlayer, playerReducer } from './playerReducer.js';
 
 /** Fraction of a step's duration during which the message dot travels; the rest is hold time for reading. */
@@ -66,17 +66,14 @@ export function useStepPlayer(steps, { playing, setPlaying, speed, pauseEach = f
     if (state.done || state.held) setPlaying(false);
   }, [state.done, state.held, setPlaying]);
 
+  // `go` and `restart` are stable; depend on them rather than on the player
+  // object, which is new whenever progress ticks (every frame while playing).
   const go = useCallback((step) => dispatch({ type: 'goto', step }), []);
   const restart = useCallback(() => dispatch({ type: 'restart' }), []);
 
-  return {
-    step: clampedStep,
-    progress: state.progress,
-    done: state.done,
-    held: state.held,
-    dur,
-    remaining: Math.max(0, Math.ceil((1 - state.progress) * dur)),
-    go,
-    restart,
-  };
+  const remaining = Math.max(0, Math.ceil((1 - state.progress) * dur));
+  return useMemo(
+    () => ({ step: clampedStep, progress: state.progress, done: state.done, held: state.held, dur, remaining, go, restart }),
+    [clampedStep, state.progress, state.done, state.held, dur, remaining, go, restart],
+  );
 }

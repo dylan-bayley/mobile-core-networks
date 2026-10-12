@@ -101,6 +101,7 @@ export const GLOSSARY = {
   Iq: { expansion: 'Iq Reference Point', note: 'Interface from the P-CSCF to the IMS-AGW, to allocate and release media addresses.', kind: 'ims' },
   Ici: { expansion: 'Ici Reference Point', note: 'SIP interface between the IBCFs of two IMS networks.', kind: 'ims' },
   iFC: { expansion: 'initial Filter Criteria', note: 'Rules in the subscriber’s IMS service profile that tell the S-CSCF which application servers to involve, and in what order.' },
+  TDM: { expansion: 'Time-Division Multiplexing', note: 'Circuit-switched trunks (such as E1 or T1) that carry voice to and from the PSTN.', kind: 'tdm' },
   ISUP: { expansion: 'ISDN User Part', note: 'Legacy circuit-switched call-control protocol used on PSTN trunks.', kind: 'tdm' },
   BICC: { expansion: 'Bearer Independent Call Control', note: 'Successor to ISUP that decouples call control from the bearer.', kind: 'tdm' },
   N2: { expansion: 'N2 Reference Point', note: '5G control interface between the gNB and the AMF, carrying NGAP.', kind: 'control' },

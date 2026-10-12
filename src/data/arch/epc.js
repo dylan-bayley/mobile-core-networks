@@ -205,5 +205,7 @@ export const check = [
 
 export const links = [
   { label: 'Watch a 4G attach and default bearer', href: '#/flows?net=4g&session=data' },
-  { label: 'Read about each EPC element', href: '#/components' },
+  { label: 'The MME, in detail', href: '#/components/mme' },
+  { label: 'The P-GW, in detail', href: '#/components/pgw' },
+  { label: 'Read about each EPC element', href: '#/components?gen=4g' },
 ];

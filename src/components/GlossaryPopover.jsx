@@ -1,6 +1,6 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { K, PANEL, EDGE, MONO, SANS, MUTED, TEXT_2 } from '../theme.js';
+import { K, PANEL, EDGE, MONO, SANS, MUTED, TEXT_2, TEXT } from '../theme.js';
 import { resolveGlossaryKey } from '../lib/resolveGlossaryKey.js';
 import { useDialogFocus } from '../lib/useDialogFocus.js';
 import { componentForTerm } from '../data/components/index.js';
@@ -134,7 +134,7 @@ export default function GlossaryPopover({ target, glossary, onClose, topology, o
           ×
         </button>
       </div>
-      <p className="mt-1.5 text-xs leading-relaxed" style={{ color: '#e6edfa' }}>
+      <p className="mt-1.5 text-xs leading-relaxed" style={{ color: TEXT }}>
         {entry.expansion}
       </p>
       {entry.note && (
@@ -150,7 +150,7 @@ export default function GlossaryPopover({ target, glossary, onClose, topology, o
       )}
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs" style={{ fontFamily: MONO }}>
         {componentForTerm(target.key) && (
-          <a href={`#/components/${componentForTerm(target.key)}`} onClick={onClose} className="underline" style={{ color: '#dbe4f3' }}>
+          <a href={`#/components/${componentForTerm(target.key)}`} onClick={onClose} className="underline" style={{ color: TEXT }}>
             read the full page →
           </a>
         )}
@@ -163,7 +163,7 @@ export default function GlossaryPopover({ target, glossary, onClose, topology, o
           type="button"
           onClick={() => onShowNode(nodeId)}
           className="mt-2 rounded px-2 py-1 text-xs"
-          style={{ background: 'transparent', border: `1px solid ${EDGE}`, color: '#dbe4f3', fontFamily: MONO }}
+          style={{ background: 'transparent', border: `1px solid ${EDGE}`, color: TEXT, fontFamily: MONO }}
         >
           show on diagram →
         </button>

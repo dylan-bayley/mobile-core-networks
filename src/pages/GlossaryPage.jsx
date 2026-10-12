@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { GLOSSARY } from '../data/reference/glossary.js';
 import { componentForTerm } from '../data/components/index.js';
 import { filterGlossary, glossaryEntries } from '../lib/filterGlossary.js';
-import { PANEL, EDGE, MONO, FAINT, MUTED, TEXT, TEXT_2, K, ACTIVE_EDGE } from '../theme.js';
+import { PANEL, EDGE, MONO, FAINT, MUTED, TEXT, TEXT_2, K, ACTIVE_EDGE, BG } from '../theme.js';
 
 const idFor = (key) => `term-${key.replace(/[^A-Za-z0-9]+/g, '-')}`;
 
@@ -34,7 +34,7 @@ export default function GlossaryPage({ term }) {
           {entries.length} terms used across the lessons and call flows. Every term has its own link.
         </p>
       </header>
-      <div className="sticky top-[53px] z-10 mt-4 py-2" style={{ background: '#070b14ee' }}>
+      <div className="sticky z-10 mt-4 py-2" style={{ top: 'var(--header-h, 53px)', background: `${BG}ee` }}>
         <input
           type="search"
           value={query}

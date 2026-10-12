@@ -118,6 +118,10 @@ export const diagram = {
     { a: 'bgcf', b: 'mgcf', l: 'Mj', k: 'ims' },
     { a: 'mgcf', b: 'mgw', l: 'Mn', k: 'ims' },
     { a: 'mgcf', b: 'pstn', l: 'ISUP', k: 'tdm', labelT: { wide: 0.5, narrow: 0.6 } },
+    // The breakout media path: RTP from the IMS-AGW to the IMS-MGW (Mb),
+    // then circuits to the PSTN.
+    { a: 'agw', b: 'mgw', l: 'Mb', k: 'media' },
+    { a: 'mgw', b: 'pstn', l: 'TDM', k: 'tdm' },
     { a: 'scscf', b: 'ibcf', l: 'Mx', k: 'ims' },
     { a: 'ibcf', b: 'other', l: 'Ici', k: 'ims' },
   ],
@@ -257,7 +261,7 @@ export const scenes = [
       { p: ['agw', 'mgw', 'pstn'], k: 'media', n: 3, phase: 0.3 },
     ],
     d: 'If the number isn’t reachable over IP, the S-CSCF hands the INVITE to the Breakout Gateway Control Function (BGCF). The BGCF picks the network where the call should leave IMS and, if it is this one, an MGCF. The MGCF translates SIP to ISUP for the circuit-switched network, and controls an IMS media gateway that converts the RTP voice to circuit bearers.',
-    cites: [c228('5.4.3'), c228('4.6.4'), c002('4a.7.2'), c002('4a.7.3')],
+    cites: [c228('5.4.3'), c228('4.6.4'), c002('4a.7.2'), c002('4a.7.3'), c002('6a.7.14')],
   },
   {
     id: 'interconnect',
@@ -336,4 +340,6 @@ export const links = [
   { label: 'Watch a VoLTE call, step by step', href: '#/flows?net=4g&session=voice' },
   { label: 'The same call on 5G SA (VoNR)', href: '#/flows?net=sa&session=voice' },
   { label: 'EPS fallback in the call-flow explorer', href: '#/flows?net=sa&session=voice&variant=voice-epsfb' },
+  { label: 'The P-CSCF, in detail', href: '#/components/pcscf' },
+  { label: 'The S-CSCF, in detail', href: '#/components/scscf' },
 ];

@@ -1,8 +1,8 @@
-import { PANEL, EDGE, MONO, MUTED, FAINT, ACTIVE_BG, ACTIVE_EDGE } from '../theme.js';
+import { PANEL, EDGE, MONO, MUTED, FAINT, ACTIVE_BG, ACTIVE_EDGE, TEXT } from '../theme.js';
 import { SPEEDS } from '../engine/useStepPlayer.js';
 import Switch from './Switch.jsx';
 
-const btn = { background: PANEL, border: `1px solid ${EDGE}`, color: '#dbe4f3', fontFamily: MONO };
+const btn = { background: PANEL, border: `1px solid ${EDGE}`, color: TEXT, fontFamily: MONO };
 
 export default function Transport({
   step,
@@ -35,7 +35,7 @@ export default function Transport({
         style={{
           background: playing ? ACTIVE_BG : accent,
           border: `1px solid ${playing ? ACTIVE_EDGE : accent}`,
-          color: playing ? '#dbe4f3' : '#06101f',
+          color: playing ? TEXT : '#06101f',
           minWidth: 84,
         }}
         aria-label={playLabel}

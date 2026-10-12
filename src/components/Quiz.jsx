@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { K, PANEL, EDGE, MONO, MUTED, FAINT, TEXT_2 } from '../theme.js';
+import { K, PANEL, EDGE, MONO, MUTED, FAINT, TEXT_2, TEXT } from '../theme.js';
 import { makeQuestions } from '../lib/makeQuestions.js';
 import { GLOSSARY } from '../data/reference/glossary.js';
 import { autolinkAcronyms } from '../lib/autolinkAcronyms.jsx';
@@ -22,7 +22,7 @@ function Choice({ q, onAnswer }) {
               onAnswer(o.correct);
             }}
             className="rounded px-3 py-2 text-left text-sm"
-            style={{ background: state === 'idle' ? '#0a1120' : `${colour}18`, border: `1px solid ${colour}`, color: '#e6edfa' }}
+            style={{ background: state === 'idle' ? '#0a1120' : `${colour}18`, border: `1px solid ${colour}`, color: TEXT }}
           >
             <span style={{ fontFamily: MONO, fontSize: 10, color: MUTED, marginRight: 8 }}>{String.fromCharCode(65 + i)}</span>
             {o.label}
@@ -66,7 +66,7 @@ function Order({ q, onAnswer }) {
               if (next.length === q.items.length) onAnswer(next.every((idx, k) => q.items[idx].order === k));
             }}
             className="flex items-start gap-2 rounded px-3 py-2 text-left text-sm"
-            style={{ background: chosen ? `${colour}18` : '#0a1120', border: `1px solid ${colour}`, color: '#e6edfa' }}
+            style={{ background: chosen ? `${colour}18` : '#0a1120', border: `1px solid ${colour}`, color: TEXT }}
           >
             <span style={{ fontFamily: MONO, fontSize: 10, color: chosen ? '#ffffff' : FAINT, minWidth: 16, paddingTop: 2 }}>
               {chosen ? pos + 1 : '·'}
@@ -105,7 +105,7 @@ function Explanation({ q, scenario, onGlossaryOpen, activeGlossaryKey }) {
       <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', color: FAINT }}>
         WHY{correct ? ` — ${correct}` : ''}
       </div>
-      <div className="mt-1 font-semibold" style={{ color: '#e6edfa' }}>
+      <div className="mt-1 font-semibold" style={{ color: TEXT }}>
         {String(q.stepIndex + 1).padStart(2, '0')} · {autolinkAcronyms(s.t, GLOSSARY, linkOpts)}
         <span style={{ fontFamily: MONO, fontWeight: 400, color: MUTED }}> · {s.m}</span>
       </div>
@@ -197,7 +197,7 @@ export default function Quiz({ scenario, geo, onGo, onClose, best, onScore, onGl
                 <button
                   onClick={() => onGo(q.stepIndex)}
                   className="rounded px-3 py-1.5 text-xs"
-                  style={{ background: 'transparent', border: `1px solid ${EDGE}`, color: '#dbe4f3', fontFamily: MONO }}
+                  style={{ background: 'transparent', border: `1px solid ${EDGE}`, color: TEXT, fontFamily: MONO }}
                 >
                   show me this step in the diagram →
                 </button>

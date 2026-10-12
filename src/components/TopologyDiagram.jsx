@@ -36,8 +36,11 @@ export default function TopologyDiagram({
   const [hintDismissed, setHintDismissed] = useState(false);
   const [, , vbW, vbH] = useMemo(() => topology.viewBox.split(/\s+/).map(Number), [topology.viewBox]);
 
+  // The clock only drives the ambient traffic dots; with none on screen,
+  // don't re-render the whole diagram every frame for nothing.
+  const animating = !reducedMotion && ambient.some((f) => step >= f.after);
   useEffect(() => {
-    if (reducedMotion) return undefined;
+    if (!animating) return undefined;
     let raf;
     let last = performance.now();
     const tick = (now) => {
@@ -48,7 +51,7 @@ export default function TopologyDiagram({
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [reducedMotion]);
+  }, [animating]);
 
   // Does the diagram overflow its container (phones, narrow windows)? If so
   // the step-follow scroll below and the swipe hint are relevant.

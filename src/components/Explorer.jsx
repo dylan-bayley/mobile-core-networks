@@ -91,6 +91,7 @@ export default function Explorer() {
   const scenario = useMemo(() => resolveScenario(networkId, flowId), [networkId, flowId]);
   const geo = useMemo(() => makeGeometry(scenario.topology), [scenario.topology]);
   const player = useStepPlayer(scenario.steps, { playing, setPlaying, speed, pauseEach });
+  const { go: playerGo, restart: playerRestart, done: playerDone, held: playerHeld } = player;
 
   // If the network can't serve the requested flow (e.g. EPS fallback on 4G)
   // resolveScenario fell back; reflect that in state so the selector is honest.
@@ -161,12 +162,12 @@ export default function Explorer() {
         setFlowId(flow);
       } else if (u.step) {
         const idx = stepIndexOf(scenario.steps, u.step);
-        if (idx >= 0) player.go(idx);
+        if (idx >= 0) playerGo(idx);
       }
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
-  }, [scenario.steps, player]);
+  }, [scenario.steps, playerGo]);
 
   /** Push the *current* URL so browser back returns here after a user-initiated jump. */
   const markHistory = () => {
@@ -176,7 +177,7 @@ export default function Explorer() {
   // A jump (step list, progress bar, sequence row, quiz) gets its own history
   // entry so Back returns to it; stepping with ←/→ or Prev/Next just moves
   // along, or walking a 30-step flow would take 30 presses of Back to leave.
-  const moveTo = useCallback((i) => player.go(Math.max(0, Math.min(last, i))), [player, last]);
+  const moveTo = useCallback((i) => playerGo(Math.max(0, Math.min(last, i))), [playerGo, last]);
   const go = useCallback(
     (i) => {
       markHistory();
@@ -212,10 +213,10 @@ export default function Explorer() {
       setPlaying(false);
       return;
     }
-    if (player.done) player.restart();
-    else if (player.held && step < last) player.go(step + 1);
+    if (playerDone) playerRestart();
+    else if (playerHeld && step < last) playerGo(step + 1);
     setPlaying(true);
-  }, [playing, player, step, last]);
+  }, [playing, playerDone, playerHeld, playerRestart, playerGo, step, last]);
 
   const restart = () => {
     player.restart();
@@ -265,7 +266,14 @@ export default function Explorer() {
     (score, total) => setProgress((p) => recordQuiz(p, networkId, scenario.flowId, score, total)),
     [networkId, scenario.flowId],
   );
-  const onResetProgress = () => setProgress(resetProgress());
+  const onResetProgress = useCallback(() => setProgress(resetProgress()), []);
+  // Stable props for the (memoised) reference panel, so it doesn't re-render
+  // its whole glossary every animation frame while a flow plays.
+  const nodeNaming = useMemo(() => (networkId === '4g' ? NODE_MAP_4G : [...NODE_MAP_4G, ...NODE_MAP_5GC]), [networkId]);
+  const beyond = useMemo(
+    () => autolinkAcronyms(BEYOND, GLOSSARY, { activeKey: activeGlossaryKey, onOpen: openGlossaryTerm }),
+    [activeGlossaryKey, openGlossaryTerm],
+  );
 
   useEffect(() => {
     const isButton = (e) => e.target instanceof HTMLElement && e.target.closest('button, [role="button"]');
@@ -298,6 +306,11 @@ export default function Explorer() {
     return () => window.removeEventListener('keydown', onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [go, moveTo, step, last, togglePlay, introOpen]);
+
+  useEffect(() => {
+    const net = NETWORKS.find((n) => n.id === networkId) ?? NETWORKS[0];
+    document.title = `${scenario.label} (${net.label}) · Call flows · Mobile Core`;
+  }, [networkId, scenario.label]);
 
   const analogs = useMemo(() => analogsOf(cur, { networkId, flowId: scenario.flowId }), [cur, networkId, scenario.flowId]);
   const networkFlows = FLOWS[networkId] ?? {};
@@ -477,12 +490,12 @@ export default function Explorer() {
         </div>
 
         <ReferencePanel
-          nodeNaming={networkId === '4g' ? NODE_MAP_4G : [...NODE_MAP_4G, ...NODE_MAP_5GC]}
+          nodeNaming={nodeNaming}
           qci={QCI}
           fiveQi={networkId === '4g' ? null : FIVE_QI}
           eirStatus={EIR_STATUS}
           glossary={GLOSSARY}
-          beyond={autolinkAcronyms(BEYOND, GLOSSARY, { activeKey: activeGlossaryKey, onOpen: openGlossaryTerm })}
+          beyond={beyond}
           completed={completedTotal}
           totalFlows={allFlowKeys.length}
           onResetProgress={onResetProgress}
