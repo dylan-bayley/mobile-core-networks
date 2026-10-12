@@ -43,7 +43,7 @@ export function LessonStepper({ current }) {
               <a
                 href={`#/learn/${l.id}`}
                 aria-current={on ? 'page' : undefined}
-                className="flex items-center gap-1.5 rounded px-2.5 py-1 text-xs"
+                className="flex min-h-10 items-center gap-1.5 rounded px-2.5 py-1 text-xs sm:min-h-0"
                 style={{ background: on ? ACTIVE_BG : 'transparent', border: `1px solid ${on ? ACTIVE_EDGE : EDGE}`, color: on ? TEXT : MUTED }}
               >
                 <span style={{ fontFamily: MONO, color: done ? K.user.c : FAINT }}>{done ? '✓' : l.n}</span>
@@ -53,7 +53,7 @@ export function LessonStepper({ current }) {
           );
         })}
         <li>
-          <a href="#/flows" className="flex items-center gap-1.5 rounded px-2.5 py-1 text-xs" style={{ border: `1px dashed ${EDGE}`, color: MUTED }}>
+          <a href="#/flows" className="flex min-h-10 items-center gap-1.5 rounded px-2.5 py-1 text-xs sm:min-h-0" style={{ border: `1px dashed ${EDGE}`, color: MUTED }}>
             <span style={{ fontFamily: MONO, color: FAINT }}>→</span>
             Call flows
           </a>
@@ -249,7 +249,7 @@ export default function LessonPage({ lessonId, query }) {
     setProgress((p) => markCompleted(recordQuiz(p, 'lesson', lessonId, score, total), 'lesson', lessonId, lesson.scenes.length));
 
   const caption = (
-    <section aria-live="polite" className="rounded p-4" style={{ background: PANEL, border: `1px solid ${EDGE}`, borderLeft: `3px solid ${accent}` }}>
+    <section className="rounded p-4" style={{ background: PANEL, border: `1px solid ${EDGE}`, borderLeft: `3px solid ${accent}` }}>
       <p style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.1em', color: FAINT }}>
         SCENE {index + 1} OF {lesson.scenes.length}
       </p>
@@ -266,6 +266,12 @@ export default function LessonPage({ lessonId, query }) {
   return (
     <div className="mx-auto max-w-[1500px] px-3 py-4 sm:px-4">
       <LessonStepper current={lessonId} />
+      {/* Announce only the scene's number and title as it changes; the full
+          caption is there to read, and reading it all out every few seconds
+          during autoplay would talk over itself. */}
+      <p className="sr-only" aria-live="polite">
+        Scene {index + 1} of {lesson.scenes.length}: {scene.title}
+      </p>
 
       <header className="mt-4 mb-3">
         <p style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.12em', color: FAINT }}>

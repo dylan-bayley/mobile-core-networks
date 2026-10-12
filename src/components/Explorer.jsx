@@ -222,9 +222,15 @@ export default function Explorer() {
     setPlaying(!reducedMotion);
   };
 
+  // Closing the intro removes the button that had focus; put focus on the
+  // help button that reopens it rather than let it drop to <body>.
+  const introRef = useRef(null);
+  const helpRef = useRef(null);
   const closeIntro = () => {
+    const hadFocus = introRef.current?.contains(document.activeElement);
     setIntroOpen(false);
     store('mcn.introSeen', true);
+    if (hadFocus) helpRef.current?.focus();
   };
   const startFromIntro = (targetFlowId) => {
     closeIntro();
@@ -330,6 +336,7 @@ export default function Explorer() {
           </p>
           <div className="ml-auto flex items-center gap-2">
             <button
+              ref={helpRef}
               type="button"
               onClick={() => setIntroOpen((o) => !o)}
               aria-pressed={introOpen}
@@ -351,15 +358,17 @@ export default function Explorer() {
         </header>
 
         {introOpen && (
-          <IntroCard
-            path={pathForNetwork}
-            progress={progress}
-            networkId={networkId}
-            networkLabel={network.label}
-            currentFlowId={scenario.flowId}
-            onStart={startFromIntro}
-            onClose={closeIntro}
-          />
+          <div ref={introRef}>
+            <IntroCard
+              path={pathForNetwork}
+              progress={progress}
+              networkId={networkId}
+              networkLabel={network.label}
+              currentFlowId={scenario.flowId}
+              onStart={startFromIntro}
+              onClose={closeIntro}
+            />
+          </div>
         )}
 
         <SelectorBar

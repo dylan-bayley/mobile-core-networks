@@ -26,8 +26,9 @@ function Row({ items, activeId, onSelect, size = 'md', ariaLabel, doneIds }) {
           >
             {item.label}
             {done && (
-              <span aria-label="completed" title="You have watched this flow to the end" style={{ color: '#3fd6a0', marginLeft: 6, fontSize: 11 }}>
-                ✓
+              <span title="You have watched this flow to the end" style={{ color: '#3fd6a0', marginLeft: 6, fontSize: 11 }}>
+                <span aria-hidden="true">✓</span>
+                <span className="sr-only"> (completed)</span>
               </span>
             )}
           </button>

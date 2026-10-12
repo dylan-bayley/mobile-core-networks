@@ -69,7 +69,7 @@ export default function VignettePlayer({ vignette, highlight }) {
           />
         )}
       </div>
-      <div className="px-4 pb-4" aria-live="polite">
+      <div className="px-4 pb-4">
         <div className="mt-1 flex flex-wrap items-center gap-2">
           <button type="button" onClick={() => player.go(Math.max(0, i - 1))} disabled={i === 0} className="min-h-10 rounded px-3 py-1.5 text-sm disabled:opacity-30 sm:min-h-0" style={btn} aria-label="Previous step">
             ←
@@ -97,19 +97,25 @@ export default function VignettePlayer({ vignette, highlight }) {
                   onClick={() => player.go(k)}
                   aria-label={`Step ${k + 1}: ${x.title}`}
                   aria-current={k === i ? 'step' : undefined}
-                  className="block h-2.5 w-6 rounded-sm"
-                  style={{ background: k === i ? K.sbi.c : k < i ? `${K.sbi.c}77` : '#1b2740', border: 0 }}
-                />
+                  className="flex h-10 w-7 items-center sm:h-6"
+                  style={{ background: 'none', border: 0, padding: 0 }}
+                >
+                  {/* A small bar inside a larger hit area for touch. */}
+                  <span className="block h-2.5 w-6 rounded-sm" style={{ background: k === i ? K.sbi.c : k < i ? `${K.sbi.c}77` : '#1b2740' }} />
+                </button>
               </li>
             ))}
           </ol>
         </div>
-        <h3 className="mt-3 text-sm font-semibold" style={{ color: TEXT }}>
-          {i + 1}. {s.title}
-        </h3>
-        <p className="mt-1 text-sm leading-relaxed" style={{ color: TEXT_2 }}>
-          {autolinkAcronyms(s.d, GLOSSARY, { activeKey, onOpen: openTerm })}
-        </p>
+        {/* Only the step text is live; the controls' changing labels aren't announced. */}
+        <div aria-live="polite">
+          <h3 className="mt-3 text-sm font-semibold" style={{ color: TEXT }}>
+            {i + 1}. {s.title}
+          </h3>
+          <p className="mt-1 text-sm leading-relaxed" style={{ color: TEXT_2 }}>
+            {autolinkAcronyms(s.d, GLOSSARY, { activeKey, onOpen: openTerm })}
+          </p>
+        </div>
         <Sources cites={s.cites} className="mt-2" />
         <p className="mt-2 text-xs" style={{ color: MUTED }}>
           A simplified sketch of the procedure. See the cited clauses for every parameter and branch.

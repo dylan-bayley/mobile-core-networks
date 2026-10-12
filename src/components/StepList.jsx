@@ -60,12 +60,13 @@ function StepList({ steps, step, onGo }) {
               onClick={() => onGo(i)}
               aria-current={on ? 'step' : undefined}
               className="flex w-full items-start gap-2 rounded px-2 py-1.5 text-left"
-              style={{ background: on ? ACTIVE_BG : 'transparent', opacity: i <= step ? 1 : 0.6 }}
+              style={{ background: on ? ACTIVE_BG : 'transparent' }}
             >
               <span style={{ fontFamily: MONO, fontSize: 10, color: on ? K[s.k].c : FAINT, paddingTop: 2, minWidth: 16 }}>
                 {String(i + 1).padStart(2, '0')}
               </span>
-              <span className="text-xs leading-snug" style={{ color: on ? '#ffffff' : MUTED }}>
+              {/* Steps still to come are dimmer (FAINT), not faded with opacity, to keep AA contrast. */}
+              <span className="text-xs leading-snug" style={{ color: on ? '#ffffff' : i < step ? MUTED : FAINT }}>
                 {s.t}
                 {s.tag && (
                   <span

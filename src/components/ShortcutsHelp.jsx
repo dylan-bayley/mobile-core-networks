@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { PANEL, EDGE, MONO, MUTED, FAINT, TEXT_2 } from '../theme.js';
+import { useDialogFocus } from '../lib/useDialogFocus.js';
 
 const SHORTCUTS = [
   ['Space', 'Play / pause a lesson or flow (continues after a held step)'],
@@ -18,16 +19,12 @@ const SHORTCUTS = [
 
 export default function ShortcutsHelp({ open, onClose }) {
   const closeRef = useRef(null);
+  const dialogRef = useRef(null);
+  useDialogFocus(open, dialogRef, { onEscape: onClose, trap: true });
 
   useEffect(() => {
-    if (!open) return undefined;
-    closeRef.current?.focus();
-    const onKey = (e) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
+    if (open) closeRef.current?.focus();
+  }, [open]);
 
   if (!open) return null;
 
@@ -38,6 +35,7 @@ export default function ShortcutsHelp({ open, onClose }) {
       onClick={onClose}
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="shortcuts-title"

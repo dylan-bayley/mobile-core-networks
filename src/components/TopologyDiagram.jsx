@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { K, MONO, SANS, PANEL, EDGE, MUTED, FAINT } from '../theme.js';
+import { K, MONO, SANS, PANEL, EDGE, MUTED, FAINT, TEXT, TEXT_2 } from '../theme.js';
 import { GLOSSARY } from '../data/reference/glossary.js';
 import { resolveGlossaryKey } from '../lib/resolveGlossaryKey.js';
 import { svgTermProps } from '../lib/svgTermProps.js';
@@ -129,7 +129,7 @@ export default function TopologyDiagram({
         <svg
           ref={svgRef}
           viewBox={topology.viewBox}
-          role="img"
+          role="group"
           aria-label={describe}
           style={{ minWidth: topology.minWidth, width: '100%', height: 'auto', maxHeight, display: 'block', margin: '0 auto' }}
         >
@@ -189,8 +189,7 @@ export default function TopologyDiagram({
                   y={lp.y - 5}
                   textAnchor="middle"
                   style={{ fontFamily: MONO, fontSize: 11.5, cursor: linkTermProps ? 'help' : 'default' }}
-                  fill={on ? '#ffffff' : MUTED}
-                  opacity={on ? 1 : focus ? 0.55 : 0.8}
+                  fill={on ? '#ffffff' : focus ? FAINT : MUTED}
                   {...(linkTermProps ?? {})}
                 >
                   {l.l}
@@ -220,7 +219,7 @@ export default function TopologyDiagram({
             const nodeTermProps = svgTermProps(nodeKey, activeGlossaryKey, onGlossaryOpen);
             const expansion = nodeKey ? GLOSSARY[nodeKey].expansion : null;
             return (
-              <g key={id} opacity={dim}>
+              <g key={id}>
                 {(on || flash) && (
                   <rect
                     x={n.cx - n.w / 2 - 5}
@@ -244,6 +243,7 @@ export default function TopologyDiagram({
                   fill={on ? '#16233d' : '#0f1830'}
                   stroke={stroke}
                   strokeWidth={on ? 1.8 : 1}
+                  opacity={dim}
                 >
                   {expansion && <title>{`${n.t} — ${expansion}`}</title>}
                 </rect>
@@ -252,7 +252,9 @@ export default function TopologyDiagram({
                   y={n.cy - 5}
                   textAnchor="middle"
                   style={{ fontSize: 13, fontWeight: 600, fontFamily: SANS, cursor: nodeTermProps ? 'help' : 'default' }}
-                  fill={on ? '#ffffff' : lit ? '#c6d4ea' : '#a3b3cf'}
+                  // Dimmed nodes use a dimmer theme colour, not opacity, so the
+                  // label stays above AA contrast.
+                  fill={on ? '#ffffff' : lit ? TEXT : dim < 1 ? FAINT : TEXT_2}
                   {...(nodeTermProps ?? {})}
                 >
                   {expansion && <title>{`${n.t} — ${expansion}. Click for the definition.`}</title>}

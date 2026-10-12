@@ -2,6 +2,7 @@ import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { K, PANEL, EDGE, MONO, SANS, MUTED, TEXT_2 } from '../theme.js';
 import { resolveGlossaryKey } from '../lib/resolveGlossaryKey.js';
+import { useDialogFocus } from '../lib/useDialogFocus.js';
 import { componentForTerm } from '../data/components/index.js';
 
 const MARGIN = 8;
@@ -12,6 +13,8 @@ export default function GlossaryPopover({ target, glossary, onClose, topology, o
   const [pos, setPos] = useState(null);
 
   const entry = target ? glossary[target.key] : null;
+  // Escape closes it and focus goes back to the term that opened it.
+  useDialogFocus(!!entry, cardRef, { onEscape: onClose, returnFocus: target?.anchorEl ?? null });
   // If the term is a node on the current diagram, offer to point at it.
   const nodeId =
     entry && topology && onShowNode
@@ -53,9 +56,6 @@ export default function GlossaryPopover({ target, glossary, onClose, topology, o
         onClose();
       }
     };
-    const handleKeyDown = (e) => {
-      if (e.key === 'Escape') onClose();
-    };
     // Scrolling moves the card with its term. The app scrolls things itself
     // as steps change (the step list, the diagram following the action), so
     // a scroll only closes the card once the term has left the screen.
@@ -65,7 +65,6 @@ export default function GlossaryPopover({ target, glossary, onClose, topology, o
     const handleResize = () => place();
 
     document.addEventListener('pointerdown', handlePointerDown, true);
-    document.addEventListener('keydown', handleKeyDown);
 
     // Opening a trigger can itself cause a scroll (e.g. focus-into-view on
     // the clicked element) — attach the scroll/resize dismissal a frame
@@ -78,7 +77,6 @@ export default function GlossaryPopover({ target, glossary, onClose, topology, o
     return () => {
       cancelAnimationFrame(raf);
       document.removeEventListener('pointerdown', handlePointerDown, true);
-      document.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('scroll', handleScroll, true);
       window.removeEventListener('resize', handleResize);
     };

@@ -21,15 +21,20 @@ function CopyLink({ url }) {
     }
   };
   return (
-    <button
-      type="button"
-      onClick={copy}
-      title="Copy a link to this exact step"
-      className="ml-auto rounded px-2 py-0.5"
-      style={{ fontFamily: MONO, fontSize: 10, color: copied ? '#3fd6a0' : MUTED, border: `1px solid ${EDGE}`, background: 'transparent' }}
-    >
-      {copied ? 'copied ✓' : 'copy link'}
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={copy}
+        title="Copy a link to this exact step"
+        className="ml-auto rounded px-2 py-0.5"
+        style={{ fontFamily: MONO, fontSize: 10, color: copied ? '#3fd6a0' : MUTED, border: `1px solid ${EDGE}`, background: 'transparent' }}
+      >
+        {copied ? 'copied ✓' : 'copy link'}
+      </button>
+      <span className="sr-only" aria-live="polite">
+        {copied ? 'Link to this step copied' : ''}
+      </span>
+    </>
   );
 }
 

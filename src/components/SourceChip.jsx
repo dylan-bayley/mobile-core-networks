@@ -19,6 +19,7 @@ export function SourceChip({ cite }) {
         <path d="M2 1.5h5.5L10 4v6.5H2z M7.5 1.5V4H10" fill="none" stroke="currentColor" strokeWidth="1.1" />
       </svg>
       {label}
+      <span className="sr-only"> (PDF, opens in a new tab)</span>
     </a>
   );
 }

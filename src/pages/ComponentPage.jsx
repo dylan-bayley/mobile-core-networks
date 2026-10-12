@@ -112,7 +112,7 @@ export default function ComponentPage({ component: c }) {
         <a href="#/components" className="hover:underline">
           Components
         </a>{' '}
-        / <span style={{ color: TEXT_2 }}>{c.label}</span>
+        / <span aria-current="page" style={{ color: TEXT_2 }}>{c.label}</span>
       </nav>
 
       <header className="mt-3">

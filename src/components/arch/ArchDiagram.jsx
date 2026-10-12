@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { K, GEN, MONO, SANS, PANEL, EDGE, FAINT, MUTED, TEXT, CONTROL_BAND, USER_BAND, IMS_BAND, NODE_FILL, NODE_FILL_ON } from '../../theme.js';
 import { GLOSSARY } from '../../data/reference/glossary.js';
 import { resolveGlossaryKey } from '../../lib/resolveGlossaryKey.js';
@@ -154,6 +154,20 @@ export default function ArchDiagram({
 
   const visibleTitles = [...current.visible].map((id) => diagram.nodes[id].t).join(', ');
   const aria = `${label ?? diagram.title}. ${scene.title}. Shown: ${visibleTitles}.`;
+  // What the scene draws attention to, for screen readers: the text
+  // alternative to the highlighted links and moving traffic.
+  const focusTitles = (scene.focus?.nodes ?? []).map((id) => diagram.nodes[id]?.t).filter(Boolean);
+  const routes = (scene.traffic ?? [])
+    .filter((t) => t.label)
+    .map((t) => `${t.label}: ${t.p.map((id) => diagram.nodes[id.replace(/^@/, '')]?.t ?? id).join(' to ')}`);
+  const desc = [
+    focusTitles.length ? `Highlighted: ${focusTitles.join(', ')}.` : '',
+    scene.focus?.links?.length ? `Highlighted interfaces: ${scene.focus.links.join(', ')}.` : '',
+    routes.length ? `Traffic: ${routes.join('; ')}.` : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+  const descId = useId();
   const clock = clockRef.current;
 
   return (
@@ -161,8 +175,10 @@ export default function ArchDiagram({
       viewBox={`0 0 ${g.w} ${g.h}`}
       role="group"
       aria-label={aria}
+      aria-describedby={desc ? descId : undefined}
       style={{ width: '100%', height: 'auto', maxHeight: maxHeight ?? undefined, display: 'block', margin: '0 auto' }}
     >
+      {desc && <desc id={descId}>{desc}</desc>}
       <defs>
         <filter id={`glow-${diagram.id}`} x="-60%" y="-60%" width="220%" height="220%">
           <feGaussianBlur stdDeviation="4" result="b" />

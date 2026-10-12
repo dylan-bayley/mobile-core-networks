@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { K, PANEL, EDGE, MONO, MUTED, FAINT, TEXT_2 } from '../theme.js';
 import { makeQuestions } from '../lib/makeQuestions.js';
 import { GLOSSARY } from '../data/reference/glossary.js';
@@ -15,8 +15,9 @@ function Choice({ q, onAnswer }) {
         return (
           <button
             key={i}
-            disabled={done}
+            aria-disabled={done || undefined}
             onClick={() => {
+              if (done) return;
               setPicked(i);
               onAnswer(o.correct);
             }}
@@ -25,6 +26,18 @@ function Choice({ q, onAnswer }) {
           >
             <span style={{ fontFamily: MONO, fontSize: 10, color: MUTED, marginRight: 8 }}>{String.fromCharCode(65 + i)}</span>
             {o.label}
+            {state === 'right' && (
+              <>
+                <span aria-hidden="true" style={{ color: colour }}> ✓</span>
+                <span className="sr-only"> (correct answer)</span>
+              </>
+            )}
+            {state === 'wrong' && (
+              <>
+                <span aria-hidden="true" style={{ color: colour }}> ✗</span>
+                <span className="sr-only"> (your answer, incorrect)</span>
+              </>
+            )}
           </button>
         );
       })}
@@ -45,8 +58,9 @@ function Order({ q, onAnswer }) {
         return (
           <button
             key={i}
-            disabled={chosen || done}
+            aria-disabled={chosen || done || undefined}
             onClick={() => {
+              if (chosen || done) return;
               const next = [...picked, i];
               setPicked(next);
               if (next.length === q.items.length) onAnswer(next.every((idx, k) => q.items[idx].order === k));
@@ -60,7 +74,13 @@ function Order({ q, onAnswer }) {
             {it.label}
             {done && it.order !== pos && (
               <span className="ml-auto" style={{ fontFamily: MONO, fontSize: 10, color: MUTED }}>
-                was #{it.order + 1}
+                <span aria-hidden="true">✗ </span>was #{it.order + 1}
+              </span>
+            )}
+            {done && it.order === pos && (
+              <span className="ml-auto" style={{ fontFamily: MONO, fontSize: 10, color: K.user.c }}>
+                <span aria-hidden="true">✓</span>
+                <span className="sr-only">right position</span>
               </span>
             )}
           </button>
@@ -113,6 +133,13 @@ export default function Quiz({ scenario, geo, onGo, onClose, best, onScore, onGl
   // so there's no reset effect here: one would leave a half-answered question
   // stuck, and would regenerate the first question after it had painted.
 
+  // Answering ends the question; move focus to the verdict so it's read out
+  // and Tab continues to "show me" and "Next question".
+  const resultRef = useRef(null);
+  useEffect(() => {
+    if (answered != null) resultRef.current?.focus();
+  }, [answered]);
+
   const q = questions[index];
   const finished = index >= questions.length;
 
@@ -164,8 +191,8 @@ export default function Quiz({ scenario, geo, onGo, onClose, best, onScore, onGl
             <>
               <Explanation q={q} scenario={scenario} onGlossaryOpen={onGlossaryOpen} activeGlossaryKey={activeGlossaryKey} />
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="text-xs" style={{ color: answered ? K.user.c : K.media.c }}>
-                  {answered ? 'Correct.' : 'Incorrect.'}
+                <span ref={resultRef} tabIndex={-1} className="text-xs outline-none" style={{ color: answered ? K.user.c : K.media.c }}>
+                  {answered ? '✓ Correct.' : '✗ Incorrect.'}
                 </span>
                 <button
                   onClick={() => onGo(q.stepIndex)}
