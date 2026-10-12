@@ -20,9 +20,11 @@ export function makeEndcAdditionDelta({ afterId, trafficStepId = 'user-plane-tra
       { id: 'rrc-reconfig-scg', t: 'RRC reconfiguration adds the SCG', m: 'RRCConnectionReconfiguration (SCG config)', p: ['enb', 'ue'], k: 'radio',
         d: "The eNodeB — the UE's only RRC anchor in EN-DC — forwards the gNB's radio configuration to the UE inside its own RRC message. The UE never talks RRC directly to the gNB; the eNodeB stays the single point of control." },
       { id: 'nr-random-access', t: 'Random access to the gNB', m: 'RACH (SCG)', p: ['ue', 'gnb'], k: 'radio',
-        d: 'The UE performs random access on the new NR secondary cell and confirms the reconfiguration back to the eNodeB. From here the UE has two simultaneous radio legs: LTE PCell for the master, NR SCell(s) for the secondary.' },
+        d: 'The UE performs random access on the new NR secondary cell and confirms the reconfiguration back to the eNodeB. From here the UE has two simultaneous radio legs: the LTE PCell for the master, and the NR PSCell (plus any further NR SCells) for the secondary.' },
+      { id: 'e-rab-modification', t: 'S-GW switches the downlink to the gNB', m: 'E-RAB Modification Indication → Modify Bearer', p: ['enb', 'mme', 'sgw'], k: 'control',
+        d: "The S-GW still sends this bearer's downlink to the eNodeB and doesn't know the gNB exists. So the eNodeB sends an E-RAB Modification Indication to the MME with the gNB's S1-U address and tunnel ID, and the MME passes them to the S-GW in a Modify Bearer Request. From now on the downlink for the bearer goes to the gNB." },
       { id: 'scg-bearer-active', t: 'Split/SCG bearer active', m: 'X2-U + S1-U (SCG bearer)', p: ['gnb', 'sgw'], k: 'user',
-        d: 'The user-plane path for this bearer now runs UE↔gNB over the air, gNB↔S-GW directly over a dedicated S1-U — the "SCG bearer" option most EN-DC deployments use, which bypasses the eNodeB entirely for the bulk of the data instead of splitting it across both legs.' },
+        d: 'The user-plane path for this bearer now runs UE↔gNB over the air, gNB↔S-GW directly over S1-U. This is drawn as an SCG bearer, which bypasses the eNodeB for this bearer\'s data; many deployments instead use a split bearer terminated at the gNB (the industry\'s "option 3x"), where the gNB also forwards part of the traffic over X2-U to the eNodeB. Either way the S-GW now talks to the gNB.' },
     ),
     patch(trafficStepId, () => ({
       m: 'GTP-U payload (SCG bearer)',
@@ -36,9 +38,9 @@ export function makeEndcAdditionDelta({ afterId, trafficStepId = 'user-plane-tra
 /**
  * Voice in EN-DC has no separate 5G core to "fall back" from — IMS
  * registration already rides the LTE anchor, so a call is just VoLTE. The
- * one thing that changes is the NR secondary: most EN-DC deployments
- * release or suspend it for the call's duration rather than try to
- * coordinate guaranteed-bit-rate scheduling across two independently
+ * one thing that changes is the NR secondary: many EN-DC deployments
+ * release or suspend it when the call's QCI 1 bearer is set up, rather than
+ * try to coordinate guaranteed-bit-rate scheduling across two independently
  * scheduled radios.
  */
 export function makeNrLegReleaseDelta({ beforeId, afterId }) {
@@ -50,7 +52,7 @@ export function makeNrLegReleaseDelta({ beforeId, afterId }) {
       p: ['enb', 'gnb'],
       k: 'control',
       tag: 'nsa',
-      d: "Many EN-DC deployments release or suspend the NR secondary before a voice call sets up: the eNodeB alone can't guarantee QCI 1's scheduling budget across two independently-scheduled cells, so it's simpler to drop to LTE-only for the call's duration. Either way, the call itself is plain VoLTE: IMS already registered over the LTE anchor, nothing 5G-specific about the signalling that follows.",
+      d: "When the QCI 1 bearer for the call arrives, many EN-DC deployments release or suspend the NR secondary: guaranteeing QCI 1's scheduling budget across two independently scheduled cells is hard, so it's simpler to drop to LTE-only for the call's duration. Either way, the call itself is plain VoLTE: IMS registered over the LTE anchor long before, and nothing in the call signalling is 5G-specific.",
       pitfall: 'This is an implementation choice, not a 3GPP mandate — some networks leave the SCG up throughout. If VoLTE call quality differs between 4G-only and NSA handsets on the same network, this setting is the first place to look.',
     }),
     insertAfter(afterId, {

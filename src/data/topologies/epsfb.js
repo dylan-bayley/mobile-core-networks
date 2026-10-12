@@ -22,7 +22,9 @@ const epcAnchor = {
     { a: 'sgw', b: 'pgw', l: 'S5 / S8', k: 'user', curve: 0, lx: 30 },
     { a: 'mme', b: 'amf', l: 'N26', k: 'control', curve: -70, dash: '6 4', labelT: 0.45, lx: -30 },
     { a: 'pgw', b: 'sbg', l: 'SGi (ims)', k: 'user', curve: 0, labelT: 0.5 },
-    { a: 'pgw', b: 'pcf', l: 'Gx', k: 'diameter', curve: 140, dash: '4 6', labelT: 0.85, lx: 14 },
+    // The combined SMF+PGW-C keeps its N7 policy session with the PCF while
+    // the UE is on LTE; Gx only applies to a standalone PGW and PCRF.
+    { a: 'pgw', b: 'pcf', l: 'N7', k: 'sbi', curve: 140, dash: '4 6', labelT: 0.85, lx: 14 },
   ],
   zones: [
     { x: 14, y: 404, w: 440, h: 212, rx: 10, fill: '#0f1424', label: 'EPC — LTE ANCHOR FOR EPS FALLBACK', labelX: 26, labelY: 422, labelColor: '#4a5a7d' },

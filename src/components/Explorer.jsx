@@ -34,7 +34,7 @@ const DIAGRAM_MAX_HEIGHT_NARROW = '48vh';
 const WIDE_QUERY = '(min-width: 1280px)'; // Tailwind `xl` — where the aside moves beside the diagram
 
 const BEYOND =
-  "Roaming swaps S5 for S8 with the P-GW in the home network. CUPS splits the EPG into EPG-C and EPG-U over Sx, which is the same control/user separation you'll meet again as SMF and UPF in 5G — where the EIR becomes the 5G-EIR on N17, and SMS keeps working over NAS through the AMF and an SMSF.";
+  "Roaming swaps S5 for S8 with the P-GW in the home network. CUPS splits each gateway into a control part (SGW-C, PGW-C) and a user-plane part (SGW-U, PGW-U) over Sx, which is the same control/user separation you'll meet again as SMF and UPF in 5G — where the EIR becomes the 5G-EIR on N17, and SMS keeps working over NAS through the AMF and an SMSF.";
 
 const readUrl = () => {
   if (typeof window === 'undefined') return {};
@@ -343,6 +343,10 @@ export default function Explorer() {
           <p className="basis-full text-xs" style={{ color: MUTED }}>
             Pick a network and a session type, then watch the signalling walk the reference points one message at a time.
             <span className="hidden sm:inline" style={{ fontFamily: MONO, color: FAINT }}> Space play/pause · ←/→ step · ? for all shortcuts</span>
+          </p>
+          <p className="basis-full text-xs" style={{ color: MUTED }}>
+            In practice: some nodes carry one vendor’s product names (Ericsson’s SBG, MTAS, EPG, M-MGw). The Reference panel below maps
+            them to the 3GPP functions.
           </p>
         </header>
 

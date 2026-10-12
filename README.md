@@ -3,7 +3,7 @@
 An animated, interactive guide to the mobile core network, in four sections:
 
 - **Learn** — five animated architecture lessons: the 4G EPC, the 5G core (service-based and reference-point views, CUPS, slicing), EPC/5GC interworking, 5G SA vs NSA (options 2, 3, 3a, 3x), and IMS (registration, service triggers, VoLTE vs VoNR QoS, breakout and interconnect).
-- **Components** — one page per network element (8 EPC, 18 5GC, 9 IMS, plus the eNodeB and gNB): responsibilities, interfaces, services, 4G/5G counterparts, where it appears in the flows, and short animated vignettes.
+- **Components** — one page per network element (8 EPC, 19 5GC, 9 IMS, plus the eNodeB and gNB): responsibilities, interfaces, services, 4G/5G counterparts, where it appears in the flows, and short animated vignettes.
 - **Flows** — the call-flow explorer described below.
 - **Glossary** — every acronym, each with its own link.
 

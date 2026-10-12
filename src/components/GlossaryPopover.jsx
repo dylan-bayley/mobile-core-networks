@@ -1,6 +1,6 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { K, PANEL, EDGE, MONO, SANS, MUTED } from '../theme.js';
+import { K, PANEL, EDGE, MONO, SANS, MUTED, TEXT_2 } from '../theme.js';
 import { resolveGlossaryKey } from '../lib/resolveGlossaryKey.js';
 import { componentForTerm } from '../data/components/index.js';
 
@@ -142,6 +142,12 @@ export default function GlossaryPopover({ target, glossary, onClose, topology, o
       {entry.note && (
         <p className="mt-1 text-xs leading-relaxed" style={{ color: MUTED }}>
           {entry.note}
+        </p>
+      )}
+      {entry.inPractice && (
+        <p className="mt-1 text-xs leading-relaxed" style={{ color: MUTED }}>
+          <span style={{ color: TEXT_2 }}>In practice: </span>
+          {entry.inPractice}
         </p>
       )}
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs" style={{ fontFamily: MONO }}>

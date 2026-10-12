@@ -13,7 +13,7 @@ Guidance for working in this repo. The README covers layout, data schemas and ru
 
 - **Every fact in Learn and Components cites an official source.** Add the document to `src/data/reference/sources.js` if it's new, and cite as `{ src, clause }`. Only give a clause number you have checked in the listed version; otherwise cite the document without a clause.
 - **Diagrams are original.** Don't reproduce figures from books or vendor material. Rommer et al., *The Core Network for 5G Advanced*, is the inspiration for the lesson style, not a source to copy.
-- **Keep definitions vendor-neutral.** Vendor product names belong only in a component's labelled `inPractice` note.
+- **Keep definitions vendor-neutral.** Vendor product names belong only in a labelled `inPractice` note: on a component, or on a glossary entry. The one exception is the Flows explorer, whose diagrams use Ericsson product names for some nodes (SBG, MTAS, EPG, M-MGw). That is labelled in the explorer's header, and the Reference panel's naming table maps those names to the 3GPP functions.
 - **Say where industry shorthand isn't standard.** For example, "option 3x" isn't a 3GPP term: 3GPP names the bearer types (TS 37.340 §4.2.2).
 - **Ask before adding a main call flow.** Short per-component vignettes (`src/data/components/vignettes.js`) are fine; they stay out of `FLOWS`.
 

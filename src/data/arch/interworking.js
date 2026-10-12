@@ -24,7 +24,7 @@ export const diagram = {
     smf: { t: 'SMF + PGW-C', s: 'Combined control', gen: '5g', g: 'SMF' },
     upf: { t: 'UPF + PGW-U', s: 'Combined user plane', gen: '5g', g: 'UPF' },
     hss: { t: 'HSS + UDM', s: 'Combined subscriber data', gen: '5g', g: 'UDM' },
-    pcf: { t: 'PCF', s: 'Policy', gen: '5g' },
+    pcf: { t: 'PCF + PCRF', s: 'Combined policy', gen: '5g', g: 'PCF' },
     dn: { t: 'DN', s: 'Data network', gen: 'ext' },
   },
   layouts: {

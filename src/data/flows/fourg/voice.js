@@ -10,7 +10,7 @@ export const steps = [
   { id: 'scscf-assignment', t: 'S-CSCF assignment', m: 'Mw + Cx UAR / UAA', p: ['sbg', 'cscf', 'hss'], rt: true, k: 'ims',
     d: 'P-CSCF forwards to the I-CSCF, which queries the HSS over Cx to select an S-CSCF for this subscriber. Ericsson runs I-CSCF and S-CSCF as one CSCF node, virtualised as part of Cloud IMS.' },
   { id: 'ims-aka', t: 'IMS-AKA challenge', m: '401 → REGISTER → 200 OK', p: ['cscf', 'sbg', 'ue'], rt: true, k: 'ims',
-    d: 'S-CSCF challenges with a 401; the UE computes the response on its ISIM and re-REGISTERs. S-CSCF then downloads the service profile with Cx SAR/SAA, and IPsec security associations come up on Gm.' },
+    d: 'The S-CSCF fetches an authentication vector from the HSS (Cx MAR/MAA) and challenges with a 401. The P-CSCF keeps the keys from the challenge and sets up IPsec security associations with the UE, so the second REGISTER, carrying the response the ISIM computed, is already protected on Gm. The S-CSCF then downloads the service profile with Cx SAR/SAA.' },
   { id: 'third-party-register', t: 'Third-party REGISTER', m: 'ISC REGISTER', p: ['cscf', 'mtas'], k: 'ims',
     d: "Initial Filter Criteria in the service profile trigger a third-party REGISTER towards the MTAS, Ericsson's MMTel application server. MTAS pulls the telephony data it needs — diversion, barring, CLI presentation — from the HSS over Sh." },
   { id: 'invite-sdp-offer', t: 'INVITE with SDP offer', m: 'INVITE (SDP)', p: ['ue', 'sbg', 'cscf'], k: 'ims',
@@ -35,7 +35,7 @@ export const steps = [
   { id: 'pstn-breakout', t: 'PSTN breakout, if off-net', m: 'SIP → ISUP', p: ['cscf', 'mgcf', 'pstn'], k: 'tdm',
     d: 'For a fixed or legacy mobile number, the MGCF interworks SIP to ISUP or BICC and the Ericsson M-MGw handles the media, transcoding AMR to G.711.' },
   { id: 'release-srvcc', t: 'Release — and SRVCC', m: 'BYE → Rx STR → Delete Bearer', p: ['ue', 'sbg', 'pcrf'], k: 'ims',
-    d: 'BYE triggers an Rx Session Termination, SAPC withdraws the rule over Gx and the QCI 1 bearer is deleted; QCI 5 stays up for the next call. If the UE runs out of LTE coverage mid-call, the MME triggers SRVCC over Sv and the MSC-S continues the call on WCDMA or GSM.' },
+    d: 'BYE triggers an Rx Session Termination, SAPC withdraws the rule over Gx and the QCI 1 bearer is deleted; QCI 5 stays up for the next call. If the UE runs out of LTE coverage mid-call, the eNodeB decides on SRVCC and tells the MME, which starts the PS-to-CS handover over Sv; the MSC-S continues the call on WCDMA or GSM.' },
 ];
 
 export const ambient = [{ afterId: 'media-flowing', p: ['ue', 'enb', 'sgw', 'pgw', 'sbg'], k: 'media' }];

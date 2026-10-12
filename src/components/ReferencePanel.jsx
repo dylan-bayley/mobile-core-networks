@@ -38,14 +38,17 @@ function ReferencePanel({ nodeNaming, qci, fiveQi, eirStatus, glossary, beyond, 
       >
         <span>{open ? '▾' : '▸'} Reference</span>
         <span className="text-xs" style={{ color: MUTED }}>
-          node naming · QoS values · full acronym glossary · how the EIR decides · beyond these flows
+          vendor node names · QoS values · full acronym glossary · how the EIR decides · beyond these flows
         </span>
       </button>
 
       {open && (
         <div className="mt-2 grid gap-3 lg:grid-cols-3">
           <div className="rounded p-3" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
-            <h3 style={{ fontFamily: MONO, fontSize: 11, color: FAINT, letterSpacing: '0.12em' }}>NODE NAMING — 3GPP FUNCTION → ERICSSON PRODUCT</h3>
+            <h3 style={{ fontFamily: MONO, fontSize: 11, color: FAINT, letterSpacing: '0.12em' }}>IN PRACTICE — 3GPP FUNCTION → ERICSSON PRODUCT</h3>
+            <p className="mt-1 text-xs" style={{ color: MUTED }}>
+              One vendor’s product names, which the call-flow diagrams use for some nodes. They are deployment names, not 3GPP terms.
+            </p>
             <div className="mt-2 max-h-80 space-y-2 overflow-y-auto pr-1">
               {nodeNaming.map((row, i) => (
                 <div key={i} className="text-xs" style={{ borderBottom: '1px solid #131d33', paddingBottom: 6 }}>

@@ -88,6 +88,12 @@ export default function GlossaryPage({ term }) {
                   {e.note}
                 </dd>
               )}
+              {e.inPractice && (
+                <dd className="mt-0.5 text-sm" style={{ color: MUTED }}>
+                  <span style={{ color: TEXT_2 }}>In practice: </span>
+                  {e.inPractice}
+                </dd>
+              )}
             </div>
           );
         })}

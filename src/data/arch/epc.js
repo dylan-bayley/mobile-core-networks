@@ -148,7 +148,7 @@ export const scenes = [
       { p: ['ue', 'enb', 'sgw', 'pgw', 'pdn'], k: 'user', n: 5 },
       { p: ['enb', 'mme', 'sgw'], k: 'control', n: 1, speed: 0.3 },
     ],
-    d: 'Signalling (the control plane) travels S1-MME, S11, S6a and Gx. Your packets (the user plane) travel S1-U, S5 and SGi through the two gateways. In classic 4G the gateways do both jobs: each S-GW and P-GW is one box handling its control and user plane together.',
+    d: 'Signalling (the control plane) travels S1-MME, S11, S6a and Gx. Your packets (the user plane) travel S1-U, S5 and SGi through the two gateways. S5 carries both: GTP-C to set up sessions between the gateways, and GTP-U for the packets. In classic 4G the gateways do both jobs: each S-GW and P-GW is one box handling its control and user plane together.',
     cites: [c401('4.2.3')],
   },
   {
