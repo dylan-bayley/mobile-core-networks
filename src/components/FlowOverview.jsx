@@ -1,4 +1,4 @@
-import { K, PANEL, EDGE, MONO, MUTED, FAINT, ACTIVE_BG, ACTIVE_EDGE } from '../theme.js';
+import { K, PANEL, EDGE, MONO, MUTED, FAINT, ACTIVE_BG, ACTIVE_EDGE, TEXT } from '../theme.js';
 import { GLOSSARY } from '../data/reference/glossary.js';
 import { autolinkAcronyms } from '../lib/autolinkAcronyms.jsx';
 
@@ -28,7 +28,7 @@ export default function FlowOverview({ scenario, networks, flows, networkId, onS
         </span>
       </div>
       {tagline && (
-        <p className="mt-1 text-xs" style={{ color: '#c6d4ea' }}>
+        <p className="mt-1 text-xs" style={{ color: TEXT }}>
           {tagline}
         </p>
       )}
@@ -58,7 +58,7 @@ export default function FlowOverview({ scenario, networks, flows, networkId, onS
               type="button"
               onClick={() => onSwitch(network.id, scenario.flowId)}
               className="rounded px-2 py-0.5 text-xs"
-              style={{ background: ACTIVE_BG, border: `1px solid ${EDGE}`, color: '#dbe4f3' }}
+              style={{ background: ACTIVE_BG, border: `1px solid ${EDGE}`, color: TEXT }}
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = ACTIVE_EDGE)}
               onMouseLeave={(e) => (e.currentTarget.style.borderColor = EDGE)}
               title={`${network.label}: ${flow.label} (${flow.steps.length} steps)`}

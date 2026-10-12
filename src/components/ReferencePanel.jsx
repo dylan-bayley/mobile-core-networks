@@ -1,5 +1,5 @@
 import { memo, useState } from 'react';
-import { K, PANEL, EDGE, MONO, MUTED, FAINT } from '../theme.js';
+import { K, PANEL, EDGE, MONO, MUTED, FAINT, TEXT, TEXT_2 } from '../theme.js';
 import GlossaryPanel from './GlossaryPanel.jsx';
 
 function QosTable({ title, rows, colorFor }) {
@@ -11,7 +11,7 @@ function QosTable({ title, rows, colorFor }) {
           <div key={i} className="flex items-baseline gap-3 text-xs" style={{ borderBottom: '1px solid #131d33', paddingBottom: 6 }}>
             <span style={{ fontFamily: MONO, color: colorFor(row), fontSize: 13, fontWeight: 700, width: 24 }}>{row[0]}</span>
             <span className="flex-1">
-              <span style={{ color: '#e6edfa' }}>{row[2]}</span>
+              <span style={{ color: TEXT }}>{row[2]}</span>
               <span style={{ color: MUTED }}> · {row[1]}</span>
             </span>
             <span style={{ fontFamily: MONO, color: MUTED }}>{row[3]}</span>
@@ -34,25 +34,28 @@ function ReferencePanel({ nodeNaming, qci, fiveQi, eirStatus, glossary, beyond, 
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         className="mt-3 flex w-full flex-wrap items-baseline gap-x-3 rounded px-3 py-2 text-left text-sm"
-        style={{ background: PANEL, border: `1px solid ${EDGE}`, color: '#dbe4f3', fontFamily: MONO }}
+        style={{ background: PANEL, border: `1px solid ${EDGE}`, color: TEXT, fontFamily: MONO }}
       >
         <span>{open ? '▾' : '▸'} Reference</span>
         <span className="text-xs" style={{ color: MUTED }}>
-          node naming · QoS values · full acronym glossary · how the EIR decides · beyond these flows
+          vendor node names · QoS values · full acronym glossary · how the EIR decides · beyond these flows
         </span>
       </button>
 
       {open && (
         <div className="mt-2 grid gap-3 lg:grid-cols-3">
           <div className="rounded p-3" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
-            <h3 style={{ fontFamily: MONO, fontSize: 11, color: FAINT, letterSpacing: '0.12em' }}>NODE NAMING — 3GPP FUNCTION → ERICSSON PRODUCT</h3>
+            <h3 style={{ fontFamily: MONO, fontSize: 11, color: FAINT, letterSpacing: '0.12em' }}>IN PRACTICE — 3GPP FUNCTION → ERICSSON PRODUCT</h3>
+            <p className="mt-1 text-xs" style={{ color: MUTED }}>
+              One vendor’s product names, which the call-flow diagrams use for some nodes. They are deployment names, not 3GPP terms.
+            </p>
             <div className="mt-2 max-h-80 space-y-2 overflow-y-auto pr-1">
               {nodeNaming.map((row, i) => (
                 <div key={i} className="text-xs" style={{ borderBottom: '1px solid #131d33', paddingBottom: 6 }}>
                   <div className="flex flex-wrap items-baseline gap-2">
                     <span style={{ color: MUTED }}>{row[0]}</span>
                     <span style={{ color: '#3d5178' }}>→</span>
-                    <span className="font-semibold" style={{ color: '#e6edfa' }}>
+                    <span className="font-semibold" style={{ color: TEXT }}>
                       {row[1]}
                     </span>
                   </div>
@@ -77,7 +80,7 @@ function ReferencePanel({ nodeNaming, qci, fiveQi, eirStatus, glossary, beyond, 
               {eirStatus.map((row, i) => (
                 <div key={i} className="text-xs" style={{ borderBottom: '1px solid #131d33', paddingBottom: 6 }}>
                   <span style={{ fontFamily: MONO, color: row[1], fontWeight: 700 }}>{row[0]}</span>
-                  <div style={{ color: '#a8b8d4' }}>{row[2]}</div>
+                  <div style={{ color: TEXT_2 }}>{row[2]}</div>
                 </div>
               ))}
             </div>

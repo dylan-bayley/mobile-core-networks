@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { K, PANEL, EDGE, MONO, MUTED, FAINT, TEXT_2, ACTIVE_BG } from '../theme.js';
+import { K, PANEL, EDGE, MONO, MUTED, FAINT, TEXT_2, ACTIVE_BG, TEXT } from '../theme.js';
 import { GLOSSARY } from '../data/reference/glossary.js';
 import { resolveGlossaryKey } from '../lib/resolveGlossaryKey.js';
 import { autolinkAcronyms } from '../lib/autolinkAcronyms.jsx';
@@ -21,15 +21,20 @@ function CopyLink({ url }) {
     }
   };
   return (
-    <button
-      type="button"
-      onClick={copy}
-      title="Copy a link to this exact step"
-      className="ml-auto rounded px-2 py-0.5"
-      style={{ fontFamily: MONO, fontSize: 10, color: copied ? '#3fd6a0' : MUTED, border: `1px solid ${EDGE}`, background: 'transparent' }}
-    >
-      {copied ? 'copied ✓' : 'copy link'}
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={copy}
+        title="Copy a link to this exact step"
+        className="ml-auto rounded px-2 py-0.5"
+        style={{ fontFamily: MONO, fontSize: 10, color: copied ? '#3fd6a0' : MUTED, border: `1px solid ${EDGE}`, background: 'transparent' }}
+      >
+        {copied ? 'copied ✓' : 'copy link'}
+      </button>
+      <span className="sr-only" aria-live="polite">
+        {copied ? 'Link to this step copied' : ''}
+      </span>
+    </>
   );
 }
 
@@ -101,7 +106,7 @@ export default function StepDetail({
       {cur.pitfall && (
         <aside
           className="mt-3 rounded px-3 py-2 text-xs leading-relaxed"
-          style={{ background: `${accent}12`, borderLeft: `3px solid ${accent}`, color: '#c6d4ea' }}
+          style={{ background: `${accent}12`, borderLeft: `3px solid ${accent}`, color: TEXT }}
         >
           <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', color: accent }}>IN PRACTICE </span>
           {autolinkAcronyms(cur.pitfall, GLOSSARY, linkOpts)}
@@ -126,7 +131,7 @@ export default function StepDetail({
                 {a.network.short}
               </span>
               <span className="text-xs leading-snug">
-                <span style={{ color: '#e6edfa' }}>{a.step.t}</span>
+                <span style={{ color: TEXT }}>{a.step.t}</span>
                 <span style={{ color: MUTED }}> · {a.step.m}</span>
                 <span style={{ color: FAINT }}> · {a.flowLabel}</span>
               </span>

@@ -7,7 +7,7 @@ export const blurb = 'VoLTE on the LTE anchor — the NR secondary plays no part
 
 export const steps = compose(
   baseSteps,
-  ...makeNrLegReleaseDelta({ beforeId: 'sip-register', afterId: 'release-srvcc' }),
+  ...makeNrLegReleaseDelta({ beforeId: 'e-rab-setup', afterId: 'release-srvcc' }),
 );
 
 export { ambient };

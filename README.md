@@ -3,7 +3,7 @@
 An animated, interactive guide to the mobile core network, in four sections:
 
 - **Learn** — five animated architecture lessons: the 4G EPC, the 5G core (service-based and reference-point views, CUPS, slicing), EPC/5GC interworking, 5G SA vs NSA (options 2, 3, 3a, 3x), and IMS (registration, service triggers, VoLTE vs VoNR QoS, breakout and interconnect).
-- **Components** — one page per network element (8 EPC, 18 5GC, 9 IMS, plus the eNodeB and gNB): responsibilities, interfaces, services, 4G/5G counterparts, where it appears in the flows, and short animated vignettes.
+- **Components** — one page per network element (8 EPC, 19 5GC, 9 IMS, plus the eNodeB and gNB): responsibilities, interfaces, services, 4G/5G counterparts, where it appears in the flows, and short animated vignettes.
 - **Flows** — the call-flow explorer described below.
 - **Glossary** — every acronym, each with its own link.
 
@@ -69,7 +69,7 @@ scene = {
 
 A lesson may also export `compare = { scenes: [a, b], labels, title, columns, rows, cites }`: the two scenes are drawn side by side (a toggle on narrow screens) above a comparison table. Component vignettes (`src/data/components/vignettes.js`) play on the 5G core diagram unless they name another `lesson` and `layout`.
 
-Moving between scenes tweens node positions and fades, draws new links in, and streams traffic dots along routes; under `prefers-reduced-motion` (tracked live) everything snaps to its end state and autoplay stops. Every diagram has a `wide` layout and a portrait `narrow` one for phones. `npm test` validates lessons, vignettes and components: known sources, nodes placed inside the viewBox in both modes, scenes that only reference drawn nodes and links, and cross-links that resolve.
+Moving between scenes tweens node positions and fades, draws new links in, and streams traffic dots along routes; under `prefers-reduced-motion` (tracked live) everything snaps to its end state and autoplay stops. Every diagram has a `wide` layout and a portrait `narrow` one for phones. `npm test` validates lessons, vignettes and components: known sources, node boxes (at their drawn width) inside the viewBox in both modes, unique scene ids, scenes that only reference drawn nodes and links (traffic hops included), spawn sources shown in the previous scene, complete quick-check questions, and cross-links and lesson links that resolve.
 
 ### Authored vs. composed
 
@@ -113,8 +113,8 @@ Moving between scenes tweens node positions and fades, draws new links in, and s
 - **First visit**: an intro card explains the site, lists the suggested learning order and holds playback until *Start*. Dismissed state lives in `localStorage` (`mcn.introSeen`); the header **? help** button reopens it. The default landing flow is 4G data attach (`DEFAULT_FLOW` in `sessions.js`).
 - **Playback**: each step's duration is derived from its description length (≈200 wpm, clamped 3–20 s). Speeds 0.5×–2×. The *auto-advance* switch, when off, holds at the end of every step; Play/Space continues.
 - **Views**: Topology (animated) or Sequence (ladder diagram of the same steps). On screens narrower than the `xl` breakpoint the step text is rendered under the transport controls and the diagram scrolls horizontally to follow the current step.
-- **Progress**: furthest step and completion per (network, flow), plus best quiz score, in `localStorage` (`mcn.progress`, see `src/lib/progress.js`). Completed flows get a tick in the selector; *reset progress* is in the reference panel.
-- **Quiz**: ten questions generated from the current flow (which interface carries a message, where a step ends up, order four steps). Each answer is followed by the step's own description as the explanation.
+- **Progress**: furthest step and completion per (network, flow), plus best quiz score (lessons are stored as `lesson/<id>` and count as complete once the last scene plays through or the quick check is done), in `localStorage` (`mcn.progress`, see `src/lib/progress.js`). Completed flows get a tick in the selector; *reset progress* is in the reference panel.
+- **Quiz**: up to ten questions generated from the current flow (which interface carries a message, where a step ends up, order four steps), none repeated. Each answer is followed by the step's own description as the explanation.
 - **Glossary**: every acronym in prose, node and link labels is clickable; the header search (`/`) looks up any term; a node definition offers *show on diagram*.
 - **Keyboard**: Space play/pause, ←/→ step, Home/End first/last, `/` glossary search, `?` shortcut help, `g` then `h`/`c`/`f`/`g` to jump between sections, `m` to switch the 5G core drawing in lessons.
 - **URL**: `#/flows?net=&session=&variant=&step=&view=` — every step is deep-linkable ("copy link" in the step panel); browser back/forward works for user-initiated jumps.

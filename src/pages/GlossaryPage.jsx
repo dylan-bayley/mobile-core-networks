@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { GLOSSARY } from '../data/reference/glossary.js';
 import { componentForTerm } from '../data/components/index.js';
 import { filterGlossary, glossaryEntries } from '../lib/filterGlossary.js';
-import { PANEL, EDGE, MONO, FAINT, MUTED, TEXT, TEXT_2, K, ACTIVE_EDGE } from '../theme.js';
+import { PANEL, EDGE, MONO, FAINT, MUTED, TEXT, TEXT_2, K, ACTIVE_EDGE, BG } from '../theme.js';
 
 const idFor = (key) => `term-${key.replace(/[^A-Za-z0-9]+/g, '-')}`;
 
@@ -13,10 +13,12 @@ export default function GlossaryPage({ term }) {
   const filtered = useMemo(() => filterGlossary(entries, query), [entries, query]);
   const listRef = useRef(null);
 
+  // Deferred, so it runs after the app's scroll-to-top for a new page
+  // (parent effects run after this child's) rather than being undone by it.
   useEffect(() => {
-    if (!term) return;
-    const el = document.getElementById(idFor(term));
-    el?.scrollIntoView({ block: 'center' });
+    if (!term) return undefined;
+    const t = setTimeout(() => document.getElementById(idFor(term))?.scrollIntoView({ block: 'center' }));
+    return () => clearTimeout(t);
   }, [term]);
 
   const letters = useMemo(() => [...new Set(filtered.map(([k]) => k[0].toUpperCase()))], [filtered]);
@@ -32,7 +34,7 @@ export default function GlossaryPage({ term }) {
           {entries.length} terms used across the lessons and call flows. Every term has its own link.
         </p>
       </header>
-      <div className="sticky top-[53px] z-10 mt-4 py-2" style={{ background: '#070b14ee' }}>
+      <div className="sticky z-10 mt-4 py-2" style={{ top: 'var(--header-h, 53px)', background: `${BG}ee` }}>
         <input
           type="search"
           value={query}
@@ -84,6 +86,12 @@ export default function GlossaryPage({ term }) {
               {e.note && (
                 <dd className="mt-0.5 text-sm" style={{ color: MUTED }}>
                   {e.note}
+                </dd>
+              )}
+              {e.inPractice && (
+                <dd className="mt-0.5 text-sm" style={{ color: MUTED }}>
+                  <span style={{ color: TEXT_2 }}>In practice: </span>
+                  {e.inPractice}
                 </dd>
               )}
             </div>

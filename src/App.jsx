@@ -1,45 +1,58 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRoute } from './lib/useRoute.js';
 import { GlossaryContext } from './lib/glossaryContext.js';
 import { GLOSSARY } from './data/reference/glossary.js';
 import { lessonMeta } from './data/arch/lessons.js';
 import { componentById } from './data/components/index.js';
-import { BG, SANS } from './theme.js';
+import { BG, SANS, MUTED, TEXT } from './theme.js';
 import SiteHeader, { MobileTabBar } from './components/shell/SiteHeader.jsx';
 import GlossaryPopover from './components/GlossaryPopover.jsx';
 import ShortcutsHelp from './components/ShortcutsHelp.jsx';
 import Home from './pages/Home.jsx';
-import LessonPage from './pages/LessonPage.jsx';
-import ComponentsIndex from './pages/ComponentsIndex.jsx';
-import ComponentPage from './pages/ComponentPage.jsx';
-import GlossaryPage from './pages/GlossaryPage.jsx';
 import NotFound from './pages/NotFound.jsx';
-import Explorer from './components/Explorer.jsx';
+
+// The heavier sections load on first visit, so the landing page doesn't
+// download every lesson, flow and diagram up front.
+const LessonPage = lazy(() => import('./pages/LessonPage.jsx'));
+const ComponentsIndex = lazy(() => import('./pages/ComponentsIndex.jsx'));
+const ComponentPage = lazy(() => import('./pages/ComponentPage.jsx'));
+const GlossaryPage = lazy(() => import('./pages/GlossaryPage.jsx'));
+const Explorer = lazy(() => import('./components/Explorer.jsx'));
 
 const SITE = 'Mobile Core';
 
+/** Shown for the moment a section's code is loading. */
+function PageLoading() {
+  return (
+    <p role="status" className="mx-auto max-w-[1100px] px-4 py-10 text-sm" style={{ color: MUTED }}>
+      Loading…
+    </p>
+  );
+}
+
 /** Resolves the hash route to a page element, its section (for the nav) and a document title. */
-function resolvePage(segments) {
+function resolvePage(segments, query) {
   const [section, id] = segments;
   if (!section) return { key: 'home', section: 'learn', title: `${SITE} — learn the 4G and 5G core`, el: <Home /> };
   if (section === 'learn') {
     const meta = id && lessonMeta(id);
-    if (meta) return { key: `learn/${id}`, section: 'learn', title: `${meta.title} · ${SITE}`, el: <LessonPage lessonId={id} /> };
-    return { key: 'home', section: 'learn', title: SITE, el: <Home /> };
+    if (meta) return { key: `learn/${id}`, section: 'learn', title: `${meta.title} · ${SITE}`, el: <LessonPage lessonId={id} query={query} /> };
+    if (!id) return { key: 'home', section: 'learn', title: SITE, el: <Home /> };
   }
   if (section === 'components') {
     if (!id) return { key: 'components', section: 'components', title: `Components · ${SITE}`, el: <ComponentsIndex /> };
     const c = componentById(id);
     if (c) return { key: `components/${id}`, section: 'components', title: `${c.label} · ${SITE}`, el: <ComponentPage component={c} /> };
   }
-  if (section === 'flows') return { key: 'flows', section: 'flows', title: `Call flows · ${SITE}`, el: <Explorer /> };
+  // The explorer names the flow in the title itself, as it changes flow without a route change.
+  if (section === 'flows') return { key: 'flows', section: 'flows', title: null, el: <Explorer /> };
   if (section === 'glossary') return { key: 'glossary', section: 'glossary', title: `Glossary · ${SITE}`, el: <GlossaryPage term={id ?? null} /> };
   return { key: 'missing', section: null, title: `Not found · ${SITE}`, el: <NotFound /> };
 }
 
 export default function App() {
   const route = useRoute();
-  const page = useMemo(() => resolvePage(route.segments), [route.segments]);
+  const page = useMemo(() => resolvePage(route.segments, route.query), [route.segments, route.query]);
   const mainRef = useRef(null);
   const searchRef = useRef(null);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
@@ -58,7 +71,7 @@ export default function App() {
   // browser's own focus handling is left alone.
   const firstPage = useRef(true);
   useEffect(() => {
-    document.title = page.title;
+    if (page.title) document.title = page.title;
     setGlossaryTarget(null);
     if (firstPage.current) {
       firstPage.current = false;
@@ -97,13 +110,17 @@ export default function App() {
 
   return (
     <GlossaryContext.Provider value={glossaryApi}>
-      <div style={{ background: BG, fontFamily: SANS, color: '#dbe4f3', minHeight: '100%' }} className="flex min-h-full flex-col">
+      <div style={{ background: BG, fontFamily: SANS, color: TEXT, minHeight: '100%' }} className="flex min-h-full flex-col">
         <a href="#main" onClick={(e) => { e.preventDefault(); mainRef.current?.querySelector('h1')?.focus(); }} className="skip-link">
           Skip to content
         </a>
         <SiteHeader section={page.section} searchRef={searchRef} onPickTerm={openTerm} onShortcuts={() => setShortcutsOpen(true)} />
         <main id="main" ref={mainRef} className="flex-1 pb-20 sm:pb-6">
-          {page.el}
+          {/* Keyed so each lesson or component gets a fresh page: no state
+              (player position, tweens) carries over from the last one. */}
+          <Fragment key={page.key}>
+            <Suspense fallback={<PageLoading />}>{page.el}</Suspense>
+          </Fragment>
         </main>
         <MobileTabBar section={page.section} />
       </div>

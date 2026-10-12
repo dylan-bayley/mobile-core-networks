@@ -272,7 +272,7 @@ export const VIGNETTES = {
         id: 'challenge',
         title: 'Challenge and response',
         traffic: msg(['scscf', 'icscf', 'pcscf', 'upf', 'gnb', 'ue'], '401 challenge', 'ims'),
-        d: 'With an authentication vector from the HSS, the S-CSCF challenges the phone. The ISIM answers, the phone registers again, and IPsec security associations come up between the phone and the P-CSCF.',
+        d: 'With an authentication vector from the HSS, the S-CSCF challenges the phone. The P-CSCF uses keys from the challenge to set up IPsec security associations with the phone, and the phone registers again over them with the answer from its ISIM.',
         cites: [{ src: 'ts33203', clause: '6.1.1' }, { src: 'ts33203', clause: '7.0' }],
       },
       {

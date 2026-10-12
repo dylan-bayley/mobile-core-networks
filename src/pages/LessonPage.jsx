@@ -3,13 +3,14 @@ import { LESSONS } from '../data/arch/index.js';
 import { LESSON_META } from '../data/arch/lessons.js';
 import { GLOSSARY } from '../data/reference/glossary.js';
 import { layoutFor } from '../engine/arch.js';
-import { durationFor, useStepPlayer } from '../engine/useStepPlayer.js';
+import { durationFor, useStepPlayer, validSpeed } from '../engine/useStepPlayer.js';
 import { useGlossary } from '../lib/glossaryContext.js';
 import { useReducedMotion } from '../lib/useMediaQuery.js';
 import { useElementWidth, useViewportHeight } from '../lib/useElementWidth.js';
 import { hashQuery, urlWithHashQuery } from '../lib/route.js';
 import { readStored, store } from '../lib/storage.js';
-import { readProgress, writeProgress, recordStep, recordQuiz, flowProgress } from '../lib/progress.js';
+import { readProgress, writeProgress, recordStep, recordQuiz, markCompleted, flowProgress } from '../lib/progress.js';
+import { ignoreShortcut } from '../lib/keys.js';
 import { autolinkAcronyms } from '../lib/autolinkAcronyms.jsx';
 import { K, PANEL, EDGE, MONO, FAINT, MUTED, TEXT, TEXT_2, ACTIVE_BG, ACTIVE_EDGE, GEN } from '../theme.js';
 import ArchDiagram from '../components/arch/ArchDiagram.jsx';
@@ -18,6 +19,9 @@ import Transport from '../components/Transport.jsx';
 import ProgressBar from '../components/ProgressBar.jsx';
 import Sources from '../components/SourceChip.jsx';
 import DataTable from '../components/DataTable.jsx';
+
+/** Home/End only drive the player when focus is in it (or nowhere in particular). */
+const inPlayer = (e) => !(e.target instanceof HTMLElement) || e.target === document.body || !!e.target.closest('[data-player]');
 
 const WIDE_MIN = 720; // below this container width the portrait layouts are used
 const REPS = [
@@ -39,7 +43,7 @@ export function LessonStepper({ current }) {
               <a
                 href={`#/learn/${l.id}`}
                 aria-current={on ? 'page' : undefined}
-                className="flex items-center gap-1.5 rounded px-2.5 py-1 text-xs"
+                className="flex min-h-10 items-center gap-1.5 rounded px-2.5 py-1 text-xs sm:min-h-0"
                 style={{ background: on ? ACTIVE_BG : 'transparent', border: `1px solid ${on ? ACTIVE_EDGE : EDGE}`, color: on ? TEXT : MUTED }}
               >
                 <span style={{ fontFamily: MONO, color: done ? K.user.c : FAINT }}>{done ? '✓' : l.n}</span>
@@ -49,7 +53,7 @@ export function LessonStepper({ current }) {
           );
         })}
         <li>
-          <a href="#/flows" className="flex items-center gap-1.5 rounded px-2.5 py-1 text-xs" style={{ border: `1px dashed ${EDGE}`, color: MUTED }}>
+          <a href="#/flows" className="flex min-h-10 items-center gap-1.5 rounded px-2.5 py-1 text-xs sm:min-h-0" style={{ border: `1px dashed ${EDGE}`, color: MUTED }}>
             <span style={{ fontFamily: MONO, color: FAINT }}>→</span>
             Call flows
           </a>
@@ -101,17 +105,20 @@ function CompareDiagrams({ lesson, scenes, labels, reducedMotion }) {
             <figcaption className="px-3 pt-2 text-sm font-medium" style={{ color: TEXT }}>
               {it.r.scene.title}
             </figcaption>
-            <ArchDiagram
-              diagram={lesson.diagram}
-              current={it.r}
-              first
-              mode={mode}
-              width={colW}
-              maxHeight={mode === 'narrow' ? 520 : 420}
-              reducedMotion={reducedMotion}
-              onOpenTerm={openTerm}
-              activeKey={activeKey}
-            />
+            {/* Wait for the measured width, or the first frame draws the narrow layout. */}
+            {width > 0 && (
+              <ArchDiagram
+                diagram={lesson.diagram}
+                current={it.r}
+                first
+                mode={mode}
+                width={colW}
+                maxHeight={mode === 'narrow' ? 520 : 420}
+                reducedMotion={reducedMotion}
+                onOpenTerm={openTerm}
+                activeKey={activeKey}
+              />
+            )}
           </figure>
         ))}
       </div>
@@ -119,26 +126,34 @@ function CompareDiagrams({ lesson, scenes, labels, reducedMotion }) {
   );
 }
 
-export default function LessonPage({ lessonId }) {
+export default function LessonPage({ lessonId, query }) {
   const lesson = LESSONS[lessonId];
   const reducedMotion = useReducedMotion();
   const { openTerm, activeKey } = useGlossary();
   const [boxRef, boxWidth] = useElementWidth();
   const vh = useViewportHeight();
 
-  const initialScene = useRef(hashQuery().get('scene')).current;
-  const startIndex = Math.max(0, lesson.scenes.findIndex((s) => s.id === initialScene));
+  const initialScene = useRef((query ?? hashQuery()).get('scene')).current;
 
   const steps = useMemo(
     () => lesson.scenes.map((s) => ({ ...s, p: [], dur: s.dur ?? durationFor({ d: s.d, p: [] }) + 1.4 })),
     [lesson],
   );
   const [playing, setPlaying] = useState(() => !reducedMotion && !initialScene);
-  const [speed, setSpeed] = useState(() => readStored('mcn.speed', 1));
+  const [speed, setSpeed] = useState(() => validSpeed(readStored('mcn.speed', 1)));
   const [pauseEach, setPauseEach] = useState(() => readStored('mcn.pauseEach', false));
   const [rep, setRep] = useState(null); // representation override for sba/refpoint scenes
   const [progress, setProgress] = useState(() => readProgress());
-  const player = useStepPlayer(steps, { playing, setPlaying, speed, pauseEach });
+  // Start on a deep-linked scene rather than jump to it in an effect: an
+  // effect would first render scene 0 and write ?scene=<first> into the URL,
+  // which the hashchange that follows a Back would then read back.
+  const player = useStepPlayer(steps, {
+    playing,
+    setPlaying,
+    speed,
+    pauseEach,
+    initialStep: Math.max(0, lesson.scenes.findIndex((s) => s.id === initialScene)),
+  });
 
   useEffect(() => store('mcn.speed', speed), [speed]);
   useEffect(() => store('mcn.pauseEach', pauseEach), [pauseEach]);
@@ -147,33 +162,34 @@ export default function LessonPage({ lessonId }) {
     if (reducedMotion) setPlaying(false);
   }, [reducedMotion]);
 
-  // First mount: jump to a deep-linked scene. A different lesson later
-  // (navigating between lessons reuses this component): start it fresh.
-  // Keyed on the lesson id rather than a first-run flag so StrictMode's
-  // double-invoked effects don't reset the deep link.
-  const shownLesson = useRef(null);
+  // Follow ?scene= when back/forward or a pasted link changes it while this
+  // lesson is open. (App remounts the page per lesson, so nothing leaks
+  // between lessons; the first scene comes from initialStep above.) Keyed on
+  // the route's query and skipped when already there, so StrictMode's
+  // double-invoked effects are harmless.
+  const sceneParam = (query ?? hashQuery()).get('scene');
   useEffect(() => {
-    if (shownLesson.current === lessonId) return;
-    const first = shownLesson.current == null;
-    shownLesson.current = lessonId;
-    if (first) {
-      if (startIndex > 0) player.go(startIndex);
-      return;
-    }
-    player.restart();
-    setRep(null);
-    setPlaying(!reducedMotion);
+    const i = lesson.scenes.findIndex((s) => s.id === sceneParam);
+    if (i < 0 || i === player.step) return;
+    player.go(i);
+    setPlaying(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lessonId]);
+  }, [query]);
 
   const index = Math.min(player.step, lesson.scenes.length - 1);
   const scene = lesson.scenes[index];
   const last = lesson.scenes.length - 1;
   const accent = K[scene.k ?? 'control'].c;
 
+  // Reaching a scene records how far the learner got; the lesson only counts
+  // as complete once its last scene has played through (or the quick check
+  // is done), not when End or a deep link lands on it.
   useEffect(() => {
-    setProgress((p) => recordStep(p, 'lesson', lessonId, index, lesson.scenes.length));
+    setProgress((p) => recordStep(p, 'lesson', lessonId, index, lesson.scenes.length, { completes: false }));
   }, [lessonId, index, lesson.scenes.length]);
+  useEffect(() => {
+    if (player.done) setProgress((p) => markCompleted(p, 'lesson', lessonId, lesson.scenes.length));
+  }, [player.done, lessonId, lesson.scenes.length]);
 
   // Keep ?scene= in the URL so any scene can be linked to.
   useEffect(() => {
@@ -192,19 +208,21 @@ export default function LessonPage({ lessonId }) {
   }, [lesson, index, rep, sceneRep]);
   const shownRep = sceneRep ? rep ?? sceneRep : null;
 
-  const go = useCallback((i) => player.go(Math.max(0, Math.min(last, i))), [player, last]);
+  // Depend on the player's stable functions, not the player object, which
+  // changes every frame while playing (and would re-bind the key handler).
+  const { go: playerGo, restart: playerRestart, done: playerDone, held: playerHeld } = player;
+  const go = useCallback((i) => playerGo(Math.max(0, Math.min(last, i))), [playerGo, last]);
   const togglePlay = useCallback(() => {
     if (playing) return setPlaying(false);
-    if (player.done) player.restart();
-    else if (player.held && index < last) player.go(index + 1);
+    if (playerDone) playerRestart();
+    else if (playerHeld && index < last) playerGo(index + 1);
     setPlaying(true);
-  }, [playing, player, index, last]);
+  }, [playing, playerDone, playerHeld, playerRestart, playerGo, index, last]);
 
   useEffect(() => {
-    const isTyping = (e) => e.target instanceof HTMLElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName);
     const isButton = (e) => e.target instanceof HTMLElement && e.target.closest('button, [role="button"], a');
     const onKey = (e) => {
-      if (isTyping(e) || e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (ignoreShortcut(e)) return;
       if (e.code === 'Space') {
         if (isButton(e)) return;
         e.preventDefault();
@@ -215,12 +233,10 @@ export default function LessonPage({ lessonId }) {
       } else if (e.code === 'ArrowLeft') {
         e.preventDefault();
         go(index - 1);
-      } else if (e.code === 'Home') {
+      } else if ((e.code === 'Home' || e.code === 'End') && inPlayer(e)) {
+        // Elsewhere on this long page Home/End keep scrolling it.
         e.preventDefault();
-        go(0);
-      } else if (e.code === 'End') {
-        e.preventDefault();
-        go(last);
+        go(e.code === 'Home' ? 0 : last);
       } else if (e.key === 'm' && hasReps && sceneRep) {
         setRep((r) => ((r ?? sceneRep) === 'sba' ? 'refpoint' : 'sba'));
       }
@@ -235,10 +251,11 @@ export default function LessonPage({ lessonId }) {
   const mode = boxWidth >= WIDE_MIN ? 'wide' : 'narrow';
   const maxH = mode === 'wide' ? Math.max(360, vh - 300) : Math.round(vh * 0.72);
   const bestQuiz = flowProgress(progress, 'lesson', lessonId)?.bestQuiz ?? null;
-  const onScore = (score, total) => setProgress((p) => recordQuiz(p, 'lesson', lessonId, score, total));
+  const onScore = (score, total) =>
+    setProgress((p) => markCompleted(recordQuiz(p, 'lesson', lessonId, score, total), 'lesson', lessonId, lesson.scenes.length));
 
   const caption = (
-    <section aria-live="polite" className="rounded p-4" style={{ background: PANEL, border: `1px solid ${EDGE}`, borderLeft: `3px solid ${accent}` }}>
+    <section className="rounded p-4" style={{ background: PANEL, border: `1px solid ${EDGE}`, borderLeft: `3px solid ${accent}` }}>
       <p style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.1em', color: FAINT }}>
         SCENE {index + 1} OF {lesson.scenes.length}
       </p>
@@ -249,12 +266,31 @@ export default function LessonPage({ lessonId }) {
         {autolinkAcronyms(scene.d, GLOSSARY, { activeKey, onOpen: openTerm })}
       </p>
       <Sources cites={scene.cites} className="mt-3" />
+      {/* At the end of the last scene, offer the next step right here rather
+          than leave it at the bottom of a long page. */}
+      {player.done && index === last && (
+        <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t pt-3 text-sm" style={{ borderColor: EDGE, color: TEXT_2 }}>
+          That’s the lesson.
+          <a href={next ? `#/learn/${next.id}` : '#/flows'} className="rounded px-3 py-1.5 font-semibold" style={{ background: GEN['5g'].c, color: '#0b0717' }}>
+            {next ? `Next: ${next.n}. ${next.title} →` : 'Next: watch real call flows →'}
+          </a>
+          <a href="#check-title" onClick={(e) => { e.preventDefault(); document.getElementById('check-title')?.scrollIntoView({ block: 'start' }); }} className="underline" style={{ color: MUTED }}>
+            or try the quick check
+          </a>
+        </p>
+      )}
     </section>
   );
 
   return (
     <div className="mx-auto max-w-[1500px] px-3 py-4 sm:px-4">
       <LessonStepper current={lessonId} />
+      {/* Announce only the scene's number and title as it changes; the full
+          caption is there to read, and reading it all out every few seconds
+          during autoplay would talk over itself. */}
+      <p className="sr-only" aria-live="polite">
+        Scene {index + 1} of {lesson.scenes.length}: {scene.title}
+      </p>
 
       <header className="mt-4 mb-3">
         <p style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.12em', color: FAINT }}>
@@ -268,7 +304,7 @@ export default function LessonPage({ lessonId }) {
         </p>
       </header>
 
-      <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_400px] xl:items-start xl:gap-4">
+      <div data-player className="xl:grid xl:grid-cols-[minmax(0,1fr)_400px] xl:items-start xl:gap-4">
         <div className="min-w-0">
           <div className="rounded" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
             <div className="flex flex-wrap items-center gap-2 px-3 pt-2.5 pb-1">
@@ -331,7 +367,7 @@ export default function LessonPage({ lessonId }) {
             onNext={() => go(index + 1)}
             onRestart={() => {
               player.restart();
-              setPlaying(true);
+              setPlaying(!reducedMotion);
             }}
             speed={speed}
             onSpeed={setSpeed}

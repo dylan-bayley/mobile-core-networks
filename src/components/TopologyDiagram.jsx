@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { K, MONO, SANS, PANEL, EDGE, MUTED, FAINT } from '../theme.js';
+import { K, MONO, SANS, PANEL, EDGE, MUTED, FAINT, TEXT, TEXT_2 } from '../theme.js';
 import { GLOSSARY } from '../data/reference/glossary.js';
 import { resolveGlossaryKey } from '../lib/resolveGlossaryKey.js';
 import { svgTermProps } from '../lib/svgTermProps.js';
@@ -34,10 +34,13 @@ export default function TopologyDiagram({
   const [clock, setClock] = useState(0);
   const [overflowing, setOverflowing] = useState(false);
   const [hintDismissed, setHintDismissed] = useState(false);
-  const [, , vbW] = useMemo(() => topology.viewBox.split(/\s+/).map(Number), [topology.viewBox]);
+  const [, , vbW, vbH] = useMemo(() => topology.viewBox.split(/\s+/).map(Number), [topology.viewBox]);
 
+  // The clock only drives the ambient traffic dots; with none on screen,
+  // don't re-render the whole diagram every frame for nothing.
+  const animating = !reducedMotion && ambient.some((f) => step >= f.after);
   useEffect(() => {
-    if (reducedMotion) return undefined;
+    if (!animating) return undefined;
     let raf;
     let last = performance.now();
     const tick = (now) => {
@@ -48,7 +51,7 @@ export default function TopologyDiagram({
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [reducedMotion]);
+  }, [animating]);
 
   // Does the diagram overflow its container (phones, narrow windows)? If so
   // the step-follow scroll below and the swipe hint are relevant.
@@ -119,19 +122,32 @@ export default function TopologyDiagram({
     <div className="relative">
       <div
         ref={wrapRef}
-        onScroll={() => setHintDismissed(true)}
+        // Only the learner's own touch or wheel dismisses the swipe hint; the
+        // step-follow scroll below would otherwise hide it before it's seen.
+        onPointerDown={() => setHintDismissed(true)}
+        onWheel={() => setHintDismissed(true)}
         className="overflow-x-auto rounded"
         style={{ background: PANEL, border: `1px solid ${EDGE}`, touchAction: 'pan-x pan-y' }}
       >
         <svg
           ref={svgRef}
           viewBox={topology.viewBox}
-          role="img"
+          role="group"
           aria-label={describe}
           style={{ minWidth: topology.minWidth, width: '100%', height: 'auto', maxHeight, display: 'block', margin: '0 auto' }}
         >
           <defs>
             <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="4" result="b" />
+              <feMerge>
+                <feMergeNode in="b" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            {/* Links need a user-space filter region: a perfectly horizontal or
+                vertical path has a zero-size bounding box, which would make it
+                vanish under a bounding-box filter while highlighted. */}
+            <filter id="glowline" filterUnits="userSpaceOnUse" x={-40} y={-40} width={vbW + 80} height={vbH + 80}>
               <feGaussianBlur stdDeviation="4" result="b" />
               <feMerge>
                 <feMergeNode in="b" />
@@ -169,15 +185,14 @@ export default function TopologyDiagram({
                   strokeWidth={on ? 2.4 : 1.2}
                   strokeDasharray={l.dash || undefined}
                   opacity={op}
-                  filter={on ? 'url(#glow)' : undefined}
+                  filter={on ? 'url(#glowline)' : undefined}
                 />
                 <text
                   x={lp.x}
                   y={lp.y - 5}
                   textAnchor="middle"
                   style={{ fontFamily: MONO, fontSize: 11.5, cursor: linkTermProps ? 'help' : 'default' }}
-                  fill={on ? '#ffffff' : MUTED}
-                  opacity={on ? 1 : focus ? 0.55 : 0.8}
+                  fill={on ? '#ffffff' : focus ? FAINT : MUTED}
                   {...(linkTermProps ?? {})}
                 >
                   {l.l}
@@ -207,7 +222,7 @@ export default function TopologyDiagram({
             const nodeTermProps = svgTermProps(nodeKey, activeGlossaryKey, onGlossaryOpen);
             const expansion = nodeKey ? GLOSSARY[nodeKey].expansion : null;
             return (
-              <g key={id} opacity={dim}>
+              <g key={id}>
                 {(on || flash) && (
                   <rect
                     x={n.cx - n.w / 2 - 5}
@@ -231,6 +246,7 @@ export default function TopologyDiagram({
                   fill={on ? '#16233d' : '#0f1830'}
                   stroke={stroke}
                   strokeWidth={on ? 1.8 : 1}
+                  opacity={dim}
                 >
                   {expansion && <title>{`${n.t} — ${expansion}`}</title>}
                 </rect>
@@ -239,7 +255,9 @@ export default function TopologyDiagram({
                   y={n.cy - 5}
                   textAnchor="middle"
                   style={{ fontSize: 13, fontWeight: 600, fontFamily: SANS, cursor: nodeTermProps ? 'help' : 'default' }}
-                  fill={on ? '#ffffff' : lit ? '#c6d4ea' : '#a3b3cf'}
+                  // Dimmed nodes use a dimmer theme colour, not opacity, so the
+                  // label stays above AA contrast.
+                  fill={on ? '#ffffff' : lit ? TEXT : dim < 1 ? FAINT : TEXT_2}
                   {...(nodeTermProps ?? {})}
                 >
                   {expansion && <title>{`${n.t} — ${expansion}. Click for the definition.`}</title>}

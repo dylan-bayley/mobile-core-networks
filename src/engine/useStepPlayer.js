@@ -1,8 +1,14 @@
-import { useCallback, useEffect, useReducer, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
 import { initPlayer, playerReducer } from './playerReducer.js';
 
 /** Fraction of a step's duration during which the message dot travels; the rest is hold time for reading. */
 export const DOT_PHASE = 0.4;
+
+/** Playback speeds offered by the transport controls. */
+export const SPEEDS = [0.5, 1, 1.5, 2];
+
+/** A stored speed, or 1× if it isn't one we offer (a bad value would make step durations NaN or Infinity). */
+export const validSpeed = (v) => (SPEEDS.includes(v) ? v : 1);
 
 const WORDS_PER_MINUTE = 200;
 const MIN_DURATION = 3;
@@ -28,8 +34,8 @@ export function durationFor(step) {
  * step completes (unless `pauseEach`), and stopping (playing -> false) once
  * the flow is done or a step is held.
  */
-export function useStepPlayer(steps, { playing, setPlaying, speed, pauseEach = false }) {
-  const [state, dispatch] = useReducer(playerReducer, undefined, initPlayer);
+export function useStepPlayer(steps, { playing, setPlaying, speed, pauseEach = false, initialStep = 0 }) {
+  const [state, dispatch] = useReducer(playerReducer, initialStep, (step) => ({ ...initPlayer(), step }));
   const rafRef = useRef(null);
   const lastRef = useRef(null);
 
@@ -60,17 +66,14 @@ export function useStepPlayer(steps, { playing, setPlaying, speed, pauseEach = f
     if (state.done || state.held) setPlaying(false);
   }, [state.done, state.held, setPlaying]);
 
+  // `go` and `restart` are stable; depend on them rather than on the player
+  // object, which is new whenever progress ticks (every frame while playing).
   const go = useCallback((step) => dispatch({ type: 'goto', step }), []);
   const restart = useCallback(() => dispatch({ type: 'restart' }), []);
 
-  return {
-    step: clampedStep,
-    progress: state.progress,
-    done: state.done,
-    held: state.held,
-    dur,
-    remaining: Math.max(0, Math.ceil((1 - state.progress) * dur)),
-    go,
-    restart,
-  };
+  const remaining = Math.max(0, Math.ceil((1 - state.progress) * dur));
+  return useMemo(
+    () => ({ step: clampedStep, progress: state.progress, done: state.done, held: state.held, dur, remaining, go, restart }),
+    [clampedStep, state.progress, state.done, state.held, dur, remaining, go, restart],
+  );
 }

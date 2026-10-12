@@ -13,7 +13,7 @@ Guidance for working in this repo. The README covers layout, data schemas and ru
 
 - **Every fact in Learn and Components cites an official source.** Add the document to `src/data/reference/sources.js` if it's new, and cite as `{ src, clause }`. Only give a clause number you have checked in the listed version; otherwise cite the document without a clause.
 - **Diagrams are original.** Don't reproduce figures from books or vendor material. Rommer et al., *The Core Network for 5G Advanced*, is the inspiration for the lesson style, not a source to copy.
-- **Keep definitions vendor-neutral.** Vendor product names belong only in a component's labelled `inPractice` note.
+- **Keep definitions vendor-neutral.** Vendor product names belong only in a labelled `inPractice` note: on a component, or on a glossary entry. The one exception is the Flows explorer, whose diagrams use Ericsson product names for some nodes (SBG, MTAS, EPG, M-MGw). That is labelled in the explorer's header, and the Reference panel's naming table maps those names to the 3GPP functions.
 - **Say where industry shorthand isn't standard.** For example, "option 3x" isn't a 3GPP term: 3GPP names the bearer types (TS 37.340 §4.2.2).
 - **Ask before adding a main call flow.** Short per-component vignettes (`src/data/components/vignettes.js`) are fine; they stay out of `FLOWS`.
 
@@ -23,7 +23,7 @@ Guidance for working in this repo. The README covers layout, data schemas and ru
 - Every layout needs both a `wide` and a portrait `narrow` placement. The validator fails if a node box leaves the viewBox in either mode.
 - Scene visibility is cumulative (`show` / `add` / `remove`). `spawn: { newNode: oldNode }` makes a node grow out of another; `'@node'` in a traffic path is the service-bus point for that node.
 - `ArchDiagram` re-animates whenever the `current` object changes identity. Memoise it, or build it once as a module constant; a fresh object every render restarts the tween every frame.
-- SVG glow filters on paths must use `filterUnits="userSpaceOnUse"`. A perfectly horizontal or vertical path has a zero-size bounding box and disappears under a bounding-box filter. `TopologyDiagram.jsx` (the Flows explorer) still uses a bounding-box filter on links.
+- SVG glow filters on paths must use `filterUnits="userSpaceOnUse"`. A perfectly horizontal or vertical path has a zero-size bounding box and disappears under a bounding-box filter.
 - React StrictMode double-runs effects. Don't use "first run" ref flags for one-time behaviour such as deep-link jumps; key them on the value that changed (see `LessonPage.jsx`).
 
 ## Style

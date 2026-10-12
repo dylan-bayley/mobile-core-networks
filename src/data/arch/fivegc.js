@@ -289,7 +289,7 @@ export const scenes = [
     layout: 'analog',
     show: ['ue', 'gnb', 'dn', 'amf', 'smf', 'upf', 'ausf', 'udm', 'udr', 'pcf', 'chf'],
     spawn: { gnb: 'enb', amf: 'mme', smf: 'mme', upf: 'pgw', ausf: 'hss', udm: 'hss', udr: 'hss', pcf: 'pcrf', chf: 'ocs' },
-    d: 'The MME’s job splits in two: access and mobility go to the AMF, session management to the SMF. The gateways’ packet forwarding becomes the UPF. The HSS’s roles are spread across the UDM, AUSF and UDR. The PCRF becomes the PCF and the OCS becomes the CHF. The jobs are much the same, split into smaller functions.',
+    d: 'The MME’s job splits in two: access and mobility go to the AMF, session management to the SMF. The SMF also takes over the gateways’ control halves, such as allocating IP addresses and steering the user plane, while their packet forwarding becomes the UPF. The HSS’s roles are spread across the UDM, AUSF and UDR. The PCRF becomes the PCF and the OCS becomes the CHF. The jobs are much the same, split into smaller functions.',
     cites: [c501('6.2'), c501('4.3.1')],
   },
 ];
@@ -324,5 +324,7 @@ export const check = [
 
 export const links = [
   { label: 'Watch a 5G registration and PDU session', href: '#/flows?net=sa&session=data' },
-  { label: 'Browse every 5G core function', href: '#/components' },
+  { label: 'The AMF, in detail', href: '#/components/amf' },
+  { label: 'The SMF, in detail', href: '#/components/smf' },
+  { label: 'Browse every 5G core function', href: '#/components?gen=5g' },
 ];

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { K, MONO, SANS, PANEL, EDGE, MUTED, FAINT } from '../theme.js';
+import { K, MONO, SANS, PANEL, EDGE, MUTED, FAINT, TEXT_2 } from '../theme.js';
 import { GLOSSARY } from '../data/reference/glossary.js';
 import { resolveGlossaryKey } from '../lib/resolveGlossaryKey.js';
 import { svgTermProps } from '../lib/svgTermProps.js';
@@ -76,7 +76,9 @@ export default function SequenceDiagram({ topology, steps, step, onGo, onGlossar
       <svg
         ref={svgRef}
         viewBox={`0 0 ${width} ${height}`}
-        role="img"
+        // A group, not an image: an image's children are presentational, which
+        // would hide the clickable node names from screen readers.
+        role="group"
         aria-label={`Sequence diagram, ${steps.length} steps across ${lanes.length} nodes. Current step ${step + 1}: ${cur.t}.`}
         style={{ width: '100%', minWidth: lanes.length * 78, height: 'auto', display: 'block' }}
       >
@@ -98,12 +100,12 @@ export default function SequenceDiagram({ topology, steps, step, onGo, onGlossar
                 y={22}
                 textAnchor="middle"
                 style={{ fontFamily: SANS, fontSize: 12, fontWeight: 600, cursor: termProps ? 'help' : 'default' }}
-                fill={touched ? '#ffffff' : '#a3b3cf'}
+                fill={touched ? '#ffffff' : TEXT_2}
                 {...(termProps ?? {})}
               >
                 {n.t}
               </text>
-              <text x={x} y={34} textAnchor="middle" style={{ fontFamily: MONO, fontSize: 8 }} fill={FAINT}>
+              <text x={x} y={34} textAnchor="middle" style={{ fontFamily: MONO, fontSize: 9 }} fill={FAINT}>
                 {n.s.length > 18 ? `${n.s.slice(0, 17)}…` : n.s}
               </text>
             </g>
@@ -116,17 +118,20 @@ export default function SequenceDiagram({ topology, steps, step, onGo, onGlossar
           const y = rowTop + ROW_H / 2 + 6;
           const colour = K[s.k].c;
           const isCur = i === step;
-          const opacity = i > step ? 0.4 : 1;
+          // Steps still to come are dimmed: arrows by opacity, text by a
+          // dimmer theme colour (opacity on text would drop it below AA).
+          const future = i > step;
+          const opacity = future ? 0.4 : 1;
           const xs = s.p.map(laneX);
           const midX = (Math.min(...xs) + Math.max(...xs)) / 2;
           return (
             <g key={s.id}>
               {isCur && <rect x={4} y={rowTop + 1} width={width - 8} height={ROW_H - 2} rx={5} fill={`${accent}14`} stroke={`${accent}88`} />}
-              <text x={LEFT / 2} y={y + 3} textAnchor="middle" style={{ fontFamily: MONO, fontSize: 9.5 }} fill={isCur ? colour : FAINT} opacity={opacity}>
+              <text x={LEFT / 2} y={y + 3} textAnchor="middle" style={{ fontFamily: MONO, fontSize: 10 }} fill={isCur ? colour : FAINT}>
                 {String(i + 1).padStart(2, '0')}
               </text>
               {s.tag && (
-                <text x={LEFT / 2} y={y - 8} textAnchor="middle" style={{ fontFamily: MONO, fontSize: 7.5, letterSpacing: '0.08em' }} fill={colour} opacity={opacity}>
+                <text x={LEFT / 2} y={y - 8} textAnchor="middle" style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em' }} fill={future ? FAINT : colour}>
                   {s.tag.toUpperCase()}
                 </text>
               )}
@@ -139,7 +144,7 @@ export default function SequenceDiagram({ topology, steps, step, onGo, onGlossar
                   .map((a, h) => (
                     <Arrow key={`r${h}`} x1={laneX(s.p[h + 1])} x2={laneX(a)} y={y + 5} colour={isCur ? accent : colour} dashed opacity={opacity * 0.8} />
                   ))}
-              <text x={midX} y={y - 9} textAnchor="middle" style={{ fontFamily: MONO, fontSize: 10.5 }} fill={isCur ? '#ffffff' : MUTED} opacity={opacity}>
+              <text x={midX} y={y - 9} textAnchor="middle" style={{ fontFamily: MONO, fontSize: 10.5 }} fill={isCur ? '#ffffff' : future ? FAINT : MUTED}>
                 {s.m}
               </text>
               <rect
@@ -149,16 +154,11 @@ export default function SequenceDiagram({ topology, steps, step, onGo, onGlossar
                 height={ROW_H}
                 fill="transparent"
                 style={{ cursor: 'pointer' }}
-                role="button"
-                tabIndex={0}
-                aria-label={`Go to step ${i + 1}: ${s.t}`}
+                // Clickable, but out of the tab order: the step list is the
+                // keyboard route to each step.
+                aria-hidden="true"
+                tabIndex={-1}
                 onClick={() => onGo(i)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    onGo(i);
-                  }
-                }}
               />
             </g>
           );

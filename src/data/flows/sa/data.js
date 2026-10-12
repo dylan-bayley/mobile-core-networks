@@ -10,7 +10,7 @@ export const steps = [
     d: 'The gNB picks an AMF — from the 5G-GUTI if the UE has one, otherwise round-robin or by requested slice — and forwards the NAS payload over NGAP.',
     pitfall: "Ericsson's dual-mode 5G Core runs the AMF as a function alongside the MME on the same platform, much like the SGSN-MME did for 2G/3G/4G — so one node's config carries both worlds." },
   { id: 'primary-auth', t: 'Primary authentication', m: 'Nausf_UEAuthentication', p: ['amf', 'ausf'], rt: true, k: 'sbi', analog: fourg('auth-vectors'),
-    d: '5G-AKA: the AMF asks the AUSF to authenticate the subscriber; the AUSF in turn pulls a 5G HE AV from the UDM over Nudm_UEAuthentication, computes HXRES*, and hands the AMF what it needs to challenge the UE. Splitting AUSF out from the UDM is new in 5G — in 4G, the HSS did this itself.' },
+    d: '5G-AKA: the AMF asks the AUSF to authenticate the subscriber; the AUSF in turn pulls a 5G HE AV from the UDM over Nudm_UEAuthentication, computes HXRES*, and hands the AMF what it needs to challenge the UE. The AUSF is new in 5G. In 4G the HSS only generated the vectors and the MME checked the answer from the UE itself; in 5G the AUSF in the home network makes the final check, and the UDM keeps the long-term key.' },
   { id: 'nas-security', t: '5G-AKA and NAS security', m: 'Auth + Security Mode', p: ['amf', 'gnb', 'ue'], rt: true, k: 'control', analog: fourg('eps-aka'),
     d: 'Authentication Request/Response over NAS, then NAS Security Mode Command/Complete brings up integrity and ciphering — functionally identical in shape to 4G, just running 5G-AKA instead of EPS-AKA underneath.' },
   { id: 'eir-check-5g', t: 'Equipment identity check', m: 'N17', p: ['amf', 'eir'], rt: true, k: 'sbi', analog: fourg('eir-check'),

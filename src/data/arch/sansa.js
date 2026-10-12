@@ -214,4 +214,6 @@ export const check = [
 export const links = [
   { label: 'Watch EN-DC add the 5G leg (NSA data)', href: '#/flows?net=nsa&session=data' },
   { label: 'Compare with a 5G SA data session', href: '#/flows?net=sa&session=data' },
+  { label: 'The gNB, in detail', href: '#/components/gnb' },
+  { label: 'The eNodeB, in detail', href: '#/components/enb' },
 ];

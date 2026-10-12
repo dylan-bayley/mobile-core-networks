@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { PANEL, EDGE, MONO, MUTED, FAINT, ACTIVE_BG } from '../theme.js';
+import { PANEL, EDGE, MONO, MUTED, FAINT, ACTIVE_BG, TEXT } from '../theme.js';
 import { filterGlossary, glossaryEntries } from '../lib/filterGlossary.js';
 
 const LIMIT = 8;
@@ -32,9 +32,10 @@ export default function GlossarySearch({ glossary, onPick, ref }) {
   };
 
   const onKeyDown = (e) => {
+    // Escape closes the list, then clears the box; focus stays put.
     if (e.key === 'Escape') {
-      setOpen(false);
-      e.currentTarget.blur();
+      if (open && results.length) setOpen(false);
+      else setQuery('');
       return;
     }
     if (!results.length) return;
@@ -67,10 +68,12 @@ export default function GlossarySearch({ glossary, onPick, ref }) {
         aria-label="Look up an acronym"
         aria-expanded={open && results.length > 0}
         aria-controls="glossary-search-results"
+        aria-activedescendant={open && results.length > 0 ? `glossary-search-option-${cursor}` : undefined}
+        aria-autocomplete="list"
         role="combobox"
         autoComplete="off"
         className="w-44 rounded px-2 py-1.5 text-xs sm:w-52"
-        style={{ background: '#0a1120', border: `1px solid ${EDGE}`, color: '#e6edfa', fontFamily: MONO }}
+        style={{ background: '#0a1120', border: `1px solid ${EDGE}`, color: TEXT, fontFamily: MONO }}
       />
       {open && results.length > 0 && (
         <ul
@@ -80,9 +83,12 @@ export default function GlossarySearch({ glossary, onPick, ref }) {
           style={{ background: PANEL, border: `1px solid ${EDGE}`, boxShadow: '0 8px 24px rgba(0,0,0,0.45)' }}
         >
           {results.map(([key, e], i) => (
-            <li key={key} role="option" aria-selected={i === cursor}>
+            <li key={key} id={`glossary-search-option-${i}`} role="option" aria-selected={i === cursor}>
+              {/* Arrow keys move through the options from the input
+                  (aria-activedescendant), so the buttons stay out of the tab order. */}
               <button
                 type="button"
+                tabIndex={-1}
                 onMouseEnter={() => setCursor(i)}
                 onClick={() => pick(key)}
                 className="flex w-full items-baseline gap-2 px-3 py-1.5 text-left text-xs"

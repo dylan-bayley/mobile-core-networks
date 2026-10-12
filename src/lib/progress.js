@@ -38,14 +38,27 @@ export function resetProgress(storage = globalThis.localStorage) {
   return {};
 }
 
-/** Marks that the learner has reached `step` (0-based) of a `total`-step flow. Returns the same object if nothing changed. */
-export function recordStep(progress, net, flow, step, total) {
+/**
+ * Marks that the learner has reached `step` (0-based) of a `total`-step flow.
+ * Reaching the last step completes it unless `completes` is false (lessons
+ * complete by playing through instead; see `markCompleted`). Returns the
+ * same object if nothing changed.
+ */
+export function recordStep(progress, net, flow, step, total, { completes = true } = {}) {
   const key = progressKey(net, flow);
   const prev = progress[key] ?? { maxStep: -1, total, completed: false };
   const maxStep = Math.max(prev.maxStep, step);
-  const completed = prev.completed || step >= total - 1;
+  const completed = prev.completed || (completes && step >= total - 1);
   if (maxStep === prev.maxStep && completed === prev.completed && prev.total === total) return progress;
   return { ...progress, [key]: { ...prev, maxStep, total, completed } };
+}
+
+/** Marks a flow or lesson completed outright. Returns the same object if it already was. */
+export function markCompleted(progress, net, flow, total) {
+  const key = progressKey(net, flow);
+  const prev = progress[key] ?? { maxStep: -1, total, completed: false };
+  if (prev.completed) return progress;
+  return { ...progress, [key]: { ...prev, total, completed: true } };
 }
 
 /** Keeps the best quiz score for a flow. */

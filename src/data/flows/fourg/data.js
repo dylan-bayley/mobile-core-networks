@@ -12,7 +12,7 @@ export const steps = [
   { id: 'eps-aka', t: 'EPS-AKA and NAS security', m: 'Auth + Security Mode', p: ['mme', 'enb', 'ue'], rt: true, k: 'control',
     d: 'Authentication Request/Response, then NAS Security Mode Command/Complete. Integrity protection and ciphering come up for NAS, and the eNodeB does the same for the access stratum using keys derived from KASME.' },
   { id: 'eir-check', t: 'Equipment identity check', m: 'S13 ECR / ECA', p: ['mme', 'eir'], rt: true, k: 'diameter',
-    d: "If the MME doesn't already hold the IMEISV it sends a NAS Identity Request to get it, then checks the handset with the EIR. The ME-Identity-Check-Request carries the IMEI; the answer is an equipment status — white, grey or black. A blacklisted handset is rejected no matter how valid the SIM is.",
+    d: "The MME normally has the IMEISV already: it asks for it in the NAS Security Mode Command and the UE returns it in Security Mode Complete (an Identity Request is the fallback). It then checks the handset with the EIR. The ME-Identity-Check-Request carries the IMEI; the answer is an equipment status — white, grey or black. A blacklisted handset is rejected no matter how valid the SIM is.",
     pitfall: 'Whether the check runs at attach, at TAU or per APN — and whether the MME fails open or closed when the EIR is unreachable — is configuration, not standard. Getting that wrong is how an EIR outage becomes a national outage.' },
   { id: 'update-location', t: 'Update Location', m: 'S6a ULR / ULA', p: ['mme', 'hss'], rt: true, k: 'diameter',
     d: 'MME registers as the serving node. HSS returns the subscription profile: APN list and default APN, subscribed QCI and ARP, APN-AMBR and UE-AMBR, plus a statically allocated P-GW if the subscriber has one.' },

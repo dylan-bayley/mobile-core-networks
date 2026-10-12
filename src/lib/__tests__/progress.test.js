@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { countCompleted, isCompleted, readProgress, recordQuiz, recordStep, writeProgress, STORAGE_KEY } from '../progress.js';
+import { countCompleted, isCompleted, markCompleted, readProgress, recordQuiz, recordStep, writeProgress, STORAGE_KEY } from '../progress.js';
 
 const memStorage = () => {
   const m = new Map();
@@ -16,6 +16,14 @@ describe('progress', () => {
     p = recordStep(p, '4g', 'data', 13, 14);
     expect(isCompleted(p, '4g', 'data')).toBe(true);
     expect(countCompleted(p, '4g', ['data', 'voice'])).toBe(1);
+  });
+  it('can record reaching the last step without completing (lessons)', () => {
+    let p = recordStep({}, 'lesson', '5gc', 8, 9, { completes: false });
+    expect(p['lesson/5gc']).toEqual({ maxStep: 8, total: 9, completed: false });
+    p = markCompleted(p, 'lesson', '5gc', 9);
+    expect(isCompleted(p, 'lesson', '5gc')).toBe(true);
+    expect(markCompleted(p, 'lesson', '5gc', 9)).toBe(p);
+    expect(isCompleted(markCompleted({}, 'lesson', 'ims', 7), 'lesson', 'ims')).toBe(true);
   });
   it('keeps only the best quiz score', () => {
     let p = recordQuiz({}, 'sa', 'voice', 6, 10);

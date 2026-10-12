@@ -11,7 +11,7 @@ export const steps = [
   { id: 'scscf-assignment', t: 'S-CSCF assignment', m: 'Mw + Cx UAR / UAA', p: ['sbg', 'cscf', 'hss'], rt: true, k: 'ims', analog: fourg('scscf-assignment'),
     d: 'Unchanged from 4G: P-CSCF forwards to I-CSCF, which queries the converged UDM/HSS over Cx to pick an S-CSCF. The IMS core has no idea whether the UE arrived over LTE or NR.' },
   { id: 'ims-aka', t: 'IMS-AKA challenge', m: '401 → REGISTER → 200 OK', p: ['cscf', 'sbg', 'ue'], rt: true, k: 'ims', analog: fourg('ims-aka'),
-    d: 'S-CSCF challenges with a 401; the UE answers on its ISIM and re-REGISTERs. IMS-AKA is layered on top of IMS itself and is completely independent of whether the access network is EPC or 5GC.' },
+    d: 'The S-CSCF fetches an authentication vector over Cx (MAR/MAA) and challenges with a 401; IPsec security associations come up with the P-CSCF, and the UE answers from its ISIM in a protected second REGISTER. IMS-AKA is layered on top of IMS itself and is completely independent of whether the access network is EPC or 5GC.' },
   { id: 'third-party-register', t: 'Third-party REGISTER', m: 'ISC REGISTER', p: ['cscf', 'mtas'], k: 'ims', analog: fourg('third-party-register'),
     d: 'iFC triggers a third-party REGISTER to the same MTAS that serves VoLTE, which pulls telephony data from the UDM/HSS over Sh — again, no change from 4G.' },
   { id: 'invite-sdp-offer', t: 'INVITE with SDP offer', m: 'INVITE (SDP)', p: ['ue', 'sbg', 'cscf'], k: 'ims', analog: fourg('invite-sdp-offer'),
@@ -21,8 +21,8 @@ export const steps = [
   { id: '183-session-progress', t: '183 Session Progress', m: '183 (SDP answer)', p: ['cscf', 'sbg'], k: 'ims', analog: fourg('183-session-progress'),
     d: "The far end's SDP answer settles codec and media addresses, so the network knows exactly what to reserve." },
   { id: 'rx-aar', t: 'Media authorisation', m: 'N5 (Npcf_PolicyAuthorization)', p: ['sbg', 'pcf'], rt: true, k: 'sbi', analog: fourg('rx-aar'),
-    d: "P-CSCF passes the negotiated media description to the PCF — over N5, the SBI-based successor to 4G's Rx. Same hinge point between IMS and the packet core, now a service call instead of a Diameter exchange." },
-  { id: 'sm-policy-update', t: 'QoS rule pushed to the SMF', m: 'Npcf_SMPolicyControl (Update)', p: ['pcf', 'smf'], rt: true, k: 'sbi', analog: fourg('gx-rar'),
+    d: "P-CSCF passes the negotiated media description to the PCF — over N5, the SBI-based successor to 4G's Rx. Same hinge point between IMS and the packet core, now a service call instead of a Diameter exchange. Where there are several PCFs, the P-CSCF asks the BSF (Binding Support Function) which one holds this UE's PDU Session." },
+  { id: 'sm-policy-update', t: 'QoS rule pushed to the SMF', m: 'Npcf_SMPolicyControl_UpdateNotify', p: ['pcf', 'smf'], rt: true, k: 'sbi', analog: fourg('gx-rar'),
     d: "PCF pushes an updated SM policy to the SMF for the ims PDU Session: a new QoS Flow, 5QI 1, GBR/MBR sized from the codec, and a packet filter matching the RTP flow — the direct equivalent of 4G's Gx RAR installing a QCI 1 bearer." },
   { id: 'n4-qos-flow-update', t: 'N4 Session Modification adds the QoS Flow', m: 'PFCP Session Modification', p: ['smf', 'upf'], k: 'control', analog: fourg('create-bearer-request'),
     d: "SMF pushes the new QoS Flow's forwarding and enforcement rules into the UPF over N4 — the SMF still never touches the voice packets themselves." },
@@ -35,7 +35,7 @@ export const steps = [
   { id: 'pstn-breakout', t: 'PSTN breakout, if off-net', m: 'SIP → ISUP', p: ['cscf', 'mgcf', 'pstn'], k: 'tdm', analog: fourg('pstn-breakout'),
     d: 'Unchanged from 4G: the MGCF interworks SIP to ISUP/BICC and the M-MGw handles the media and any transcoding.' },
   { id: 'release', t: 'Release', m: 'BYE → N5 termination → QoS Flow removal', p: ['ue', 'sbg', 'pcf'], k: 'ims', analog: fourg('release-srvcc'),
-    d: "BYE triggers session termination over N5, the PCF withdraws the QoS Flow rule, and the SMF removes it via N4; the 5QI 5 signalling flow stays up for the next call. There's no SRVCC step here — VoNR assumes a network that doesn't need to hand a voice call back to a CS domain that, in a genuinely CS-free 5G SA deployment, may not exist. Coverage-driven interworking back to LTE is a separate mechanism — see the EPS fallback variant of this flow." },
+    d: "BYE triggers session termination over N5, the PCF withdraws the QoS Flow rule, and the SMF removes it via N4; the 5QI 5 signalling flow stays up for the next call. If the UE leaves NR coverage mid-call, the gNB hands it over to LTE over N26 and the 5QI 1 QoS Flow becomes a QCI 1 bearer, so the call carries on as VoLTE. Handing over to a 3G CS domain (5G-SRVCC, TS 23.216) exists from Rel-16, but few networks use it. The EPS fallback variant of this flow is different: it moves to LTE before the call is set up, not during it." },
 ];
 
 export const ambient = [{ afterId: 'media-flowing', p: ['ue', 'gnb', 'upf', 'sbg'], k: 'media' }];

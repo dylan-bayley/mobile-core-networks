@@ -13,7 +13,8 @@ import { useMediaQuery, useReducedMotion } from '../lib/useMediaQuery.js';
 import { useGlossary } from '../lib/glossaryContext.js';
 import { readStored, store } from '../lib/storage.js';
 import { makeGeometry } from '../engine/geometry.js';
-import { useStepPlayer } from '../engine/useStepPlayer.js';
+import { useStepPlayer, validSpeed } from '../engine/useStepPlayer.js';
+import { ignoreShortcut } from '../lib/keys.js';
 import { K, MONO, MUTED, FAINT, EDGE, PANEL } from '../theme.js';
 import SelectorBar from './SelectorBar.jsx';
 import TopologyDiagram from './TopologyDiagram.jsx';
@@ -33,7 +34,7 @@ const DIAGRAM_MAX_HEIGHT_NARROW = '48vh';
 const WIDE_QUERY = '(min-width: 1280px)'; // Tailwind `xl` — where the aside moves beside the diagram
 
 const BEYOND =
-  "Roaming swaps S5 for S8 with the P-GW in the home network. CUPS splits the EPG into EPG-C and EPG-U over Sx, which is the same control/user separation you'll meet again as SMF and UPF in 5G — where the EIR becomes the 5G-EIR on N17, and SMS keeps working over NAS through the AMF and an SMSF.";
+  "Roaming swaps S5 for S8 with the P-GW in the home network. CUPS splits each gateway into a control part (SGW-C, PGW-C) and a user-plane part (SGW-U, PGW-U) over Sx, which is the same control/user separation you'll meet again as SMF and UPF in 5G — where the EIR becomes the 5G-EIR on N17, and SMS keeps working over NAS through the AMF and an SMSF.";
 
 const readUrl = () => {
   if (typeof window === 'undefined') return {};
@@ -69,7 +70,7 @@ export default function Explorer() {
   // a plain reload would otherwise look like a deep link.)
   const [introOpen, setIntroOpen] = useState(() => !readStored('mcn.introSeen', false));
   const [playing, setPlaying] = useState(() => !reducedMotion && !initial.step && !introOpen);
-  const [speed, setSpeed] = useState(() => readStored('mcn.speed', 1));
+  const [speed, setSpeed] = useState(() => validSpeed(readStored('mcn.speed', 1)));
   const [pauseEach, setPauseEach] = useState(() => readStored('mcn.pauseEach', false));
   const [focus, setFocus] = useState(true);
   const [highlightNode, setHighlightNode] = useState(null);
@@ -90,6 +91,7 @@ export default function Explorer() {
   const scenario = useMemo(() => resolveScenario(networkId, flowId), [networkId, flowId]);
   const geo = useMemo(() => makeGeometry(scenario.topology), [scenario.topology]);
   const player = useStepPlayer(scenario.steps, { playing, setPlaying, speed, pauseEach });
+  const { go: playerGo, restart: playerRestart, done: playerDone, held: playerHeld } = player;
 
   // If the network can't serve the requested flow (e.g. EPS fallback on 4G)
   // resolveScenario fell back; reflect that in state so the selector is honest.
@@ -160,24 +162,28 @@ export default function Explorer() {
         setFlowId(flow);
       } else if (u.step) {
         const idx = stepIndexOf(scenario.steps, u.step);
-        if (idx >= 0) player.go(idx);
+        if (idx >= 0) playerGo(idx);
       }
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
-  }, [scenario.steps, player]);
+  }, [scenario.steps, playerGo]);
 
   /** Push the *current* URL so browser back returns here after a user-initiated jump. */
   const markHistory = () => {
     if (typeof window !== 'undefined') window.history.pushState(null, '', window.location.href);
   };
 
+  // A jump (step list, progress bar, sequence row, quiz) gets its own history
+  // entry so Back returns to it; stepping with ←/→ or Prev/Next just moves
+  // along, or walking a 30-step flow would take 30 presses of Back to leave.
+  const moveTo = useCallback((i) => playerGo(Math.max(0, Math.min(last, i))), [playerGo, last]);
   const go = useCallback(
     (i) => {
       markHistory();
-      player.go(Math.max(0, Math.min(last, i)));
+      moveTo(i);
     },
-    [player, last],
+    [moveTo],
   );
   const switchNetwork = (id) => {
     if (id === networkId) return;
@@ -207,19 +213,25 @@ export default function Explorer() {
       setPlaying(false);
       return;
     }
-    if (player.done) player.restart();
-    else if (player.held && step < last) player.go(step + 1);
+    if (playerDone) playerRestart();
+    else if (playerHeld && step < last) playerGo(step + 1);
     setPlaying(true);
-  }, [playing, player, step, last]);
+  }, [playing, playerDone, playerHeld, playerRestart, playerGo, step, last]);
 
   const restart = () => {
     player.restart();
-    setPlaying(true);
+    setPlaying(!reducedMotion);
   };
 
+  // Closing the intro removes the button that had focus; put focus on the
+  // help button that reopens it rather than let it drop to <body>.
+  const introRef = useRef(null);
+  const helpRef = useRef(null);
   const closeIntro = () => {
+    const hadFocus = introRef.current?.contains(document.activeElement);
     setIntroOpen(false);
     store('mcn.introSeen', true);
+    if (hadFocus) helpRef.current?.focus();
   };
   const startFromIntro = (targetFlowId) => {
     closeIntro();
@@ -254,25 +266,34 @@ export default function Explorer() {
     (score, total) => setProgress((p) => recordQuiz(p, networkId, scenario.flowId, score, total)),
     [networkId, scenario.flowId],
   );
-  const onResetProgress = () => setProgress(resetProgress());
+  const onResetProgress = useCallback(() => setProgress(resetProgress()), []);
+  // Stable props for the (memoised) reference panel, so it doesn't re-render
+  // its whole glossary every animation frame while a flow plays.
+  const nodeNaming = useMemo(() => (networkId === '4g' ? NODE_MAP_4G : [...NODE_MAP_4G, ...NODE_MAP_5GC]), [networkId]);
+  const beyond = useMemo(
+    () => autolinkAcronyms(BEYOND, GLOSSARY, { activeKey: activeGlossaryKey, onOpen: openGlossaryTerm }),
+    [activeGlossaryKey, openGlossaryTerm],
+  );
 
   useEffect(() => {
-    const isTyping = (e) => e.target instanceof HTMLElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName);
     const isButton = (e) => e.target instanceof HTMLElement && e.target.closest('button, [role="button"]');
     const onKeyDown = (e) => {
-      if (isTyping(e) || e.defaultPrevented) return;
       if (e.key === 'Escape') {
-        if (introOpen) closeIntro();
-      } else if (e.code === 'Space') {
+        // A dialog or popover that handled Escape itself marks it prevented.
+        if (introOpen && !e.defaultPrevented) closeIntro();
+        return;
+      }
+      if (ignoreShortcut(e)) return;
+      if (e.code === 'Space') {
         if (isButton(e)) return; // let the focused button take Space; don't also toggle playback
         e.preventDefault();
         togglePlay();
       } else if (e.code === 'ArrowRight') {
         e.preventDefault();
-        go(step + 1);
+        moveTo(step + 1);
       } else if (e.code === 'ArrowLeft') {
         e.preventDefault();
-        go(step - 1);
+        moveTo(step - 1);
       } else if (e.code === 'Home') {
         e.preventDefault();
         go(0);
@@ -284,7 +305,12 @@ export default function Explorer() {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [go, step, last, togglePlay, introOpen]);
+  }, [go, moveTo, step, last, togglePlay, introOpen]);
+
+  useEffect(() => {
+    const net = NETWORKS.find((n) => n.id === networkId) ?? NETWORKS[0];
+    document.title = `${scenario.label} (${net.label}) · Call flows · Mobile Core`;
+  }, [networkId, scenario.label]);
 
   const analogs = useMemo(() => analogsOf(cur, { networkId, flowId: scenario.flowId }), [cur, networkId, scenario.flowId]);
   const networkFlows = FLOWS[networkId] ?? {};
@@ -323,6 +349,7 @@ export default function Explorer() {
           </p>
           <div className="ml-auto flex items-center gap-2">
             <button
+              ref={helpRef}
               type="button"
               onClick={() => setIntroOpen((o) => !o)}
               aria-pressed={introOpen}
@@ -337,18 +364,24 @@ export default function Explorer() {
             Pick a network and a session type, then watch the signalling walk the reference points one message at a time.
             <span className="hidden sm:inline" style={{ fontFamily: MONO, color: FAINT }}> Space play/pause · ←/→ step · ? for all shortcuts</span>
           </p>
+          <p className="basis-full text-xs" style={{ color: MUTED }}>
+            In practice: some nodes carry one vendor’s product names (Ericsson’s SBG, MTAS, EPG, M-MGw). The Reference panel below maps
+            them to the 3GPP functions.
+          </p>
         </header>
 
         {introOpen && (
-          <IntroCard
-            path={pathForNetwork}
-            progress={progress}
-            networkId={networkId}
-            networkLabel={network.label}
-            currentFlowId={scenario.flowId}
-            onStart={startFromIntro}
-            onClose={closeIntro}
-          />
+          <div ref={introRef}>
+            <IntroCard
+              path={pathForNetwork}
+              progress={progress}
+              networkId={networkId}
+              networkLabel={network.label}
+              currentFlowId={scenario.flowId}
+              onStart={startFromIntro}
+              onClose={closeIntro}
+            />
+          </div>
         )}
 
         <SelectorBar
@@ -406,8 +439,8 @@ export default function Explorer() {
               held={player.held}
               remaining={player.remaining}
               onTogglePlay={togglePlay}
-              onPrev={() => go(step - 1)}
-              onNext={() => go(step + 1)}
+              onPrev={() => moveTo(step - 1)}
+              onNext={() => moveTo(step + 1)}
               onRestart={restart}
               speed={speed}
               onSpeed={setSpeed}
@@ -427,6 +460,7 @@ export default function Explorer() {
           <aside className="mt-3 flex min-h-0 flex-col gap-3 xl:sticky xl:top-3 xl:mt-0 xl:max-h-[calc(100vh-1.5rem)] xl:overflow-y-auto xl:pr-0.5">
             {quizOpen ? (
               <Quiz
+                key={`${networkId}/${scenario.flowId}`}
                 scenario={scenario}
                 geo={geo}
                 onGo={go}
@@ -456,12 +490,12 @@ export default function Explorer() {
         </div>
 
         <ReferencePanel
-          nodeNaming={networkId === '4g' ? NODE_MAP_4G : [...NODE_MAP_4G, ...NODE_MAP_5GC]}
+          nodeNaming={nodeNaming}
           qci={QCI}
           fiveQi={networkId === '4g' ? null : FIVE_QI}
           eirStatus={EIR_STATUS}
           glossary={GLOSSARY}
-          beyond={autolinkAcronyms(BEYOND, GLOSSARY, { activeKey: activeGlossaryKey, onOpen: openGlossaryTerm })}
+          beyond={beyond}
           completed={completedTotal}
           totalFlows={allFlowKeys.length}
           onResetProgress={onResetProgress}

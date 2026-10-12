@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { COMPONENTS, componentById } from '../data/components/index.js';
+import { hashQuery, urlWithHashQuery } from '../lib/route.js';
 import { PANEL, EDGE, MONO, FAINT, MUTED, TEXT, TEXT_2, GEN, ACTIVE_BG, ACTIVE_EDGE } from '../theme.js';
 
 const FILTERS = [
@@ -16,6 +17,11 @@ const SECTIONS = [
   { gen: 'ims', title: 'IP Multimedia Subsystem', blurb: 'TS 23.228: the SIP servers that carry voice over 4G and 5G alike.' },
 ];
 const PLANE = { control: 'control plane', user: 'user plane', both: 'control + user' };
+
+const validFilter = (id) => (FILTERS.some((f) => f.id === id) ? id : 'all');
+
+/** Matches a component on its label, expansion or summary, ignoring case. */
+const matches = (c, q) => !q || [c.label, c.expansion, c.summary].some((t) => t?.toLowerCase().includes(q));
 
 function Card({ c }) {
   const gen = GEN[c.gen] ?? GEN.ext;
@@ -49,8 +55,19 @@ function Card({ c }) {
 }
 
 export default function ComponentsIndex() {
-  const [filter, setFilter] = useState('all');
-  const sections = SECTIONS.filter((s) => filter === 'all' || s.gen === filter);
+  // The generation filter lives in the URL (?gen=), so Back from a component
+  // page returns to the same filtered list.
+  const [filter, setFilter] = useState(() => validFilter(hashQuery().get('gen')));
+  const [query, setQuery] = useState('');
+  useEffect(() => {
+    const url = urlWithHashQuery('/components', filter === 'all' ? null : { gen: filter });
+    if (window.location.href !== url) window.history.replaceState(null, '', url);
+  }, [filter]);
+
+  const q = query.trim().toLowerCase();
+  const sections = SECTIONS.filter((s) => filter === 'all' || s.gen === filter)
+    .map((s) => ({ ...s, items: COMPONENTS.filter((c) => (s.gen === '5g' ? c.gen === '5g' || c.gen === 'ext' : c.gen === s.gen) && matches(c, q)) }))
+    .filter((s) => s.items.length > 0);
   return (
     <div className="mx-auto max-w-[1500px] px-3 py-5 sm:px-4 sm:py-6">
       <header>
@@ -63,22 +80,38 @@ export default function ComponentsIndex() {
           replaced or became, and where to watch it work in the call flows.
         </p>
       </header>
-      <div role="group" aria-label="Filter components" className="mt-4 flex flex-wrap gap-1.5">
-        {FILTERS.map((f) => (
-          <button
-            key={f.id}
-            type="button"
-            aria-pressed={filter === f.id}
-            onClick={() => setFilter(f.id)}
-            className="min-h-10 rounded px-3 py-1 text-sm sm:min-h-0"
-            style={{ background: filter === f.id ? ACTIVE_BG : 'transparent', border: `1px solid ${filter === f.id ? ACTIVE_EDGE : EDGE}`, color: filter === f.id ? TEXT : MUTED }}
-          >
-            {f.label}
-          </button>
-        ))}
+      <div className="mt-4 flex flex-wrap items-center gap-1.5">
+        <div role="group" aria-label="Filter components" className="flex flex-wrap gap-1.5">
+          {FILTERS.map((f) => (
+            <button
+              key={f.id}
+              type="button"
+              aria-pressed={filter === f.id}
+              onClick={() => setFilter(f.id)}
+              className="min-h-10 rounded px-3 py-1 text-sm sm:min-h-0"
+              style={{ background: filter === f.id ? ACTIVE_BG : 'transparent', border: `1px solid ${filter === f.id ? ACTIVE_EDGE : EDGE}`, color: filter === f.id ? TEXT : MUTED }}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search components…"
+          aria-label="Search components by name or description"
+          className="min-h-10 w-full rounded px-3 py-1.5 text-sm sm:ml-auto sm:min-h-0 sm:w-64"
+          style={{ background: '#0a1120', border: `1px solid ${EDGE}`, color: TEXT, fontFamily: MONO }}
+        />
       </div>
+      {sections.length === 0 && (
+        <p className="mt-6 text-sm" style={{ color: MUTED }} role="status">
+          No component matches “{query}”.
+        </p>
+      )}
       {sections.map((s) => {
-        const items = COMPONENTS.filter((c) => (s.gen === '5g' ? c.gen === '5g' || c.gen === 'ext' : c.gen === s.gen));
+        const { items } = s;
         const groups = [...new Set(items.map((c) => c.group))];
         return (
           <section key={s.gen} aria-labelledby={`sec-${s.gen}`} className="mt-7">

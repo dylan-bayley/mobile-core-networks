@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { GLOSSARY } from '../../data/reference/glossary.js';
 import { PANEL, EDGE, MONO, MUTED, FAINT, TEXT, BG, GEN } from '../../theme.js';
 import GlossarySearch from '../GlossarySearch.jsx';
@@ -22,8 +23,18 @@ function Mark() {
 }
 
 export default function SiteHeader({ section, searchRef, onPickTerm, onShortcuts }) {
+  // Publish the header's real height as --header-h, so sticky elements below
+  // it (the glossary filter) sit flush even when the header wraps.
+  const ref = useRef(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === 'undefined') return undefined;
+    const ro = new ResizeObserver(() => document.documentElement.style.setProperty('--header-h', `${el.offsetHeight}px`));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   return (
-    <header className="sticky top-0 z-40" style={{ background: `${BG}f2`, borderBottom: `1px solid ${EDGE}`, backdropFilter: 'blur(6px)' }}>
+    <header ref={ref} className="sticky top-0 z-40" style={{ background: `${BG}f2`, borderBottom: `1px solid ${EDGE}`, backdropFilter: 'blur(6px)' }}>
       <div className="mx-auto flex max-w-[1500px] items-center gap-3 px-3 py-2 sm:px-4">
         <a href="#/" className="flex items-center gap-2 rounded" aria-label="Mobile Core — home">
           <Mark />

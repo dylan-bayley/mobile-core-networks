@@ -24,7 +24,7 @@ export const diagram = {
     smf: { t: 'SMF + PGW-C', s: 'Combined control', gen: '5g', g: 'SMF' },
     upf: { t: 'UPF + PGW-U', s: 'Combined user plane', gen: '5g', g: 'UPF' },
     hss: { t: 'HSS + UDM', s: 'Combined subscriber data', gen: '5g', g: 'UDM' },
-    pcf: { t: 'PCF', s: 'Policy', gen: '5g' },
+    pcf: { t: 'PCF + PCRF', s: 'Combined policy', gen: '5g', g: 'PCF' },
     dn: { t: 'DN', s: 'Data network', gen: 'ext' },
   },
   layouts: {
@@ -164,4 +164,6 @@ export const check = [
 
 export const links = [
   { label: 'Watch EPS fallback for a 5G voice call', href: '#/flows?net=sa&session=voice&variant=voice-epsfb' },
+  { label: 'The SMF (and its PGW-C role), in detail', href: '#/components/smf' },
+  { label: 'The MME, in detail', href: '#/components/mme' },
 ];
