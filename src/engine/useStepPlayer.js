@@ -4,6 +4,12 @@ import { initPlayer, playerReducer } from './playerReducer.js';
 /** Fraction of a step's duration during which the message dot travels; the rest is hold time for reading. */
 export const DOT_PHASE = 0.4;
 
+/** Playback speeds offered by the transport controls. */
+export const SPEEDS = [0.5, 1, 1.5, 2];
+
+/** A stored speed, or 1× if it isn't one we offer (a bad value would make step durations NaN or Infinity). */
+export const validSpeed = (v) => (SPEEDS.includes(v) ? v : 1);
+
 const WORDS_PER_MINUTE = 200;
 const MIN_DURATION = 3;
 const MAX_DURATION = 20;
@@ -28,8 +34,8 @@ export function durationFor(step) {
  * step completes (unless `pauseEach`), and stopping (playing -> false) once
  * the flow is done or a step is held.
  */
-export function useStepPlayer(steps, { playing, setPlaying, speed, pauseEach = false }) {
-  const [state, dispatch] = useReducer(playerReducer, undefined, initPlayer);
+export function useStepPlayer(steps, { playing, setPlaying, speed, pauseEach = false, initialStep = 0 }) {
+  const [state, dispatch] = useReducer(playerReducer, initialStep, (step) => ({ ...initPlayer(), step }));
   const rafRef = useRef(null);
   const lastRef = useRef(null);
 

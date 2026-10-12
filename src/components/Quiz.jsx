@@ -109,13 +109,9 @@ export default function Quiz({ scenario, geo, onGo, onClose, best, onScore, onGl
     setAnswered(null);
   };
 
-  // A different flow means a different question set.
-  useEffect(() => {
-    setQuestions(makeQuestions(scenario, geo));
-    setIndex(0);
-    setScore(0);
-    setAnswered(null);
-  }, [scenario, geo]);
+  // A different flow remounts this component (Explorer keys it on the flow),
+  // so there's no reset effect here: one would leave a half-answered question
+  // stuck, and would regenerate the first question after it had painted.
 
   const q = questions[index];
   const finished = index >= questions.length;

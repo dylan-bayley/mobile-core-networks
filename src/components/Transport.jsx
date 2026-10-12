@@ -1,7 +1,6 @@
 import { PANEL, EDGE, MONO, MUTED, FAINT, ACTIVE_BG, ACTIVE_EDGE } from '../theme.js';
+import { SPEEDS } from '../engine/useStepPlayer.js';
 import Switch from './Switch.jsx';
-
-const SPEEDS = [0.5, 1, 1.5, 2];
 
 const btn = { background: PANEL, border: `1px solid ${EDGE}`, color: '#dbe4f3', fontFamily: MONO };
 

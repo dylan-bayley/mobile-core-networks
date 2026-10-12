@@ -13,10 +13,12 @@ export default function GlossaryPage({ term }) {
   const filtered = useMemo(() => filterGlossary(entries, query), [entries, query]);
   const listRef = useRef(null);
 
+  // Deferred, so it runs after the app's scroll-to-top for a new page
+  // (parent effects run after this child's) rather than being undone by it.
   useEffect(() => {
-    if (!term) return;
-    const el = document.getElementById(idFor(term));
-    el?.scrollIntoView({ block: 'center' });
+    if (!term) return undefined;
+    const t = setTimeout(() => document.getElementById(idFor(term))?.scrollIntoView({ block: 'center' }));
+    return () => clearTimeout(t);
   }, [term]);
 
   const letters = useMemo(() => [...new Set(filtered.map(([k]) => k[0].toUpperCase()))], [filtered]);

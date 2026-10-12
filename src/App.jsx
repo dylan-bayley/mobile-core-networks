@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRoute } from './lib/useRoute.js';
 import { GlossaryContext } from './lib/glossaryContext.js';
 import { GLOSSARY } from './data/reference/glossary.js';
@@ -19,13 +19,13 @@ import Explorer from './components/Explorer.jsx';
 const SITE = 'Mobile Core';
 
 /** Resolves the hash route to a page element, its section (for the nav) and a document title. */
-function resolvePage(segments) {
+function resolvePage(segments, query) {
   const [section, id] = segments;
   if (!section) return { key: 'home', section: 'learn', title: `${SITE} — learn the 4G and 5G core`, el: <Home /> };
   if (section === 'learn') {
     const meta = id && lessonMeta(id);
-    if (meta) return { key: `learn/${id}`, section: 'learn', title: `${meta.title} · ${SITE}`, el: <LessonPage lessonId={id} /> };
-    return { key: 'home', section: 'learn', title: SITE, el: <Home /> };
+    if (meta) return { key: `learn/${id}`, section: 'learn', title: `${meta.title} · ${SITE}`, el: <LessonPage lessonId={id} query={query} /> };
+    if (!id) return { key: 'home', section: 'learn', title: SITE, el: <Home /> };
   }
   if (section === 'components') {
     if (!id) return { key: 'components', section: 'components', title: `Components · ${SITE}`, el: <ComponentsIndex /> };
@@ -39,7 +39,7 @@ function resolvePage(segments) {
 
 export default function App() {
   const route = useRoute();
-  const page = useMemo(() => resolvePage(route.segments), [route.segments]);
+  const page = useMemo(() => resolvePage(route.segments, route.query), [route.segments, route.query]);
   const mainRef = useRef(null);
   const searchRef = useRef(null);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
@@ -103,7 +103,9 @@ export default function App() {
         </a>
         <SiteHeader section={page.section} searchRef={searchRef} onPickTerm={openTerm} onShortcuts={() => setShortcutsOpen(true)} />
         <main id="main" ref={mainRef} className="flex-1 pb-20 sm:pb-6">
-          {page.el}
+          {/* Keyed so each lesson or component gets a fresh page: no state
+              (player position, tweens) carries over from the last one. */}
+          <Fragment key={page.key}>{page.el}</Fragment>
         </main>
         <MobileTabBar section={page.section} />
       </div>

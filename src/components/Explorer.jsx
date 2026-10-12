@@ -13,7 +13,8 @@ import { useMediaQuery, useReducedMotion } from '../lib/useMediaQuery.js';
 import { useGlossary } from '../lib/glossaryContext.js';
 import { readStored, store } from '../lib/storage.js';
 import { makeGeometry } from '../engine/geometry.js';
-import { useStepPlayer } from '../engine/useStepPlayer.js';
+import { useStepPlayer, validSpeed } from '../engine/useStepPlayer.js';
+import { ignoreShortcut } from '../lib/keys.js';
 import { K, MONO, MUTED, FAINT, EDGE, PANEL } from '../theme.js';
 import SelectorBar from './SelectorBar.jsx';
 import TopologyDiagram from './TopologyDiagram.jsx';
@@ -69,7 +70,7 @@ export default function Explorer() {
   // a plain reload would otherwise look like a deep link.)
   const [introOpen, setIntroOpen] = useState(() => !readStored('mcn.introSeen', false));
   const [playing, setPlaying] = useState(() => !reducedMotion && !initial.step && !introOpen);
-  const [speed, setSpeed] = useState(() => readStored('mcn.speed', 1));
+  const [speed, setSpeed] = useState(() => validSpeed(readStored('mcn.speed', 1)));
   const [pauseEach, setPauseEach] = useState(() => readStored('mcn.pauseEach', false));
   const [focus, setFocus] = useState(true);
   const [highlightNode, setHighlightNode] = useState(null);
@@ -172,12 +173,16 @@ export default function Explorer() {
     if (typeof window !== 'undefined') window.history.pushState(null, '', window.location.href);
   };
 
+  // A jump (step list, progress bar, sequence row, quiz) gets its own history
+  // entry so Back returns to it; stepping with ←/→ or Prev/Next just moves
+  // along, or walking a 30-step flow would take 30 presses of Back to leave.
+  const moveTo = useCallback((i) => player.go(Math.max(0, Math.min(last, i))), [player, last]);
   const go = useCallback(
     (i) => {
       markHistory();
-      player.go(Math.max(0, Math.min(last, i)));
+      moveTo(i);
     },
-    [player, last],
+    [moveTo],
   );
   const switchNetwork = (id) => {
     if (id === networkId) return;
@@ -214,7 +219,7 @@ export default function Explorer() {
 
   const restart = () => {
     player.restart();
-    setPlaying(true);
+    setPlaying(!reducedMotion);
   };
 
   const closeIntro = () => {
@@ -257,22 +262,24 @@ export default function Explorer() {
   const onResetProgress = () => setProgress(resetProgress());
 
   useEffect(() => {
-    const isTyping = (e) => e.target instanceof HTMLElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName);
     const isButton = (e) => e.target instanceof HTMLElement && e.target.closest('button, [role="button"]');
     const onKeyDown = (e) => {
-      if (isTyping(e) || e.defaultPrevented) return;
       if (e.key === 'Escape') {
-        if (introOpen) closeIntro();
-      } else if (e.code === 'Space') {
+        // A dialog or popover that handled Escape itself marks it prevented.
+        if (introOpen && !e.defaultPrevented) closeIntro();
+        return;
+      }
+      if (ignoreShortcut(e)) return;
+      if (e.code === 'Space') {
         if (isButton(e)) return; // let the focused button take Space; don't also toggle playback
         e.preventDefault();
         togglePlay();
       } else if (e.code === 'ArrowRight') {
         e.preventDefault();
-        go(step + 1);
+        moveTo(step + 1);
       } else if (e.code === 'ArrowLeft') {
         e.preventDefault();
-        go(step - 1);
+        moveTo(step - 1);
       } else if (e.code === 'Home') {
         e.preventDefault();
         go(0);
@@ -284,7 +291,7 @@ export default function Explorer() {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [go, step, last, togglePlay, introOpen]);
+  }, [go, moveTo, step, last, togglePlay, introOpen]);
 
   const analogs = useMemo(() => analogsOf(cur, { networkId, flowId: scenario.flowId }), [cur, networkId, scenario.flowId]);
   const networkFlows = FLOWS[networkId] ?? {};
@@ -406,8 +413,8 @@ export default function Explorer() {
               held={player.held}
               remaining={player.remaining}
               onTogglePlay={togglePlay}
-              onPrev={() => go(step - 1)}
-              onNext={() => go(step + 1)}
+              onPrev={() => moveTo(step - 1)}
+              onNext={() => moveTo(step + 1)}
               onRestart={restart}
               speed={speed}
               onSpeed={setSpeed}
@@ -427,6 +434,7 @@ export default function Explorer() {
           <aside className="mt-3 flex min-h-0 flex-col gap-3 xl:sticky xl:top-3 xl:mt-0 xl:max-h-[calc(100vh-1.5rem)] xl:overflow-y-auto xl:pr-0.5">
             {quizOpen ? (
               <Quiz
+                key={`${networkId}/${scenario.flowId}`}
                 scenario={scenario}
                 geo={geo}
                 onGo={go}

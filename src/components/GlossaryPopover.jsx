@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { K, PANEL, EDGE, MONO, SANS, MUTED } from '../theme.js';
 import { resolveGlossaryKey } from '../lib/resolveGlossaryKey.js';
@@ -18,19 +18,32 @@ export default function GlossaryPopover({ target, glossary, onClose, topology, o
       ? Object.keys(topology.nodes).find((id) => resolveGlossaryKey(topology.nodes[id].t, glossary) === target.key)
       : null;
 
-  useLayoutEffect(() => {
-    if (!entry || !target.anchorEl) {
-      setPos(null);
-      return;
-    }
-    const r = target.anchorEl.getBoundingClientRect();
+  // Placed from the card's real height: on a new term the card first renders
+  // invisibly (pos null) so it can be measured before it's shown. Returns
+  // false when the anchor has scrolled out of view.
+  const place = useCallback(() => {
+    const anchor = target?.anchorEl;
+    if (!anchor) return true;
+    // The anchor can be re-rendered away (the step text changes during
+    // autoplay); keep the card where it is rather than snap to the corner.
+    if (!anchor.isConnected) return true;
+    const r = anchor.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > window.innerHeight) return false;
     const cardHeight = cardRef.current?.offsetHeight ?? 120;
     const width = Math.min(WIDTH, window.innerWidth - MARGIN * 2);
     const left = Math.min(Math.max(r.left, MARGIN), window.innerWidth - width - MARGIN);
     const fitsBelow = r.bottom + MARGIN + cardHeight <= window.innerHeight;
     const top = fitsBelow ? r.bottom + MARGIN : Math.max(MARGIN, r.top - MARGIN - cardHeight);
     setPos({ top, left, width });
-  }, [target, entry]);
+    return true;
+  }, [target]);
+
+  useLayoutEffect(() => {
+    setPos(null);
+  }, [target]);
+  useLayoutEffect(() => {
+    if (entry && !pos) place();
+  }, [entry, pos, place]);
 
   useLayoutEffect(() => {
     if (!entry) return undefined;
@@ -43,7 +56,13 @@ export default function GlossaryPopover({ target, glossary, onClose, topology, o
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') onClose();
     };
-    const handleDismiss = () => onClose();
+    // Scrolling moves the card with its term. The app scrolls things itself
+    // as steps change (the step list, the diagram following the action), so
+    // a scroll only closes the card once the term has left the screen.
+    const handleScroll = () => {
+      if (!place()) onClose();
+    };
+    const handleResize = () => place();
 
     document.addEventListener('pointerdown', handlePointerDown, true);
     document.addEventListener('keydown', handleKeyDown);
@@ -52,21 +71,21 @@ export default function GlossaryPopover({ target, glossary, onClose, topology, o
     // the clicked element) — attach the scroll/resize dismissal a frame
     // later so that doesn't immediately close the popover it just opened.
     let raf = requestAnimationFrame(() => {
-      window.addEventListener('scroll', handleDismiss, true);
-      window.addEventListener('resize', handleDismiss);
+      window.addEventListener('scroll', handleScroll, true);
+      window.addEventListener('resize', handleResize);
     });
 
     return () => {
       cancelAnimationFrame(raf);
       document.removeEventListener('pointerdown', handlePointerDown, true);
       document.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('scroll', handleDismiss, true);
-      window.removeEventListener('resize', handleDismiss);
+      window.removeEventListener('scroll', handleScroll, true);
+      window.removeEventListener('resize', handleResize);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entry, target, onClose]);
+  }, [entry, target, onClose, place]);
 
-  if (!entry || !pos) return null;
+  if (!entry || !target.anchorEl) return null;
 
   return createPortal(
     <div
@@ -76,9 +95,13 @@ export default function GlossaryPopover({ target, glossary, onClose, topology, o
       aria-labelledby="glossary-popover-term"
       style={{
         position: 'fixed',
-        top: pos.top,
-        left: pos.left,
-        width: pos.width,
+        top: pos?.top ?? 0,
+        left: pos?.left ?? 0,
+        width: pos?.width ?? Math.min(WIDTH, window.innerWidth - MARGIN * 2),
+        // Measuring pass: laid out but not shown. Opacity rather than
+        // visibility, so the autofocused close button can still take focus.
+        opacity: pos ? 1 : 0,
+        pointerEvents: pos ? undefined : 'none',
         zIndex: 1000,
         background: PANEL,
         border: `1px solid ${EDGE}`,

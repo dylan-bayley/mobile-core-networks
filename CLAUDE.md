@@ -23,7 +23,7 @@ Guidance for working in this repo. The README covers layout, data schemas and ru
 - Every layout needs both a `wide` and a portrait `narrow` placement. The validator fails if a node box leaves the viewBox in either mode.
 - Scene visibility is cumulative (`show` / `add` / `remove`). `spawn: { newNode: oldNode }` makes a node grow out of another; `'@node'` in a traffic path is the service-bus point for that node.
 - `ArchDiagram` re-animates whenever the `current` object changes identity. Memoise it, or build it once as a module constant; a fresh object every render restarts the tween every frame.
-- SVG glow filters on paths must use `filterUnits="userSpaceOnUse"`. A perfectly horizontal or vertical path has a zero-size bounding box and disappears under a bounding-box filter. `TopologyDiagram.jsx` (the Flows explorer) still uses a bounding-box filter on links.
+- SVG glow filters on paths must use `filterUnits="userSpaceOnUse"`. A perfectly horizontal or vertical path has a zero-size bounding box and disappears under a bounding-box filter.
 - React StrictMode double-runs effects. Don't use "first run" ref flags for one-time behaviour such as deep-link jumps; key them on the value that changed (see `LessonPage.jsx`).
 
 ## Style

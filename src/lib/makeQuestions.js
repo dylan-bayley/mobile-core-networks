@@ -9,10 +9,19 @@ const shuffle = (arr) => {
 
 const pick = (arr, n) => shuffle(arr).slice(0, n);
 
-const maskNodes = (text, topology) => {
+const escapeRe = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * Hides node names in a description. Longest names first, and only whole
+ * names, so "SMF+PGW-C" isn't half-masked as "SMF" and the "MME" inside
+ * "S1-MME" (an interface, not the answer) is left alone. "MME-initiated" is
+ * still masked.
+ */
+export const maskNodes = (text, topology) => {
+  const labels = [...new Set(Object.values(topology.nodes).map((n) => n.t))].sort((a, b) => b.length - a.length);
   let out = text;
-  for (const n of Object.values(topology.nodes)) {
-    out = out.split(n.t).join('▒▒▒');
+  for (const label of labels) {
+    out = out.replace(new RegExp(`(?<![\\w-])${escapeRe(label)}(?!\\w)`, 'g'), '▒▒▒');
   }
   return out;
 };
@@ -46,9 +55,12 @@ export function makeQuestions(scenario, geo, count = 10) {
 
   const nodeQ = (i) => {
     const s = steps[i];
+    // A round trip ends back where it started; "where does it end up" would be a trick question.
+    if (s.rt) return null;
     const correct = topology.nodes[s.p[s.p.length - 1]].t;
     const inPath = new Set(s.p.map((n) => topology.nodes[n].t));
     const distractors = pick(nodeLabels.filter((l) => !inPath.has(l)), 3);
+    if (distractors.length < 3) return null;
     return {
       type: 'choice',
       stepIndex: i,
@@ -57,9 +69,7 @@ export function makeQuestions(scenario, geo, count = 10) {
     };
   };
 
-  const orderQ = () => {
-    if (steps.length < 4) return null;
-    const start = Math.floor(Math.random() * (steps.length - 3));
+  const orderQ = (start) => {
     const slice = steps.slice(start, start + 4);
     return {
       type: 'order',
@@ -69,14 +79,21 @@ export function makeQuestions(scenario, geo, count = 10) {
     };
   };
 
-  const indices = shuffle(steps.map((_, i) => i));
-  let cursor = 0;
-  while (qs.length < count && cursor < indices.length * 3) {
-    const kind = qs.length % 3;
-    const i = indices[cursor % indices.length];
-    cursor++;
-    const q = kind === 0 ? interfaceQ(i) : kind === 1 ? nodeQ(i) : orderQ();
-    if (q) qs.push(q);
+  // One shuffled pool of distinct questions per kind, drawn in turn, so no
+  // question repeats; a short flow just gets a shorter quiz.
+  const pools = [
+    shuffle(steps.map((_, i) => i)).map((i) => () => interfaceQ(i)),
+    shuffle(steps.map((_, i) => i)).map((i) => () => nodeQ(i)),
+    shuffle(steps.length >= 4 ? steps.slice(0, steps.length - 3).map((_, i) => i) : []).map((i) => () => orderQ(i)),
+  ];
+  for (let kind = 0; qs.length < count && pools.some((p) => p.length); kind = (kind + 1) % pools.length) {
+    while (pools[kind].length) {
+      const q = pools[kind].shift()();
+      if (q) {
+        qs.push(q);
+        break;
+      }
+    }
   }
   return qs;
 }

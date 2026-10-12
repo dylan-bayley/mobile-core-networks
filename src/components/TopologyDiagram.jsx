@@ -34,7 +34,7 @@ export default function TopologyDiagram({
   const [clock, setClock] = useState(0);
   const [overflowing, setOverflowing] = useState(false);
   const [hintDismissed, setHintDismissed] = useState(false);
-  const [, , vbW] = useMemo(() => topology.viewBox.split(/\s+/).map(Number), [topology.viewBox]);
+  const [, , vbW, vbH] = useMemo(() => topology.viewBox.split(/\s+/).map(Number), [topology.viewBox]);
 
   useEffect(() => {
     if (reducedMotion) return undefined;
@@ -119,7 +119,10 @@ export default function TopologyDiagram({
     <div className="relative">
       <div
         ref={wrapRef}
-        onScroll={() => setHintDismissed(true)}
+        // Only the learner's own touch or wheel dismisses the swipe hint; the
+        // step-follow scroll below would otherwise hide it before it's seen.
+        onPointerDown={() => setHintDismissed(true)}
+        onWheel={() => setHintDismissed(true)}
         className="overflow-x-auto rounded"
         style={{ background: PANEL, border: `1px solid ${EDGE}`, touchAction: 'pan-x pan-y' }}
       >
@@ -132,6 +135,16 @@ export default function TopologyDiagram({
         >
           <defs>
             <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="4" result="b" />
+              <feMerge>
+                <feMergeNode in="b" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            {/* Links need a user-space filter region: a perfectly horizontal or
+                vertical path has a zero-size bounding box, which would make it
+                vanish under a bounding-box filter while highlighted. */}
+            <filter id="glowline" filterUnits="userSpaceOnUse" x={-40} y={-40} width={vbW + 80} height={vbH + 80}>
               <feGaussianBlur stdDeviation="4" result="b" />
               <feMerge>
                 <feMergeNode in="b" />
@@ -169,7 +182,7 @@ export default function TopologyDiagram({
                   strokeWidth={on ? 2.4 : 1.2}
                   strokeDasharray={l.dash || undefined}
                   opacity={op}
-                  filter={on ? 'url(#glow)' : undefined}
+                  filter={on ? 'url(#glowline)' : undefined}
                 />
                 <text
                   x={lp.x}
