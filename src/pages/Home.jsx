@@ -2,6 +2,9 @@ import { LESSONS } from '../data/arch/index.js';
 import { LESSON_META } from '../data/arch/lessons.js';
 import { SOURCES } from '../data/reference/sources.js';
 import { COMPONENTS } from '../data/components/index.js';
+import { GLOSSARY } from '../data/reference/glossary.js';
+import { glossaryEntries } from '../lib/filterGlossary.js';
+import { NETWORKS, SESSIONS } from '../data/index.js';
 import { readProgress, flowProgress } from '../lib/progress.js';
 import { useGlossary } from '../lib/glossaryContext.js';
 import { useReducedMotion } from '../lib/useMediaQuery.js';
@@ -45,6 +48,32 @@ function HeroDiagram() {
   );
 }
 
+const TOTAL_MINUTES = LESSON_META.reduce((sum, l) => sum + l.minutes, 0);
+const GLOSSARY_COUNT = glossaryEntries(GLOSSARY).length;
+
+function SectionCard({ href, label, title, line, stat }) {
+  return (
+    <li>
+      <a
+        href={href}
+        className="flex h-full flex-col rounded p-4 transition-colors hover:brightness-125"
+        style={{ background: PANEL, border: `1px solid ${EDGE}` }}
+      >
+        <span style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.12em', color: FAINT }}>{label}</span>
+        <span className="mt-1.5 text-base font-semibold" style={{ color: TEXT }}>
+          {title}
+        </span>
+        <span className="mt-1 text-sm leading-snug" style={{ color: TEXT_2 }}>
+          {line}
+        </span>
+        <span className="mt-auto pt-3 text-xs" style={{ fontFamily: MONO, color: MUTED }}>
+          {stat}
+        </span>
+      </a>
+    </li>
+  );
+}
+
 export default function Home() {
   const progress = readProgress();
   const status = (id) => {
@@ -64,112 +93,116 @@ export default function Home() {
           <h1 tabIndex={-1} className="mt-2 text-3xl leading-tight font-semibold tracking-tight sm:text-4xl" style={{ color: TEXT }}>
             See how the 4G and 5G core actually fit together.
           </h1>
-          <p className="mt-3 max-w-[60ch] text-base leading-relaxed" style={{ color: TEXT_2 }}>
-            Five short animated lessons build up the 4G Evolved Packet Core, the 5G core, how the two work together, what
-            really differs between 5G standalone and non-standalone, and the IMS that carries voice over both. Then watch real
-            procedures, one message at a time. Every fact links to the 3GPP specification it comes from.
+          <p className="mt-3 max-w-[48ch] text-base leading-relaxed" style={{ color: TEXT_2 }}>
+            Short animated lessons, then real call flows one message at a time. Every fact cites the 3GPP specification it comes from.
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
             <a href={`#/learn/${next.id}`} className="rounded px-4 py-2.5 text-sm font-semibold" style={{ background: GEN['5g'].c, color: '#0b0717' }}>
               {started ? `Continue: ${next.title}` : 'Start with lesson 1'} →
             </a>
-            <a href="#/components" className="rounded px-4 py-2.5 text-sm" style={{ border: `1px solid ${EDGE}`, color: TEXT }}>
-              Browse the {COMPONENTS.length} components
+            <a href="#/flows" className="rounded px-4 py-2.5 text-sm" style={{ border: `1px solid ${EDGE}`, color: TEXT }}>
+              Jump to call flows
             </a>
           </div>
-          <p className="mt-3 text-xs" style={{ color: FAINT }}>
-            New to this? No telecoms background needed. Click any underlined acronym or any box on a diagram for a definition.
-          </p>
         </div>
         <HeroDiagram />
+      </section>
+
+      <section aria-labelledby="whats-here-title" className="mt-10">
+        <h2 id="whats-here-title" className="text-lg font-semibold" style={{ color: TEXT }}>
+          What’s here
+        </h2>
+        <ul className="mt-3 grid list-none gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <SectionCard
+            href={`#/learn/${LESSON_META[0].id}`}
+            label="LEARN"
+            title="Animated lessons"
+            line="Build up the 4G and 5G core, step by step. No telecoms background needed."
+            stat={`${LESSON_META.length} lessons · about ${TOTAL_MINUTES} min`}
+          />
+          <SectionCard
+            href="#/components"
+            label="COMPONENTS"
+            title="Every network function"
+            line="What each box does, its interfaces, and where it shows up."
+            stat={`${COMPONENTS.length} pages`}
+          />
+          <SectionCard
+            href="#/flows"
+            label="CALL FLOWS"
+            title="Real procedures"
+            line="Attach, calls, SMS and more, played message by message with quizzes."
+            stat={`${SESSIONS.length} session types · ${NETWORKS.map((n) => n.short).join(' / ')}`}
+          />
+          <SectionCard
+            href="#/glossary"
+            label="GLOSSARY"
+            title="Acronyms, explained"
+            line="Click any underlined acronym or diagram box for a definition."
+            stat={`${GLOSSARY_COUNT} terms`}
+          />
+        </ul>
       </section>
 
       <section aria-labelledby="path-title" className="mt-10">
         <h2 id="path-title" className="text-lg font-semibold" style={{ color: TEXT }}>
           The learning path
         </h2>
-        <ol className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <ol className="mt-3 grid list-none gap-2 sm:grid-cols-2 xl:grid-cols-5">
           {LESSON_META.map((l) => {
             const s = status(l.id);
             return (
               <li key={l.id}>
                 <a
                   href={`#/learn/${l.id}`}
-                  className="flex h-full flex-col rounded p-4 transition-colors hover:brightness-125"
+                  title={l.blurb}
+                  className="flex h-full flex-col rounded px-3 py-2.5 transition-colors hover:brightness-125"
                   style={{ background: PANEL, border: `1px solid ${s === 'done' ? `${K.user.c}66` : EDGE}` }}
                 >
                   <span className="flex items-center gap-2" style={{ fontFamily: MONO, fontSize: 12, color: FAINT }}>
-                    LESSON {l.n} · {l.minutes} MIN
+                    {l.n} · {l.minutes} MIN
                     {s && (
                       <span className="ml-auto" style={{ color: s === 'done' ? K.user.c : MUTED }}>
                         {s === 'done' ? '✓ done' : `scene ${s}`}
                       </span>
                     )}
                   </span>
-                  <span className="mt-1.5 text-base font-semibold" style={{ color: TEXT }}>
+                  <span className="mt-1 text-sm font-semibold" style={{ color: TEXT }}>
                     {l.title}
-                  </span>
-                  <span className="mt-1 text-sm leading-relaxed" style={{ color: TEXT_2 }}>
-                    {l.blurb}
-                  </span>
-                  <span className="mt-auto pt-3 text-xs" style={{ color: MUTED }}>
-                    {LESSONS[l.id].scenes.length} animated scenes · quick check
                   </span>
                 </a>
               </li>
             );
           })}
-          <li>
-            <a href="#/flows" className="flex h-full flex-col rounded p-4 hover:brightness-125" style={{ background: PANEL, border: `1px dashed ${EDGE}` }}>
-              <span style={{ fontFamily: MONO, fontSize: 12, color: FAINT }}>THEN · PRACTICE</span>
-              <span className="mt-1.5 text-base font-semibold" style={{ color: TEXT }}>
-                Call flows
-              </span>
-              <span className="mt-1 text-sm leading-relaxed" style={{ color: TEXT_2 }}>
-                Attach, calls, SMS, idle mode and EPS fallback, played message by message on 4G, NSA and SA.
-              </span>
-              <span className="mt-auto pt-3 text-xs" style={{ color: MUTED }}>
-                Topology and sequence views · quizzes
-              </span>
-            </a>
-          </li>
         </ol>
+        <p className="mt-2 text-xs" style={{ color: FAINT }}>
+          Then practise with the <a href="#/flows" className="underline">call flows</a>.
+        </p>
       </section>
 
-      <section aria-labelledby="sources-title" className="mt-10 grid gap-4 lg:grid-cols-2">
-        <div className="rounded p-4" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
-          <h2 id="sources-title" className="text-base font-semibold" style={{ color: TEXT }}>
-            Where the facts come from
-          </h2>
-          <p className="mt-1 text-sm leading-relaxed" style={{ color: TEXT_2 }}>
-            Lessons and component pages cite the 3GPP specifications (the free ETSI copies) and the GSMA migration white paper,
-            down to the clause. Vendor product names only appear in labelled “in practice” notes.
-          </p>
-          <ul className="mt-3 grid gap-1 text-sm sm:grid-cols-2">
-            {Object.values(SOURCES).map((s) => (
-              <li key={s.doc + s.title}>
-                <a href={s.url} target="_blank" rel="noreferrer" className="hover:underline" style={{ color: MUTED }}>
-                  <span style={{ fontFamily: MONO, color: TEXT }}>{s.doc}</span> {s.title}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="rounded p-4" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
-          <h2 className="text-base font-semibold" style={{ color: TEXT }}>
-            Going further
-          </h2>
-          <p className="mt-1 text-sm leading-relaxed" style={{ color: TEXT_2 }}>
-            For a deeper, book-length treatment of the same material, the Architecture Overview chapter of{' '}
-            <cite>The Core Network for 5G Advanced</cite> by Stefan Rommer et al. (Academic Press, 2nd edition, 2025) is an
-            excellent companion. The diagrams here are original; the specifications above are the primary source.
-          </p>
-          <p className="mt-3 text-sm" style={{ color: TEXT_2 }}>
-            Shortcuts: <kbd style={{ fontFamily: MONO }}>/</kbd> search acronyms · <kbd style={{ fontFamily: MONO }}>?</kbd> all keys ·{' '}
-            <kbd style={{ fontFamily: MONO }}>g</kbd> then <kbd style={{ fontFamily: MONO }}>c</kbd> components.
-          </p>
-        </div>
-      </section>
+      <details className="mt-10 rounded p-4" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
+        <summary className="cursor-pointer text-sm font-semibold" style={{ color: TEXT }}>
+          Sources and further reading
+        </summary>
+        <p className="mt-2 text-sm leading-relaxed" style={{ color: TEXT_2 }}>
+          Lessons and component pages cite the 3GPP specifications (the free ETSI copies) and the GSMA migration white paper,
+          down to the clause. Vendor product names only appear in labelled “in practice” notes.
+        </p>
+        <ul className="mt-3 grid list-none gap-1 text-sm sm:grid-cols-2">
+          {Object.values(SOURCES).map((s) => (
+            <li key={s.doc + s.title}>
+              <a href={s.url} target="_blank" rel="noreferrer" className="hover:underline" style={{ color: MUTED }}>
+                <span style={{ fontFamily: MONO, color: TEXT }}>{s.doc}</span> {s.title}
+              </a>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 text-sm leading-relaxed" style={{ color: TEXT_2 }}>
+          For a deeper, book-length treatment of the same material, the Architecture Overview chapter of{' '}
+          <cite>The Core Network for 5G Advanced</cite> by Stefan Rommer et al. (Academic Press, 2nd edition, 2025) is an
+          excellent companion. The diagrams here are original; the specifications above are the primary source.
+        </p>
+      </details>
     </div>
   );
 }
