@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { K, PANEL, EDGE, MONO, MUTED, FAINT, TEXT_2, ACTIVE_BG, TEXT } from '../theme.js';
+import { K, PANEL, EDGE, MONO, MUTED, FAINT, TEXT_2, ACTIVE_BG, TEXT, DONE } from '../theme.js';
 import { GLOSSARY } from '../data/reference/glossary.js';
 import { resolveGlossaryKey } from '../lib/resolveGlossaryKey.js';
 import { autolinkAcronyms } from '../lib/autolinkAcronyms.jsx';
@@ -27,7 +27,7 @@ function CopyLink({ url }) {
         onClick={copy}
         title="Copy a link to this exact step"
         className="ml-auto rounded px-2 py-0.5"
-        style={{ fontFamily: MONO, fontSize: 12, color: copied ? '#3fd6a0' : MUTED, border: `1px solid ${EDGE}`, background: 'transparent' }}
+        style={{ fontFamily: MONO, fontSize: 12, color: copied ? DONE : MUTED, border: `1px solid ${EDGE}`, background: 'transparent' }}
       >
         {copied ? 'copied ✓' : 'copy link'}
       </button>

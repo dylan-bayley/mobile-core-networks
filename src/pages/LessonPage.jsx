@@ -257,7 +257,7 @@ export default function LessonPage({ lessonId, query }) {
 
   const caption = (
     <section className="rounded p-4" style={{ background: PANEL, border: `1px solid ${EDGE}`, borderLeft: `3px solid ${accent}` }}>
-      <p style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.1em', color: FAINT }}>
+      <p style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.1em', color: FAINT }}>
         SCENE {index + 1} OF {lesson.scenes.length}
       </p>
       <h2 className="mt-1 text-lg font-semibold leading-snug" style={{ color: TEXT }}>
@@ -294,7 +294,7 @@ export default function LessonPage({ lessonId, query }) {
       </p>
 
       <header className="mt-4 mb-3">
-        <p style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.12em', color: FAINT }}>
+        <p style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.12em', color: FAINT }}>
           LESSON {meta.n} OF {LESSON_META.length} · ABOUT {meta.minutes} MIN
         </p>
         <h1 tabIndex={-1} className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl" style={{ color: TEXT }}>
@@ -392,7 +392,7 @@ export default function LessonPage({ lessonId, query }) {
                         className="flex w-full items-baseline gap-2 rounded px-2 py-1.5 text-left text-sm"
                         style={{ background: on ? ACTIVE_BG : 'transparent', border: 0, color: on ? TEXT : i < index ? TEXT_2 : MUTED }}
                       >
-                        <span style={{ fontFamily: MONO, fontSize: 11, color: on ? K[s.k ?? 'control'].c : FAINT, minWidth: 18 }}>{String(i + 1).padStart(2, '0')}</span>
+                        <span style={{ fontFamily: MONO, fontSize: 12, color: on ? K[s.k ?? 'control'].c : FAINT, minWidth: 18 }}>{String(i + 1).padStart(2, '0')}</span>
                         {s.title}
                       </button>
                     </li>
@@ -516,7 +516,7 @@ function Legend({ diagram }) {
   return (
     <ul className="flex flex-wrap gap-x-4 gap-y-1 px-3 pb-2.5" aria-label="Diagram key">
       {items.map(([label, c, kind]) => (
-        <li key={label} className="flex items-center gap-1.5" style={{ fontFamily: MONO, fontSize: 11, color: MUTED }}>
+        <li key={label} className="flex items-center gap-1.5" style={{ fontFamily: MONO, fontSize: 12, color: MUTED }}>
           {kind === 'box' ? (
             <span aria-hidden="true" style={{ width: 12, height: 9, border: `1.5px solid ${c}`, borderRadius: 2, display: 'inline-block' }} />
           ) : (

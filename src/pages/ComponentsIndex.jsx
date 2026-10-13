@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { COMPONENTS, componentById } from '../data/components/index.js';
 import { hashQuery, urlWithHashQuery } from '../lib/route.js';
-import { PANEL, EDGE, MONO, FAINT, MUTED, TEXT, TEXT_2, GEN, ACTIVE_BG, ACTIVE_EDGE } from '../theme.js';
+import { PANEL, EDGE, MONO, FAINT, MUTED, TEXT, TEXT_2, GEN, ACTIVE_BG, ACTIVE_EDGE, SURFACE } from '../theme.js';
 
 const FILTERS = [
   { id: 'all', label: 'All' },
@@ -34,7 +34,7 @@ function Card({ c }) {
     >
       <span className="flex items-baseline gap-2">
         <span style={{ fontFamily: MONO, fontSize: 17, fontWeight: 700, color: TEXT }}>{c.label}</span>
-        <span className="ml-auto" style={{ fontFamily: MONO, fontSize: 10, color: FAINT }}>
+        <span className="ml-auto" style={{ fontFamily: MONO, fontSize: 12, color: FAINT }}>
           {PLANE[c.plane] ?? ''}
         </span>
       </span>
@@ -71,7 +71,7 @@ export default function ComponentsIndex() {
   return (
     <div className="mx-auto max-w-[1500px] px-3 py-5 sm:px-4 sm:py-6">
       <header>
-        <p style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.14em', color: FAINT }}>REFERENCE</p>
+        <p style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.14em', color: FAINT }}>REFERENCE</p>
         <h1 tabIndex={-1} className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl" style={{ color: TEXT }}>
           Core network components
         </h1>
@@ -102,7 +102,7 @@ export default function ComponentsIndex() {
           placeholder="Search components…"
           aria-label="Search components by name or description"
           className="min-h-10 w-full rounded px-3 py-1.5 text-sm sm:ml-auto sm:min-h-0 sm:w-64"
-          style={{ background: '#0a1120', border: `1px solid ${EDGE}`, color: TEXT, fontFamily: MONO }}
+          style={{ background: SURFACE, border: `1px solid ${EDGE}`, color: TEXT, fontFamily: MONO }}
         />
       </div>
       {sections.length === 0 && (
@@ -118,7 +118,7 @@ export default function ComponentsIndex() {
             <h2 id={`sec-${s.gen}`} className="flex items-center gap-2 text-lg font-semibold" style={{ color: TEXT }}>
               <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: 2, background: GEN[s.gen].c, display: 'inline-block' }} />
               {s.title}
-              <span style={{ fontFamily: MONO, fontSize: 11, color: FAINT, fontWeight: 400 }}>{items.length}</span>
+              <span style={{ fontFamily: MONO, fontSize: 12, color: FAINT, fontWeight: 400 }}>{items.length}</span>
             </h2>
             <p className="mt-0.5 text-sm" style={{ color: MUTED }}>
               {s.blurb}
@@ -126,7 +126,7 @@ export default function ComponentsIndex() {
             {groups.map((g) => (
               <div key={g} className="mt-3">
                 {groups.length > 1 && (
-                  <h3 className="mb-1.5" style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.1em', color: FAINT }}>
+                  <h3 className="mb-1.5" style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.1em', color: FAINT }}>
                     {g.toUpperCase()}
                   </h3>
                 )}

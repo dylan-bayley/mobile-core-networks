@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { GLOSSARY } from '../data/reference/glossary.js';
 import { componentForTerm } from '../data/components/index.js';
 import { filterGlossary, glossaryEntries } from '../lib/filterGlossary.js';
-import { PANEL, EDGE, MONO, FAINT, MUTED, TEXT, TEXT_2, K, ACTIVE_EDGE, BG } from '../theme.js';
+import { PANEL, EDGE, MONO, FAINT, MUTED, TEXT, TEXT_2, K, ACTIVE_EDGE, BG, SURFACE } from '../theme.js';
 
 const idFor = (key) => `term-${key.replace(/[^A-Za-z0-9]+/g, '-')}`;
 
@@ -26,7 +26,7 @@ export default function GlossaryPage({ term }) {
   return (
     <div className="mx-auto max-w-[1100px] px-3 py-5 sm:px-4 sm:py-6">
       <header>
-        <p style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.14em', color: FAINT }}>REFERENCE</p>
+        <p style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.14em', color: FAINT }}>REFERENCE</p>
         <h1 tabIndex={-1} className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl" style={{ color: TEXT }}>
           Acronym glossary
         </h1>
@@ -42,7 +42,7 @@ export default function GlossaryPage({ term }) {
           placeholder="Filter by acronym, name or description…"
           aria-label="Filter the glossary"
           className="w-full rounded px-3 py-2 text-sm"
-          style={{ background: '#0a1120', border: `1px solid ${EDGE}`, color: TEXT, fontFamily: MONO }}
+          style={{ background: SURFACE, border: `1px solid ${EDGE}`, color: TEXT, fontFamily: MONO }}
         />
         {!query && (
           <nav aria-label="Jump to letter" className="mt-2 flex flex-wrap gap-1">
@@ -73,7 +73,7 @@ export default function GlossaryPage({ term }) {
                   {e.expansion}
                 </span>
                 {e.kind && K[e.kind] && (
-                  <span className="rounded px-1.5" style={{ fontFamily: MONO, fontSize: 10, color: K[e.kind].c, border: `1px solid ${K[e.kind].c}55` }}>
+                  <span className="rounded px-1.5" style={{ fontFamily: MONO, fontSize: 12, color: K[e.kind].c, border: `1px solid ${K[e.kind].c}55` }}>
                     {K[e.kind].n}
                   </span>
                 )}

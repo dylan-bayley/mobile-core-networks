@@ -1,4 +1,4 @@
-import { ACTIVE_EDGE, EDGE, MONO, MUTED, PANEL, TEXT } from '../theme.js';
+import { ACTIVE_EDGE, EDGE, MONO, MUTED, PANEL, TEXT, TRACK } from '../theme.js';
 
 /** A labelled on/off control that reads as a switch, not a mystery glyph. */
 export default function Switch({ on, onChange, children, title, size = 'md' }) {
@@ -16,7 +16,7 @@ export default function Switch({ on, onChange, children, title, size = 'md' }) {
       <span
         aria-hidden="true"
         className="relative inline-block h-3.5 w-6 rounded-full transition-colors"
-        style={{ background: on ? ACTIVE_EDGE : '#26334f' }}
+        style={{ background: on ? ACTIVE_EDGE : TRACK }}
       >
         <span
           className="absolute top-0.5 h-2.5 w-2.5 rounded-full transition-all"

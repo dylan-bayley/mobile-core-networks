@@ -71,7 +71,7 @@ function StepList({ steps, step, onGo }) {
                 {s.tag && (
                   <span
                     className="ml-1.5 rounded px-1 align-middle"
-                    style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', color: K[s.k].c, border: `1px solid ${K[s.k].c}55` }}
+                    style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.06em', color: K[s.k].c, border: `1px solid ${K[s.k].c}55` }}
                     title={`Specific to this variant (${s.tag})`}
                   >
                     {s.tag.toUpperCase()}

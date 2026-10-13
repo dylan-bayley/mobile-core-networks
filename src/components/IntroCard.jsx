@@ -1,4 +1,4 @@
-import { PANEL, EDGE, MONO, MUTED, FAINT, TEXT_2, ACTIVE_BG, ACTIVE_EDGE, K } from '../theme.js';
+import { PANEL, EDGE, MONO, MUTED, FAINT, TEXT_2, ACTIVE_BG, ACTIVE_EDGE, K, DONE } from '../theme.js';
 import { isCompleted } from '../lib/progress.js';
 
 /**
@@ -64,7 +64,7 @@ export default function IntroCard({ path, progress, networkId, networkLabel, cur
               style={{
                 background: current ? ACTIVE_BG : 'transparent',
                 border: `1px solid ${current ? ACTIVE_EDGE : EDGE}`,
-                color: finished ? '#3fd6a0' : current ? '#fff' : MUTED,
+                color: finished ? DONE : current ? '#fff' : MUTED,
               }}
             >
               <span style={{ fontFamily: MONO, fontSize: 12, marginRight: 5, color: FAINT }}>{i + 1}</span>

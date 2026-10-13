@@ -10,7 +10,7 @@ import { useGlossary } from '../lib/glossaryContext.js';
 import { useReducedMotion } from '../lib/useMediaQuery.js';
 import { useElementWidth } from '../lib/useElementWidth.js';
 import { autolinkAcronyms } from '../lib/autolinkAcronyms.jsx';
-import { PANEL, EDGE, MONO, FAINT, MUTED, TEXT, TEXT_2, GEN, K } from '../theme.js';
+import { PANEL, EDGE, MONO, FAINT, MUTED, TEXT, TEXT_2, GEN, K, DIVIDER } from '../theme.js';
 import ArchDiagram from '../components/arch/ArchDiagram.jsx';
 import VignettePlayer from '../components/arch/VignettePlayer.jsx';
 import Sources from '../components/SourceChip.jsx';
@@ -164,7 +164,7 @@ export default function ComponentPage({ component: c }) {
                 <thead>
                   <tr>
                     {['Interface', 'Connects to', 'Protocol'].map((h) => (
-                      <th key={h} scope="col" className="px-2 py-1.5" style={{ fontFamily: MONO, fontSize: 11, color: FAINT, borderBottom: `1px solid ${EDGE}` }}>
+                      <th key={h} scope="col" className="px-2 py-1.5" style={{ fontFamily: MONO, fontSize: 12, color: FAINT, borderBottom: `1px solid ${EDGE}` }}>
                         {h}
                       </th>
                     ))}
@@ -173,13 +173,13 @@ export default function ComponentPage({ component: c }) {
                 <tbody>
                   {c.interfaces.map((i) => (
                     <tr key={i.name + i.peer}>
-                      <th scope="row" className="px-2 py-1.5 font-medium" style={{ fontFamily: MONO, color: TEXT, borderBottom: '1px solid #131d33' }}>
+                      <th scope="row" className="px-2 py-1.5 font-medium" style={{ fontFamily: MONO, color: TEXT, borderBottom: `1px solid ${DIVIDER}` }}>
                         {link(i.name)}
                       </th>
-                      <td className="px-2 py-1.5" style={{ color: TEXT_2, borderBottom: '1px solid #131d33' }}>
+                      <td className="px-2 py-1.5" style={{ color: TEXT_2, borderBottom: `1px solid ${DIVIDER}` }}>
                         {link(i.peer)}
                       </td>
-                      <td className="px-2 py-1.5" style={{ color: MUTED, borderBottom: '1px solid #131d33' }}>
+                      <td className="px-2 py-1.5" style={{ color: MUTED, borderBottom: `1px solid ${DIVIDER}` }}>
                         {link(i.protocol)}
                       </td>
                     </tr>
@@ -247,9 +247,9 @@ export default function ComponentPage({ component: c }) {
                 {flows.map((a) => (
                   <li key={`${a.net}/${a.flowId}`}>
                     <a href={flowHref(a)} className="flex items-baseline gap-2 rounded px-1 py-1 text-sm hover:underline" style={{ color: TEXT_2 }}>
-                      <span style={{ fontFamily: MONO, fontSize: 11, color: FAINT, minWidth: 34 }}>{a.network.label.split(' ')[0]}</span>
+                      <span style={{ fontFamily: MONO, fontSize: 12, color: FAINT, minWidth: 34 }}>{a.network.label.split(' ')[0]}</span>
                       <span className="min-w-0 flex-1">{a.flowLabel}</span>
-                      <span style={{ fontFamily: MONO, fontSize: 11, color: MUTED }}>
+                      <span style={{ fontFamily: MONO, fontSize: 12, color: MUTED }}>
                         {a.count} step{a.count > 1 ? 's' : ''}
                       </span>
                     </a>

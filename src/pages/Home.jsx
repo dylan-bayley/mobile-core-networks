@@ -60,7 +60,7 @@ export default function Home() {
     <div className="mx-auto max-w-[1500px] px-3 py-5 sm:px-4 sm:py-8">
       <section className="grid items-center gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <div>
-          <p style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.16em', color: FAINT }}>MOBILE CORE NETWORKS, ANIMATED</p>
+          <p style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.16em', color: FAINT }}>MOBILE CORE NETWORKS, ANIMATED</p>
           <h1 tabIndex={-1} className="mt-2 text-3xl leading-tight font-semibold tracking-tight sm:text-4xl" style={{ color: TEXT }}>
             See how the 4G and 5G core actually fit together.
           </h1>
@@ -98,7 +98,7 @@ export default function Home() {
                   className="flex h-full flex-col rounded p-4 transition-colors hover:brightness-125"
                   style={{ background: PANEL, border: `1px solid ${s === 'done' ? `${K.user.c}66` : EDGE}` }}
                 >
-                  <span className="flex items-center gap-2" style={{ fontFamily: MONO, fontSize: 11, color: FAINT }}>
+                  <span className="flex items-center gap-2" style={{ fontFamily: MONO, fontSize: 12, color: FAINT }}>
                     LESSON {l.n} · {l.minutes} MIN
                     {s && (
                       <span className="ml-auto" style={{ color: s === 'done' ? K.user.c : MUTED }}>
@@ -121,7 +121,7 @@ export default function Home() {
           })}
           <li>
             <a href="#/flows" className="flex h-full flex-col rounded p-4 hover:brightness-125" style={{ background: PANEL, border: `1px dashed ${EDGE}` }}>
-              <span style={{ fontFamily: MONO, fontSize: 11, color: FAINT }}>THEN · PRACTICE</span>
+              <span style={{ fontFamily: MONO, fontSize: 12, color: FAINT }}>THEN · PRACTICE</span>
               <span className="mt-1.5 text-base font-semibold" style={{ color: TEXT }}>
                 Call flows
               </span>

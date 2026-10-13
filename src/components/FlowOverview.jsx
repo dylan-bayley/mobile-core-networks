@@ -19,10 +19,10 @@ export default function FlowOverview({ scenario, networks, flows, networkId, onS
   return (
     <div className="rounded px-3 py-2" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
       <div className="flex flex-wrap items-baseline gap-x-2">
-        <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.12em', color: FAINT }}>
+        <span style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.12em', color: FAINT }}>
           {scenario.network.label.toUpperCase()} · {scenario.label.toUpperCase()}
         </span>
-        <span style={{ fontFamily: MONO, fontSize: 10, color: FAINT }}>
+        <span style={{ fontFamily: MONO, fontSize: 12, color: FAINT }}>
           {scenario.steps.length} steps · {nodes.size} nodes
         </span>
       </div>
@@ -36,13 +36,13 @@ export default function FlowOverview({ scenario, networks, flows, networkId, onS
       </p>
       {tagged.length > 0 && (
         <p className="mt-1.5 text-xs" style={{ color: MUTED }}>
-          <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em' }}>{tagNames.map((t) => t.toUpperCase()).join(' · ')}</span>
+          <span style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.08em' }}>{tagNames.map((t) => t.toUpperCase()).join(' · ')}</span>
           {' '}— {tagged.length} of these steps are specific to this variant; the rest are shared with the base flow.
         </p>
       )}
       {elsewhere.length > 0 && (
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', color: FAINT }}>SAME SESSION IN</span>
+          <span style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.12em', color: FAINT }}>SAME SESSION IN</span>
           {elsewhere.map(({ network, flow }) => (
             <button
               key={network.id}
@@ -55,7 +55,7 @@ export default function FlowOverview({ scenario, networks, flows, networkId, onS
               title={`${network.label}: ${flow.label} (${flow.steps.length} steps)`}
             >
               {network.label}
-              <span style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}> · {flow.steps.length}</span>
+              <span style={{ fontFamily: MONO, fontSize: 12, color: MUTED }}> · {flow.steps.length}</span>
             </button>
           ))}
         </div>
