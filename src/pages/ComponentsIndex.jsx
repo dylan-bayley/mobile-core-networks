@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { COMPONENTS, componentById } from '../data/components/index.js';
 import { hashQuery, urlWithHashQuery } from '../lib/route.js';
+import GroupIcon from '../components/GroupIcon.jsx';
 import { PANEL, EDGE, MONO, FAINT, MUTED, TEXT, TEXT_2, GEN, ACTIVE_BG, ACTIVE_EDGE, SURFACE } from '../theme.js';
 
 const FILTERS = [
@@ -121,15 +122,21 @@ export default function ComponentsIndex() {
             <p className="mt-0.5 text-sm" style={{ color: MUTED }}>
               {s.blurb}
             </p>
-            <div className={`mt-3 grid gap-x-6 gap-y-4 ${groups.length > 1 ? 'lg:grid-cols-2' : ''}`}>
+            {/* Columns, not grid rows: a short group beside a tall one would leave a gap under it. A group's odd last card spans the row so it leaves no empty slot. */}
+            <div className={`mt-3 ${groups.length > 1 ? 'lg:columns-2 lg:gap-x-6' : ''}`}>
               {groups.map((g) => (
-                <div key={g} className="min-w-0">
+                <div key={g} className={`min-w-0 ${groups.length > 1 ? 'mb-4 break-inside-avoid' : ''}`}>
                   {groups.length > 1 && (
-                    <h3 className="mb-1.5 text-sm font-medium" style={{ color: MUTED }}>
+                    <h3 className="mb-1.5 flex items-center gap-1.5 text-sm font-medium" style={{ color: MUTED }}>
+                      <GroupIcon group={g} />
                       {g}
                     </h3>
                   )}
-                  <ul className={`grid gap-2.5 sm:grid-cols-2 ${groups.length > 1 ? '' : 'lg:grid-cols-3 xl:grid-cols-4'}`}>
+                  <ul
+                    className={`grid gap-2.5 sm:grid-cols-2 ${
+                      groups.length > 1 ? 'sm:[&>li:last-child:nth-child(odd)]:col-span-2' : 'lg:grid-cols-3 xl:grid-cols-4'
+                    }`}
+                  >
                     {items
                       .filter((c) => c.group === g)
                       .map((c) => (
