@@ -108,14 +108,14 @@ export default function StepDetail({
           className="mt-3 rounded px-3 py-2 text-xs leading-relaxed"
           style={{ background: `${accent}12`, borderLeft: `3px solid ${accent}`, color: TEXT }}
         >
-          <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', color: accent }}>IN PRACTICE </span>
+          <span style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.12em', color: accent }}>IN PRACTICE </span>
           {autolinkAcronyms(cur.pitfall, GLOSSARY, linkOpts)}
         </aside>
       )}
 
       {analogs.length > 0 && (
         <div className="mt-3 rounded p-2" style={{ border: `1px dashed ${EDGE}` }}>
-          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', color: FAINT }}>COMPARE — THE SAME STEP IN ANOTHER GENERATION</div>
+          <div style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.12em', color: FAINT }}>COMPARE — THE SAME STEP IN ANOTHER GENERATION</div>
           {analogs.map((a) => (
             <button
               key={a.key}

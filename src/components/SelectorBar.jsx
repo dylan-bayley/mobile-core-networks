@@ -1,7 +1,8 @@
 import { PANEL, EDGE, MONO, MUTED, FAINT, ACTIVE_BG, ACTIVE_EDGE, TEXT } from '../theme.js';
-import { sessionForFlow, variantsFor, taglineFor } from '../data/sessions.js';
+import { sessionForFlow, variantsFor } from '../data/sessions.js';
 import { isCompleted } from '../lib/progress.js';
 import Switch from './Switch.jsx';
+import Popover from './ui/Popover.jsx';
 
 function Row({ items, activeId, onSelect, size = 'md', ariaLabel, doneIds }) {
   const pad = size === 'sm' ? 'px-2.5 py-1.5 text-xs' : 'px-3 py-2 text-sm';
@@ -65,7 +66,6 @@ export default function SelectorBar({
     }).map((s) => s.id),
   );
   const doneVariants = new Set(variants.filter((v) => isCompleted(progress, networkId, v.id)).map((v) => v.id));
-  const tagline = taglineFor(flowId);
 
   return (
     <div className="mb-3 flex flex-col gap-2">
@@ -74,7 +74,7 @@ export default function SelectorBar({
         <Row items={networks} activeId={networkId} onSelect={onNetwork} ariaLabel="Network" />
         <span aria-hidden="true" className="hidden sm:inline" style={{ color: '#2a3958' }}>|</span>
         <Row items={sessions} activeId={session.id} onSelect={(id) => onFlow(id)} ariaLabel="Session type" doneIds={doneSessions} />
-        <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+        <div className="flex items-center gap-2 sm:ml-auto">
           <div className="flex items-center rounded" role="group" aria-label="Diagram view" style={{ border: `1px solid ${EDGE}` }}>
             {[
               ['topology', 'Topology'],
@@ -98,33 +98,32 @@ export default function SelectorBar({
               </button>
             ))}
           </div>
-          <Switch on={focus} onChange={onToggleFocus} title="Fade the nodes and links the current step doesn't touch">
-            focus current step
-          </Switch>
-          <button
-            onClick={onToggleQuiz}
-            aria-pressed={quizOpen}
-            title="Ten questions generated from this flow"
-            className="min-h-10 rounded px-3 py-2 text-xs sm:min-h-0"
-            style={{ background: PANEL, border: `1px solid ${quizOpen ? ACTIVE_EDGE : EDGE}`, color: quizOpen ? TEXT : MUTED, fontFamily: MONO }}
-          >
-            {quizOpen ? '✕ close quiz' : '? quiz me'}
-          </button>
+          <Popover label="More" ariaLabel="Diagram and quiz options" active={quizOpen}>
+            {(close) => (
+              <>
+                <Switch on={focus} onChange={onToggleFocus} title="Fade the nodes and links the current step doesn't touch">
+                  focus current step
+                </Switch>
+                <button
+                  onClick={() => {
+                    onToggleQuiz();
+                    close();
+                  }}
+                  aria-pressed={quizOpen}
+                  className="min-h-10 rounded px-3 py-2 text-left text-xs sm:min-h-0"
+                  style={{ background: PANEL, border: `1px solid ${quizOpen ? ACTIVE_EDGE : EDGE}`, color: quizOpen ? TEXT : MUTED, fontFamily: MONO }}
+                >
+                  {quizOpen ? '✕ close quiz' : '? quiz me (10 questions)'}
+                </button>
+              </>
+            )}
+          </Popover>
         </div>
       </div>
-      {(variants.length > 1 || tagline) && (
+      {variants.length > 1 && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          {variants.length > 1 && (
-            <>
-              <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.12em', color: FAINT }}>VARIANT</span>
-              <Row items={variants} activeId={flowId} onSelect={onFlow} size="sm" ariaLabel="Flow variant" doneIds={doneVariants} />
-            </>
-          )}
-          {tagline && (
-            <span className="basis-full text-xs sm:basis-auto" style={{ color: MUTED }}>
-              {tagline}
-            </span>
-          )}
+          <span style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.12em', color: FAINT }}>VARIANT</span>
+          <Row items={variants} activeId={flowId} onSelect={onFlow} size="sm" ariaLabel="Flow variant" doneIds={doneVariants} />
         </div>
       )}
     </div>
