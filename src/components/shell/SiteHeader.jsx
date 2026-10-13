@@ -36,11 +36,11 @@ export default function SiteHeader({ section, searchRef, onPickTerm, onShortcuts
   return (
     <header ref={ref} className="sticky top-0 z-40" style={{ background: `${BG}f2`, borderBottom: `1px solid ${EDGE}`, backdropFilter: 'blur(6px)' }}>
       <div className="mx-auto flex max-w-[1500px] items-center gap-3 px-3 py-2 sm:px-4">
-        <a href="#/" className="flex items-center gap-2 rounded" aria-label="Mobile Core — home">
+        <a href="#/" className="flex items-center gap-2 rounded" aria-label="The Mobile Core — home">
           <Mark />
           <span className="hidden flex-col leading-tight min-[400px]:flex">
             <span className="text-sm font-semibold tracking-tight" style={{ color: TEXT }}>
-              Mobile Core
+              The Mobile Core
             </span>
             <span style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.14em', color: FAINT }}>EPC · 5GC · SA/NSA</span>
           </span>

@@ -43,6 +43,7 @@ export default function ArchDiagram({
   focusNode = null,
   label,
   maxHeight,
+  tweenMs = TWEEN_MS,
 }) {
   const scene = current.scene;
   const target = useMemo(() => targetState(diagram, current, mode), [diagram, current, mode]);
@@ -93,7 +94,7 @@ export default function ArchDiagram({
       const dt = Math.min((now - last) / 1000, 0.05);
       last = now;
       clockRef.current += dt;
-      const tweening = !anim.current.instant && now - anim.current.start < TWEEN_MS;
+      const tweening = !anim.current.instant && now - anim.current.start < tweenMs;
       const stillPulsing = pulsing && clockRef.current - pulseFrom.current < PULSE_S;
       // Always render once more after the tween ends, so it lands exactly on its target.
       setFrame((f) => (f + 1) % 1e6);
@@ -106,7 +107,7 @@ export default function ArchDiagram({
   }, [target, needsClock]);
 
   const now = typeof performance !== 'undefined' ? performance.now() : 0;
-  const t = anim.current.instant ? 1 : Math.min(1, (now - anim.current.start) / TWEEN_MS);
+  const t = anim.current.instant ? 1 : Math.min(1, (now - anim.current.start) / tweenMs);
   const state = t >= 1 ? anim.current.to : interpolate(anim.current.from, anim.current.to, t, anim.current.spawn);
   shown.current = state;
 

@@ -309,7 +309,7 @@ export default function Explorer() {
 
   useEffect(() => {
     const net = NETWORKS.find((n) => n.id === networkId) ?? NETWORKS[0];
-    document.title = `${scenario.label} (${net.label}) · Call flows · Mobile Core`;
+    document.title = `${scenario.label} (${net.label}) · Call flows · The Mobile Core`;
   }, [networkId, scenario.label]);
 
   const flowKinds = useMemo(() => [...new Set(scenario.steps.map((s) => s.k))], [scenario.steps]);
