@@ -5,7 +5,7 @@ import { GLOSSARY } from '../data/reference/glossary.js';
 import { layoutFor } from '../engine/arch.js';
 import { durationFor, useStepPlayer, validSpeed } from '../engine/useStepPlayer.js';
 import { useGlossary } from '../lib/glossaryContext.js';
-import { useReducedMotion } from '../lib/useMediaQuery.js';
+import { useMediaQuery, useReducedMotion } from '../lib/useMediaQuery.js';
 import { useElementWidth, useViewportHeight } from '../lib/useElementWidth.js';
 import { hashQuery, urlWithHashQuery } from '../lib/route.js';
 import { readStored, store } from '../lib/storage.js';
@@ -129,6 +129,7 @@ function CompareDiagrams({ lesson, scenes, labels, reducedMotion }) {
 export default function LessonPage({ lessonId, query }) {
   const lesson = LESSONS[lessonId];
   const reducedMotion = useReducedMotion();
+  const isWide = useMediaQuery('(min-width: 1280px)'); // Tailwind `xl`: the scene list sits beside the player
   const { openTerm, activeKey } = useGlossary();
   const [boxRef, boxWidth] = useElementWidth();
   const vh = useViewportHeight();
@@ -307,15 +308,9 @@ export default function LessonPage({ lessonId, query }) {
       <div data-player className="xl:grid xl:grid-cols-[minmax(0,1fr)_400px] xl:items-start xl:gap-4">
         <div className="min-w-0">
           <div className="rounded" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
+            {hasReps && (
             <div className="flex flex-wrap items-center gap-2 px-3 pt-2.5 pb-1">
-              <span className="text-sm font-medium" style={{ color: TEXT }}>
-                {scene.title}
-              </span>
-              <span className="hidden sm:inline" style={{ fontFamily: MONO, fontSize: 11, color: FAINT }}>
-                {index + 1}/{lesson.scenes.length}
-              </span>
-              {hasReps && (
-                <div role="group" aria-label="Diagram style (m)" className="ml-auto flex gap-1">
+              <div role="group" aria-label="Diagram style (m)" className="ml-auto flex gap-1">
                   {REPS.map((r) => {
                     const on = shownRep === r.id;
                     return (
@@ -334,9 +329,9 @@ export default function LessonPage({ lessonId, query }) {
                     );
                   })}
                 </div>
-              )}
             </div>
-            <div ref={boxRef} className="px-1 pb-2">
+            )}
+            <div ref={boxRef} className="px-1 pt-2 pb-2">
               {boxWidth > 0 && (
                 <ArchDiagram
                   diagram={lesson.diagram}
@@ -382,31 +377,45 @@ export default function LessonPage({ lessonId, query }) {
 
         <aside className="mt-3 flex flex-col gap-3 xl:sticky xl:top-16 xl:mt-0">
           <div className="hidden xl:block">{caption}</div>
-          <nav aria-label="Scenes in this lesson" className="rounded p-2" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
-            <ol className="grid gap-0.5">
-              {lesson.scenes.map((s, i) => {
-                const on = i === index;
-                return (
-                  <li key={s.id}>
-                    <button
-                      type="button"
-                      onClick={() => go(i)}
-                      aria-current={on ? 'step' : undefined}
-                      className="flex w-full items-baseline gap-2 rounded px-2 py-1.5 text-left text-sm"
-                      style={{ background: on ? ACTIVE_BG : 'transparent', border: 0, color: on ? TEXT : i < index ? TEXT_2 : MUTED }}
-                    >
-                      <span style={{ fontFamily: MONO, fontSize: 11, color: on ? K[s.k ?? 'control'].c : FAINT, minWidth: 18 }}>{String(i + 1).padStart(2, '0')}</span>
-                      {s.title}
-                    </button>
-                  </li>
-                );
-              })}
-            </ol>
-          </nav>
+          {(() => {
+            const sceneNav = (
+            <nav aria-label="Scenes in this lesson" className="rounded p-2" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
+              <ol className="grid gap-0.5">
+                {lesson.scenes.map((s, i) => {
+                  const on = i === index;
+                  return (
+                    <li key={s.id}>
+                      <button
+                        type="button"
+                        onClick={() => go(i)}
+                        aria-current={on ? 'step' : undefined}
+                        className="flex w-full items-baseline gap-2 rounded px-2 py-1.5 text-left text-sm"
+                        style={{ background: on ? ACTIVE_BG : 'transparent', border: 0, color: on ? TEXT : i < index ? TEXT_2 : MUTED }}
+                      >
+                        <span style={{ fontFamily: MONO, fontSize: 11, color: on ? K[s.k ?? 'control'].c : FAINT, minWidth: 18 }}>{String(i + 1).padStart(2, '0')}</span>
+                        {s.title}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+            </nav>
+            );
+            return isWide ? (
+              sceneNav
+            ) : (
+              <details>
+                <summary className="cursor-pointer rounded px-3 py-2 text-sm" style={{ background: PANEL, border: `1px solid ${EDGE}`, color: MUTED }}>
+                  All {lesson.scenes.length} scenes
+                </summary>
+                <div className="mt-2">{sceneNav}</div>
+              </details>
+            );
+          })()}
         </aside>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         {lesson.compare && (
           <div className="lg:col-span-2">
             <CompareDiagrams lesson={lesson} scenes={lesson.compare.scenes} labels={lesson.compare.labels} reducedMotion={reducedMotion} />
@@ -418,7 +427,11 @@ export default function LessonPage({ lessonId, query }) {
           </div>
         )}
         {lesson.options && (
-          <div className="lg:col-span-2">
+          <details className="lg:col-span-2">
+            <summary className="cursor-pointer rounded px-3 py-2 text-sm" style={{ background: PANEL, border: `1px solid ${EDGE}`, color: MUTED }}>
+              All the deployment options, for reference
+            </summary>
+            <div className="mt-2">
             <DataTable
               title="All the deployment options, for reference"
               caption="Operators mostly deployed option 3 (NSA) first, then option 2 (SA). The other options are defined but less common."
@@ -426,7 +439,8 @@ export default function LessonPage({ lessonId, query }) {
               rows={lesson.options.rows}
               cites={lesson.options.cites}
             />
-          </div>
+            </div>
+          </details>
         )}
         <section className="rounded p-4" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
           <h2 className="text-base font-semibold" style={{ color: TEXT }}>
