@@ -79,8 +79,8 @@ function ComponentDiagram({ component }) {
 
 function Panel({ title, children, className = '' }) {
   return (
-    <section className={`rounded p-4 ${className}`} style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
-      <h2 className="text-base font-semibold" style={{ color: TEXT }}>
+    <section className={`pt-4 first:pt-0 ${className}`} style={{ borderTop: `1px solid ${DIVIDER}` }}>
+      <h2 className="text-lg font-semibold" style={{ color: TEXT }}>
         {title}
       </h2>
       {children}
@@ -121,17 +121,14 @@ export default function ComponentPage({ component: c }) {
       </nav>
 
       <header className="mt-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded px-2 py-0.5 text-xs" style={{ border: `1px solid ${gen.c}`, color: gen.c, fontFamily: MONO }}>
-            {gen.n}
-          </span>
-          <span className="rounded px-2 py-0.5 text-xs" style={{ border: `1px solid ${EDGE}`, color: MUTED, fontFamily: MONO }}>
-            {PLANE[c.plane]}
-          </span>
-          <span className="rounded px-2 py-0.5 text-xs" style={{ border: `1px solid ${EDGE}`, color: MUTED, fontFamily: MONO }}>
-            {c.group}
-          </span>
-        </div>
+        <p className="flex flex-wrap items-center gap-x-2 text-sm" style={{ color: MUTED }}>
+          <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: 2, background: gen.c, display: 'inline-block' }} />
+          <span style={{ color: TEXT_2 }}>{gen.n}</span>
+          <span aria-hidden="true">/</span>
+          <span>{PLANE[c.plane]}</span>
+          <span aria-hidden="true">/</span>
+          <span>{c.group}</span>
+        </p>
         <h1 tabIndex={-1} className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl" style={{ color: TEXT, fontFamily: MONO }}>
           {c.label}
         </h1>
@@ -233,7 +230,7 @@ export default function ComponentPage({ component: c }) {
                       className="rounded px-2.5 py-1 text-sm"
                       style={{ fontFamily: MONO, border: `1px solid ${(GEN[p.gen] ?? GEN.ext).c}`, color: TEXT }}
                     >
-                      {p.label} →
+                      {p.label}
                     </a>
                   ))}
                 </div>
