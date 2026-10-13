@@ -9,7 +9,7 @@ import { readProgress, flowProgress } from '../lib/progress.js';
 import { useGlossary } from '../lib/glossaryContext.js';
 import { useReducedMotion } from '../lib/useMediaQuery.js';
 import { useElementWidth } from '../lib/useElementWidth.js';
-import { PANEL, EDGE, MONO, FAINT, MUTED, TEXT, TEXT_2, GEN, K } from '../theme.js';
+import { PANEL, EDGE, DIVIDER, RULE, FAINT, MONO, MUTED, TEXT, TEXT_2, GEN, DONE } from '../theme.js';
 import ArchDiagram from '../components/arch/ArchDiagram.jsx';
 
 const HERO_SCENE = 'sba';
@@ -50,137 +50,161 @@ function HeroDiagram() {
 
 const TOTAL_MINUTES = LESSON_META.reduce((sum, l) => sum + l.minutes, 0);
 const GLOSSARY_COUNT = glossaryEntries(GLOSSARY).length;
+const NODE = 22; // px; the rail's node diameter
 
-function SectionCard({ href, label, title, line, stat }) {
+/** One lesson on the rail: a node, the line down to the next node, and the text. */
+function RailItem({ lesson, state, scene, isLast }) {
+  const done = state === 'done';
+  const current = state === 'current';
+  const sceneCount = LESSONS[lesson.id].scenes.length;
   return (
-    <li>
-      <a
-        href={href}
-        className="flex h-full flex-col rounded p-4 transition-colors hover:brightness-125"
-        style={{ background: PANEL, border: `1px solid ${EDGE}` }}
-      >
-        <span style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.12em', color: FAINT }}>{label}</span>
-        <span className="mt-1.5 text-base font-semibold" style={{ color: TEXT }}>
-          {title}
+    <li className="flex gap-4">
+      <div className="flex flex-col items-center" aria-hidden="true">
+        <span
+          className="flex shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums"
+          style={{
+            width: NODE,
+            height: NODE,
+            background: done ? DONE : current ? GEN['5g'].c : 'transparent',
+            border: `2px solid ${done ? DONE : current ? GEN['5g'].c : FAINT}`,
+            color: '#06101f',
+          }}
+        >
+          {done ? '✓' : ''}
         </span>
-        <span className="mt-1 text-sm leading-snug" style={{ color: TEXT_2 }}>
-          {line}
-        </span>
-        <span className="mt-auto pt-3 text-xs" style={{ fontFamily: MONO, color: MUTED }}>
-          {stat}
-        </span>
-      </a>
+        {!isLast && <span className="my-1 w-0.5 flex-1" style={{ background: done ? DONE : RULE, minHeight: 20 }} />}
+      </div>
+      <div className={`min-w-0 flex-1 ${isLast ? '' : 'pb-5'}`}>
+        <a
+          href={`#/learn/${lesson.id}`}
+          aria-current={current ? 'step' : undefined}
+          className="group flex flex-wrap items-baseline gap-x-3 rounded"
+        >
+          <span className={`font-semibold group-hover:underline ${current ? 'text-lg' : 'text-base'}`} style={{ color: TEXT }}>
+            <span className="tabular-nums" style={{ color: MUTED }}>{lesson.n}. </span>
+            {lesson.title}
+          </span>
+          <span className="text-sm tabular-nums" style={{ color: MUTED }}>
+            {done ? 'Done' : scene ? `Scene ${scene} of ${sceneCount}` : `${lesson.minutes} min`}
+          </span>
+        </a>
+        {current && (
+          <p className="mt-1 max-w-[56ch] text-sm leading-relaxed" style={{ color: TEXT_2 }}>
+            {lesson.blurb}
+          </p>
+        )}
+      </div>
     </li>
+  );
+}
+
+function LearningPath({ states, scenes }) {
+  return (
+    <section aria-labelledby="path-title">
+      <h2 id="path-title" className="text-xl font-semibold" style={{ color: TEXT }}>
+        Learning path
+      </h2>
+      <p className="mt-1 text-sm" style={{ color: MUTED }}>
+        {LESSON_META.length} lessons, about {TOTAL_MINUTES} minutes. Each builds on the one before.
+      </p>
+      <ol className="mt-5 list-none">
+        {LESSON_META.map((l, i) => (
+          <RailItem key={l.id} lesson={l} state={states[l.id]} scene={scenes[l.id]} isLast={i === LESSON_META.length - 1} />
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+const TOOLS = [
+  {
+    href: '#/flows',
+    title: 'Call flows',
+    line: `Attach, calls, SMS and more, message by message. ${SESSIONS.length} session types on ${NETWORKS.map((n) => n.label).join(', ')}.`,
+  },
+  {
+    href: '#/components',
+    title: 'Components',
+    line: `What each network function does, its interfaces, and where it shows up. ${COMPONENTS.length} pages.`,
+  },
+  {
+    href: '#/glossary',
+    title: 'Glossary',
+    line: `${GLOSSARY_COUNT} terms. Press / to look one up from any page.`,
+  },
+];
+
+function LookThingsUp() {
+  return (
+    <section aria-labelledby="tools-title">
+      <h2 id="tools-title" className="text-xl font-semibold" style={{ color: TEXT }}>
+        Look things up
+      </h2>
+      <p className="mt-1 text-sm" style={{ color: MUTED }}>
+        Use these alongside the lessons, or on their own.
+      </p>
+      <ul className="mt-5 list-none" style={{ borderTop: `1px solid ${DIVIDER}` }}>
+        {TOOLS.map((t) => (
+          <li key={t.href} style={{ borderBottom: `1px solid ${DIVIDER}` }}>
+            <a href={t.href} className="group block rounded py-3">
+              <span className="text-base font-semibold group-hover:underline" style={{ color: TEXT }}>
+                {t.title}
+              </span>
+              <span className="mt-0.5 block max-w-[48ch] text-sm leading-snug" style={{ color: TEXT_2 }}>
+                {t.line}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
 export default function Home() {
   const progress = readProgress();
-  const status = (id) => {
-    const p = flowProgress(progress, 'lesson', id);
-    if (!p) return null;
-    if (p.completed) return 'done';
-    return `${p.maxStep + 1}/${p.total}`;
-  };
-  const next = LESSON_META.find((l) => status(l.id) !== 'done') ?? LESSON_META[0];
-  const started = LESSON_META.some((l) => status(l.id));
+  const detail = (id) => flowProgress(progress, 'lesson', id);
+  const next = LESSON_META.find((l) => !detail(l.id)?.completed) ?? LESSON_META[0];
+  const started = LESSON_META.some((l) => detail(l.id));
+  const allDone = LESSON_META.every((l) => detail(l.id)?.completed);
+
+  const states = Object.fromEntries(
+    LESSON_META.map((l) => [l.id, detail(l.id)?.completed ? 'done' : l.id === next.id && !allDone ? 'current' : 'todo']),
+  );
+  // Scene progress is only worth showing on the lesson you are part-way through.
+  const scenes = Object.fromEntries(
+    LESSON_META.map((l) => [l.id, states[l.id] === 'current' && detail(l.id) ? detail(l.id).maxStep + 1 : null]),
+  );
 
   return (
     <div className="mx-auto max-w-[1500px] px-3 py-5 sm:px-4 sm:py-8">
       <section className="grid items-center gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <div>
-          <p style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.16em', color: FAINT }}>MOBILE CORE NETWORKS, ANIMATED</p>
-          <h1 tabIndex={-1} className="mt-2 text-3xl leading-tight font-semibold tracking-tight sm:text-4xl" style={{ color: TEXT }}>
+          <h1 tabIndex={-1} className="text-4xl leading-tight font-semibold tracking-tight sm:text-[2.5rem]" style={{ color: TEXT }}>
             See how the 4G and 5G core actually fit together.
           </h1>
-          <p className="mt-3 max-w-[48ch] text-base leading-relaxed" style={{ color: TEXT_2 }}>
-            Short animated lessons, then real call flows one message at a time. Every fact cites the 3GPP specification it comes from.
+          <p className="mt-4 max-w-[48ch] text-base leading-relaxed" style={{ color: TEXT_2 }}>
+            Short animated lessons, then real call flows one message at a time. Every fact cites the 3GPP specification it comes
+            from.
           </p>
-          <div className="mt-5 flex flex-wrap gap-2">
+          <div className="mt-6 flex flex-wrap gap-2">
             <a href={`#/learn/${next.id}`} className="rounded px-4 py-2.5 text-sm font-semibold" style={{ background: GEN['5g'].c, color: '#0b0717' }}>
-              {started ? `Continue: ${next.title}` : 'Start with lesson 1'} →
+              {started ? `Continue: ${next.title}` : 'Start with lesson 1'}
             </a>
             <a href="#/flows" className="rounded px-4 py-2.5 text-sm" style={{ border: `1px solid ${EDGE}`, color: TEXT }}>
-              Jump to call flows
+              Open call flows
             </a>
           </div>
         </div>
         <HeroDiagram />
       </section>
 
-      <section aria-labelledby="whats-here-title" className="mt-10">
-        <h2 id="whats-here-title" className="text-lg font-semibold" style={{ color: TEXT }}>
-          What’s here
-        </h2>
-        <ul className="mt-3 grid list-none gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <SectionCard
-            href={`#/learn/${LESSON_META[0].id}`}
-            label="LEARN"
-            title="Animated lessons"
-            line="Build up the 4G and 5G core, step by step. No telecoms background needed."
-            stat={`${LESSON_META.length} lessons · about ${TOTAL_MINUTES} min`}
-          />
-          <SectionCard
-            href="#/components"
-            label="COMPONENTS"
-            title="Every network function"
-            line="What each box does, its interfaces, and where it shows up."
-            stat={`${COMPONENTS.length} pages`}
-          />
-          <SectionCard
-            href="#/flows"
-            label="CALL FLOWS"
-            title="Real procedures"
-            line="Attach, calls, SMS and more, played message by message with quizzes."
-            stat={`${SESSIONS.length} session types · ${NETWORKS.map((n) => n.short).join(' / ')}`}
-          />
-          <SectionCard
-            href="#/glossary"
-            label="GLOSSARY"
-            title="Acronyms, explained"
-            line="Click any underlined acronym or diagram box for a definition."
-            stat={`${GLOSSARY_COUNT} terms`}
-          />
-        </ul>
-      </section>
+      <div className="mt-12 grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-14">
+        <LearningPath states={states} scenes={scenes} />
+        <LookThingsUp />
+      </div>
 
-      <section aria-labelledby="path-title" className="mt-10">
-        <h2 id="path-title" className="text-lg font-semibold" style={{ color: TEXT }}>
-          The learning path
-        </h2>
-        <ol className="mt-3 grid list-none gap-2 sm:grid-cols-2 xl:grid-cols-5">
-          {LESSON_META.map((l) => {
-            const s = status(l.id);
-            return (
-              <li key={l.id}>
-                <a
-                  href={`#/learn/${l.id}`}
-                  title={l.blurb}
-                  className="flex h-full flex-col rounded px-3 py-2.5 transition-colors hover:brightness-125"
-                  style={{ background: PANEL, border: `1px solid ${s === 'done' ? `${K.user.c}66` : EDGE}` }}
-                >
-                  <span className="flex items-center gap-2" style={{ fontFamily: MONO, fontSize: 12, color: FAINT }}>
-                    {l.n} · {l.minutes} MIN
-                    {s && (
-                      <span className="ml-auto" style={{ color: s === 'done' ? K.user.c : MUTED }}>
-                        {s === 'done' ? '✓ done' : `scene ${s}`}
-                      </span>
-                    )}
-                  </span>
-                  <span className="mt-1 text-sm font-semibold" style={{ color: TEXT }}>
-                    {l.title}
-                  </span>
-                </a>
-              </li>
-            );
-          })}
-        </ol>
-        <p className="mt-2 text-xs" style={{ color: FAINT }}>
-          Then practise with the <a href="#/flows" className="underline">call flows</a>.
-        </p>
-      </section>
-
-      <details className="mt-10 rounded p-4" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
+      <details className="mt-12 rounded p-4" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
         <summary className="cursor-pointer text-sm font-semibold" style={{ color: TEXT }}>
           Sources and further reading
         </summary>
