@@ -52,7 +52,6 @@ export default function FlowOverview({ scenario, networks, flows, networkId, onS
               style={{ background: ACTIVE_BG, border: `1px solid ${EDGE}`, color: TEXT }}
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = ACTIVE_EDGE)}
               onMouseLeave={(e) => (e.currentTarget.style.borderColor = EDGE)}
-              title={`${network.label}: ${flow.label} (${flow.steps.length} steps)`}
             >
               {network.label}
               <span style={{ fontFamily: MONO, fontSize: 12, color: MUTED }}> · {flow.steps.length}</span>

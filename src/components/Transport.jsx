@@ -65,7 +65,11 @@ export default function Transport({
         <Popover label="Options" ariaLabel="Playback options">
           {(close) => (
             <>
-              <Switch on={!pauseEach} onChange={onTogglePauseEach} title="Off: playback stops at the end of every step so you can read before moving on">
+              <Switch
+                on={!pauseEach}
+                onChange={onTogglePauseEach}
+                hint="Turn off to stop at the end of every step, so you can read before moving on."
+              >
                 auto-advance
               </Switch>
               <div>

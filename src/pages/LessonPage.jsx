@@ -309,8 +309,13 @@ export default function LessonPage({ lessonId, query }) {
         <div className="min-w-0">
           <div className="rounded" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
             {hasReps && (
-            <div className="flex flex-wrap items-center gap-2 px-3 pt-2.5 pb-1">
-              <div role="group" aria-label="Diagram style (m)" className="ml-auto flex gap-1">
+              <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 px-3 pt-2.5 pb-1">
+                {!sceneRep && (
+                  <span className="text-xs" style={{ color: MUTED }}>
+                    This scene has its own layout.
+                  </span>
+                )}
+                <div role="group" aria-label="Diagram style (m)" className="flex gap-1">
                   {REPS.map((r) => {
                     const on = shownRep === r.id;
                     return (
@@ -320,7 +325,6 @@ export default function LessonPage({ lessonId, query }) {
                         disabled={!sceneRep}
                         aria-pressed={on}
                         onClick={() => setRep(r.id)}
-                        title={sceneRep ? 'Switch how the 5G core is drawn (m)' : 'This scene uses its own layout'}
                         className="min-h-9 rounded px-2.5 py-1 text-xs disabled:opacity-40 sm:min-h-0"
                         style={{ background: on ? ACTIVE_BG : 'transparent', border: `1px solid ${on ? ACTIVE_EDGE : EDGE}`, color: on ? TEXT : MUTED, fontFamily: MONO }}
                       >
@@ -329,7 +333,7 @@ export default function LessonPage({ lessonId, query }) {
                     );
                   })}
                 </div>
-            </div>
+              </div>
             )}
             <div ref={boxRef} className="px-1 pt-2 pb-2">
               {boxWidth > 0 && (

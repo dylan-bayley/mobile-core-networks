@@ -75,7 +75,6 @@ export default function SiteHeader({ section, searchRef, onPickTerm, onShortcuts
           <button
             type="button"
             onClick={onShortcuts}
-            title="Keyboard shortcuts (?)"
             aria-label="Keyboard shortcuts"
             className="hidden rounded px-2 py-1.5 text-xs md:block"
             style={{ background: PANEL, border: `1px solid ${EDGE}`, color: MUTED, fontFamily: MONO }}

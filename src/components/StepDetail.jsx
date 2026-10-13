@@ -25,7 +25,6 @@ function CopyLink({ url }) {
       <button
         type="button"
         onClick={copy}
-        title="Copy a link to this exact step"
         className="ml-auto rounded px-2 py-0.5"
         style={{ fontFamily: MONO, fontSize: 12, color: copied ? DONE : MUTED, border: `1px solid ${EDGE}`, background: 'transparent' }}
       >
@@ -71,7 +70,6 @@ export default function StepDetail({
           <span
             className="rounded px-2 py-0.5"
             style={{ fontFamily: MONO, fontSize: 12, color: MUTED, border: `1px solid ${EDGE}` }}
-            title="This step is specific to this variant"
           >
             {cur.tag}
           </span>
@@ -127,7 +125,7 @@ export default function StepDetail({
               style={{ background: 'transparent', border: 0 }}
               onMouseEnter={(e) => (e.currentTarget.style.background = ACTIVE_BG)}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-              title={`Switch to ${a.network.label} · ${a.flowLabel} at this step`}
+              aria-label={`Switch to ${a.network.label}, ${a.flowLabel}, at this step`}
             >
               <span className="shrink-0" style={{ fontFamily: MONO, fontSize: 12, color: K[a.step.k].c, paddingTop: 2, minWidth: 28 }}>
                 {a.network.short}

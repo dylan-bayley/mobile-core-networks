@@ -354,7 +354,6 @@ export default function Explorer() {
               type="button"
               onClick={() => setIntroOpen((o) => !o)}
               aria-pressed={introOpen}
-              title="What is this site and where should I start?"
               className="rounded px-2 py-1.5 text-xs"
               style={{ background: PANEL, border: `1px solid ${EDGE}`, color: MUTED, fontFamily: MONO }}
             >
@@ -454,7 +453,7 @@ export default function Explorer() {
             <Legend kinds={flowKinds} />
           </div>
 
-          <aside className="mt-3 flex min-h-0 flex-col gap-3 xl:sticky xl:top-3 xl:mt-0 xl:max-h-[calc(100vh-1.5rem)] xl:overflow-y-auto xl:pr-0.5">
+          <aside id="flow-aside" className="mt-3 flex min-h-0 flex-col gap-3 xl:sticky xl:top-3 xl:mt-0 xl:max-h-[calc(100vh-1.5rem)] xl:overflow-y-auto xl:pr-0.5">
             {quizOpen ? (
               <Quiz
                 key={`${networkId}/${scenario.flowId}`}
