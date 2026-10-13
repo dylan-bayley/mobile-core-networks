@@ -491,7 +491,6 @@ export default function Explorer() {
           qci={QCI}
           fiveQi={networkId === '4g' ? null : FIVE_QI}
           eirStatus={EIR_STATUS}
-          glossary={GLOSSARY}
           beyond={beyond}
           completed={completedTotal}
           totalFlows={allFlowKeys.length}
