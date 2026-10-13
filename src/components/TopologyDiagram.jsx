@@ -5,10 +5,14 @@ import { resolveGlossaryKey } from '../lib/resolveGlossaryKey.js';
 import { svgTermProps } from '../lib/svgTermProps.js';
 import { DOT_PHASE } from '../engine/useStepPlayer.js';
 import { nodeAt } from '../engine/geometry.js';
+import { useElementWidth } from '../lib/useElementWidth.js';
+import { KindMark } from './KindMark.jsx';
 
 const BUBBLE_MARGIN = 6;
 const BUBBLE_H = 20;
-const CHAR_W = 6.8;
+const CHAR_W = 6.8; // monospace advance at BUBBLE_FONT
+const BUBBLE_FONT = 11;
+const MIN_TEXT_PX = 10.5; // smallest rendered text, whatever the diagram is scaled to
 const NODE_PAD = 4;
 
 /** Splits a message label into tokens, keeping delimiters, so glossary-known tokens can be made clickable. */
@@ -29,12 +33,17 @@ export default function TopologyDiagram({
   maxHeight,
 }) {
   const cur = steps[step];
-  const wrapRef = useRef(null);
+  const [wrapRef, wrapW] = useElementWidth();
   const svgRef = useRef(null);
   const [clock, setClock] = useState(0);
   const [overflowing, setOverflowing] = useState(false);
   const [hintDismissed, setHintDismissed] = useState(false);
   const [, , vbW, vbH] = useMemo(() => topology.viewBox.split(/\s+/).map(Number), [topology.viewBox]);
+  // The SVG renders at least `minWidth` wide (it scrolls sideways below that),
+  // so viewBox units shrink by this factor; keep small text readable by
+  // growing it in viewBox units to compensate (same idea as ArchDiagram).
+  const scale = Math.max(wrapW, topology.minWidth ?? 0) / vbW || 1;
+  const fs = (units) => Math.max(units, MIN_TEXT_PX / scale);
 
   // The clock only drives the ambient traffic dots; with none on screen,
   // don't re-render the whole diagram every frame for nothing.
@@ -63,7 +72,7 @@ export default function TopologyDiagram({
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(check) : null;
     ro?.observe(wrap);
     return () => ro?.disconnect();
-  }, [topology]);
+  }, [topology, wrapRef]);
 
   // Follow the action: keep the current step's route centred horizontally
   // when the diagram is wider than the viewport.
@@ -76,7 +85,7 @@ export default function TopologyDiagram({
     const scale = svg.clientWidth / vbW;
     const left = Math.max(0, mid * scale - wrap.clientWidth / 2);
     wrap.scrollTo({ left, behavior: reducedMotion ? 'auto' : 'smooth' });
-  }, [cur, overflowing, topology, vbW, reducedMotion]);
+  }, [cur, overflowing, topology, vbW, reducedMotion, wrapRef]);
 
   const activeLinks = useMemo(() => new Set(geo.routeLinks(cur.p)), [geo, cur]);
   const activeNodes = useMemo(() => new Set(cur.p), [cur]);
@@ -98,14 +107,16 @@ export default function TopologyDiagram({
   // above that node so it never covers the node's title; in flight it sits
   // just above the dot. Either way it is clamped inside the viewBox so long
   // labels near the edge stay legible.
-  const bubbleW = cur.m.length * CHAR_W + 24;
+  const bubbleFont = fs(BUBBLE_FONT);
+  const bubbleH = BUBBLE_H * (bubbleFont / BUBBLE_FONT);
+  const bubbleW = cur.m.length * CHAR_W * (bubbleFont / BUBBLE_FONT) + 24;
   const restingOn = nodeAt(pos, topology.nodes, NODE_PAD);
   let anchorX = pos.x;
   let bubbleY;
   if (restingOn) {
     const n = topology.nodes[restingOn];
     anchorX = n.cx;
-    const top = n.cy - n.h / 2 - 10 - BUBBLE_H;
+    const top = n.cy - n.h / 2 - 10 - bubbleH;
     bubbleY = top >= BUBBLE_MARGIN ? top : n.cy + n.h / 2 + 10;
   } else {
     const above = pos.y - 34 >= BUBBLE_MARGIN;
@@ -161,7 +172,7 @@ export default function TopologyDiagram({
               <rect key={i} x={z.x} y={z.y} width={z.w} height={z.h} rx={z.rx} fill={z.fill} />
             ))}
           </g>
-          <g style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em' }}>
+          <g style={{ fontFamily: MONO, fontSize: fs(10), letterSpacing: '0.14em' }}>
             {topology.zones.map((z, i) => (
               <text key={i} x={z.labelX} y={z.labelY} fill={z.labelColor}>
                 {z.label}
@@ -174,6 +185,7 @@ export default function TopologyDiagram({
             const col = on ? accent : K[l.k].c;
             const op = on ? 0.95 : focus ? 0.26 : 0.4;
             const lp = geo.labelPos(l);
+            const linkFont = fs(11.5);
             const linkKey = resolveGlossaryKey(l.l, GLOSSARY);
             const linkTermProps = svgTermProps(linkKey, activeGlossaryKey, onGlossaryOpen);
             return (
@@ -187,11 +199,12 @@ export default function TopologyDiagram({
                   opacity={op}
                   filter={on ? 'url(#glowline)' : undefined}
                 />
+                <KindMark kind={l.k} cx={lp.x - (l.l.length * linkFont * 0.6) / 2 - linkFont * 0.7} cy={lp.y - 5 - linkFont * 0.33} r={linkFont * 0.28} colour={col} />
                 <text
                   x={lp.x}
                   y={lp.y - 5}
                   textAnchor="middle"
-                  style={{ fontFamily: MONO, fontSize: 11.5, cursor: linkTermProps ? 'help' : 'default' }}
+                  style={{ fontFamily: MONO, fontSize: linkFont, cursor: linkTermProps ? 'help' : 'default' }}
                   fill={on ? '#ffffff' : focus ? FAINT : MUTED}
                   {...(linkTermProps ?? {})}
                 >
@@ -263,7 +276,7 @@ export default function TopologyDiagram({
                   {expansion && <title>{`${n.t} — ${expansion}. Click for the definition.`}</title>}
                   {n.t}
                 </text>
-                <text x={n.cx} y={n.cy + 12} textAnchor="middle" style={{ fontSize: 10.5, fontFamily: MONO }} fill={on ? accent : FAINT}>
+                <text x={n.cx} y={n.cy + 12} textAnchor="middle" style={{ fontSize: Math.max(10.5, Math.min(fs(10.5), (n.w - 8) / (Math.max(n.s.length, 1) * 0.6))), fontFamily: MONO }} fill={on ? accent : FAINT}>
                   {n.s}
                 </text>
               </g>
@@ -273,8 +286,8 @@ export default function TopologyDiagram({
           <g>
             <circle cx={pos.x} cy={pos.y} r={7} fill={accent} filter="url(#glow)" />
             <circle cx={pos.x} cy={pos.y} r={13} fill="none" stroke={accent} strokeWidth="1" opacity={0.35} />
-            <rect x={bubbleX} y={bubbleY} width={bubbleW} height={BUBBLE_H} rx={5} fill="#0a1324" stroke={accent} strokeWidth="1" />
-            <text x={bubbleX + bubbleW / 2} y={bubbleY + 14} textAnchor="middle" style={{ fontFamily: MONO, fontSize: 11 }} fill="#ffffff">
+            <rect x={bubbleX} y={bubbleY} width={bubbleW} height={bubbleH} rx={5} fill="#0a1324" stroke={accent} strokeWidth="1" />
+            <text x={bubbleX + bubbleW / 2} y={bubbleY + bubbleH * 0.7} textAnchor="middle" style={{ fontFamily: MONO, fontSize: bubbleFont }} fill="#ffffff">
               {tokens.map((tok, i) => {
                 const key = GLOSSARY[tok] ? tok : null;
                 const props = svgTermProps(key, activeGlossaryKey, onGlossaryOpen);

@@ -19,6 +19,7 @@ import Transport from '../components/Transport.jsx';
 import ProgressBar from '../components/ProgressBar.jsx';
 import Sources from '../components/SourceChip.jsx';
 import DataTable from '../components/DataTable.jsx';
+import { KindSwatch } from '../components/KindMark.jsx';
 
 /** Home/End only drive the player when focus is in it (or nowhere in particular). */
 const inPlayer = (e) => !(e.target instanceof HTMLElement) || e.target === document.body || !!e.target.closest('[data-player]');
@@ -515,7 +516,7 @@ function Legend({ diagram }) {
   const kinds = new Set(diagram.links.map((l) => l.k));
   const items = [
     ...LEGEND_BOXES.filter(([, g]) => gens.has(g)).map(([label, g]) => [label, GEN[g].c, 'box']),
-    ...LEGEND_LINES.filter(([, k]) => kinds.has(k)).map(([label, k]) => [label, K[k].c, 'line']),
+    ...LEGEND_LINES.filter(([, k]) => kinds.has(k)).map(([label, k]) => [label, k, 'line']),
   ];
   return (
     <ul className="flex flex-wrap gap-x-4 gap-y-1 px-3 pb-2.5" aria-label="Diagram key">
@@ -524,7 +525,7 @@ function Legend({ diagram }) {
           {kind === 'box' ? (
             <span aria-hidden="true" style={{ width: 12, height: 9, border: `1.5px solid ${c}`, borderRadius: 2, display: 'inline-block' }} />
           ) : (
-            <span aria-hidden="true" style={{ width: 14, height: 2, background: c, display: 'inline-block' }} />
+            <KindSwatch kind={c} />
           )}
           {label}
         </li>
