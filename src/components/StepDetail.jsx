@@ -27,7 +27,7 @@ function CopyLink({ url }) {
         onClick={copy}
         title="Copy a link to this exact step"
         className="ml-auto rounded px-2 py-0.5"
-        style={{ fontFamily: MONO, fontSize: 10, color: copied ? '#3fd6a0' : MUTED, border: `1px solid ${EDGE}`, background: 'transparent' }}
+        style={{ fontFamily: MONO, fontSize: 12, color: copied ? '#3fd6a0' : MUTED, border: `1px solid ${EDGE}`, background: 'transparent' }}
       >
         {copied ? 'copied ✓' : 'copy link'}
       </button>
@@ -61,16 +61,16 @@ export default function StepDetail({
   return (
     <div className="rounded p-4" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
       <div className="flex flex-wrap items-center gap-2">
-        <span style={{ fontFamily: MONO, fontSize: 11, color: accent }}>
+        <span style={{ fontFamily: MONO, fontSize: 12, color: accent }}>
           {String(step + 1).padStart(2, '0')} / {String(stepsLength).padStart(2, '0')}
         </span>
-        <span className="rounded px-2 py-0.5" style={{ fontFamily: MONO, fontSize: 10, color: accent, border: `1px solid ${accent}55` }}>
+        <span className="rounded px-2 py-0.5" style={{ fontFamily: MONO, fontSize: 12, color: accent, border: `1px solid ${accent}55` }}>
           {K[cur.k].n}
         </span>
         {cur.tag && (
           <span
             className="rounded px-2 py-0.5"
-            style={{ fontFamily: MONO, fontSize: 10, color: MUTED, border: `1px solid ${EDGE}` }}
+            style={{ fontFamily: MONO, fontSize: 12, color: MUTED, border: `1px solid ${EDGE}` }}
             title="This step is specific to this variant"
           >
             {cur.tag}
@@ -84,7 +84,7 @@ export default function StepDetail({
           {autolinkAcronyms(cur.d, GLOSSARY, linkOpts)}
         </p>
       </div>
-      <p className="mt-3" style={{ fontFamily: MONO, fontSize: 11, color: MUTED }}>
+      <p className="mt-3" style={{ fontFamily: MONO, fontSize: 12, color: MUTED }}>
         {cur.p.map((n, i) => {
           const label = topology.nodes[n].t;
           const key = resolveGlossaryKey(label, GLOSSARY);
@@ -114,8 +114,10 @@ export default function StepDetail({
       )}
 
       {analogs.length > 0 && (
-        <div className="mt-3 rounded p-2" style={{ border: `1px dashed ${EDGE}` }}>
-          <div style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.12em', color: FAINT }}>COMPARE — THE SAME STEP IN ANOTHER GENERATION</div>
+        <details className="mt-3 rounded p-2" style={{ border: `1px dashed ${EDGE}` }}>
+          <summary className="cursor-pointer" style={{ fontFamily: MONO, fontSize: 12, color: FAINT }}>
+            Compare this step in another generation ({analogs.length})
+          </summary>
           {analogs.map((a) => (
             <button
               key={a.key}
@@ -127,7 +129,7 @@ export default function StepDetail({
               onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
               title={`Switch to ${a.network.label} · ${a.flowLabel} at this step`}
             >
-              <span className="shrink-0" style={{ fontFamily: MONO, fontSize: 10, color: K[a.step.k].c, paddingTop: 2, minWidth: 28 }}>
+              <span className="shrink-0" style={{ fontFamily: MONO, fontSize: 12, color: K[a.step.k].c, paddingTop: 2, minWidth: 28 }}>
                 {a.network.short}
               </span>
               <span className="text-xs leading-snug">
@@ -138,7 +140,7 @@ export default function StepDetail({
               <span className="ml-auto shrink-0" style={{ color: MUTED }}>→</span>
             </button>
           ))}
-        </div>
+        </details>
       )}
     </div>
   );
