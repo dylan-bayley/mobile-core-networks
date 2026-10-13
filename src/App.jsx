@@ -19,7 +19,7 @@ const ComponentPage = lazy(() => import('./pages/ComponentPage.jsx'));
 const GlossaryPage = lazy(() => import('./pages/GlossaryPage.jsx'));
 const Explorer = lazy(() => import('./components/Explorer.jsx'));
 
-const SITE = 'Mobile Core';
+const SITE = 'The Mobile Core';
 
 /** Shown for the moment a section's code is loading. */
 function PageLoading() {
