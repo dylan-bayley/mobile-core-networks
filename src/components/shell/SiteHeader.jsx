@@ -42,7 +42,7 @@ export default function SiteHeader({ section, searchRef, onPickTerm, onShortcuts
             <span className="text-sm font-semibold tracking-tight" style={{ color: TEXT }}>
               Mobile Core
             </span>
-            <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em', color: FAINT }}>EPC · 5GC · SA/NSA</span>
+            <span style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.14em', color: FAINT }}>EPC · 5GC · SA/NSA</span>
           </span>
         </a>
 
@@ -104,7 +104,7 @@ export function MobileTabBar({ section }) {
               <a
                 href={n.href}
                 aria-current={on ? 'page' : undefined}
-                className="flex min-h-14 flex-col items-center justify-center gap-0.5 text-[11px]"
+                className="flex min-h-14 flex-col items-center justify-center gap-0.5 text-xs"
                 style={{ color: on ? TEXT : MUTED }}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke={on ? GEN['5g'].c : 'currentColor'} strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round">

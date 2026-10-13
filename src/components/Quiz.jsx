@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { K, PANEL, EDGE, MONO, MUTED, FAINT, TEXT_2, TEXT } from '../theme.js';
+import { K, PANEL, EDGE, MONO, MUTED, FAINT, TEXT_2, TEXT, SURFACE } from '../theme.js';
 import { makeQuestions } from '../lib/makeQuestions.js';
 import { GLOSSARY } from '../data/reference/glossary.js';
 import { autolinkAcronyms } from '../lib/autolinkAcronyms.jsx';
@@ -22,9 +22,9 @@ function Choice({ q, onAnswer }) {
               onAnswer(o.correct);
             }}
             className="rounded px-3 py-2 text-left text-sm"
-            style={{ background: state === 'idle' ? '#0a1120' : `${colour}18`, border: `1px solid ${colour}`, color: TEXT }}
+            style={{ background: state === 'idle' ? SURFACE : `${colour}18`, border: `1px solid ${colour}`, color: TEXT }}
           >
-            <span style={{ fontFamily: MONO, fontSize: 10, color: MUTED, marginRight: 8 }}>{String.fromCharCode(65 + i)}</span>
+            <span style={{ fontFamily: MONO, fontSize: 12, color: MUTED, marginRight: 8 }}>{String.fromCharCode(65 + i)}</span>
             {o.label}
             {state === 'right' && (
               <>
@@ -66,19 +66,19 @@ function Order({ q, onAnswer }) {
               if (next.length === q.items.length) onAnswer(next.every((idx, k) => q.items[idx].order === k));
             }}
             className="flex items-start gap-2 rounded px-3 py-2 text-left text-sm"
-            style={{ background: chosen ? `${colour}18` : '#0a1120', border: `1px solid ${colour}`, color: TEXT }}
+            style={{ background: chosen ? `${colour}18` : SURFACE, border: `1px solid ${colour}`, color: TEXT }}
           >
-            <span style={{ fontFamily: MONO, fontSize: 10, color: chosen ? '#ffffff' : FAINT, minWidth: 16, paddingTop: 2 }}>
+            <span style={{ fontFamily: MONO, fontSize: 12, color: chosen ? '#ffffff' : FAINT, minWidth: 16, paddingTop: 2 }}>
               {chosen ? pos + 1 : '·'}
             </span>
             {it.label}
             {done && it.order !== pos && (
-              <span className="ml-auto" style={{ fontFamily: MONO, fontSize: 10, color: MUTED }}>
+              <span className="ml-auto" style={{ fontFamily: MONO, fontSize: 12, color: MUTED }}>
                 <span aria-hidden="true">✗ </span>was #{it.order + 1}
               </span>
             )}
             {done && it.order === pos && (
-              <span className="ml-auto" style={{ fontFamily: MONO, fontSize: 10, color: K.user.c }}>
+              <span className="ml-auto" style={{ fontFamily: MONO, fontSize: 12, color: K.user.c }}>
                 <span aria-hidden="true">✓</span>
                 <span className="sr-only">right position</span>
               </span>
@@ -101,8 +101,8 @@ function Explanation({ q, scenario, onGlossaryOpen, activeGlossaryKey }) {
   const linkOpts = { activeKey: activeGlossaryKey, onOpen: onGlossaryOpen };
   const correct = q.type === 'choice' ? q.options.find((o) => o.correct)?.label : null;
   return (
-    <div className="mt-3 rounded px-3 py-2 text-xs leading-relaxed" style={{ background: '#0a1120', border: `1px solid ${EDGE}`, color: TEXT_2 }}>
-      <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', color: FAINT }}>
+    <div className="mt-3 rounded px-3 py-2 text-xs leading-relaxed" style={{ background: SURFACE, border: `1px solid ${EDGE}`, color: TEXT_2 }}>
+      <div style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.12em', color: FAINT }}>
         WHY{correct ? ` — ${correct}` : ''}
       </div>
       <div className="mt-1 font-semibold" style={{ color: TEXT }}>
@@ -156,10 +156,10 @@ export default function Quiz({ scenario, geo, onGo, onClose, best, onScore, onGl
   return (
     <div className="rounded p-4" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
       <div className="flex flex-wrap items-center gap-2">
-        <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.12em', color: FAINT }}>
+        <span style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.12em', color: FAINT }}>
           QUIZ · {scenario.network.label.toUpperCase()} · {scenario.label.toUpperCase()}
         </span>
-        <span className="ml-auto" style={{ fontFamily: MONO, fontSize: 11, color: MUTED }}>
+        <span className="ml-auto" style={{ fontFamily: MONO, fontSize: 12, color: MUTED }}>
           {finished ? `${score} / ${questions.length}` : `Q ${index + 1} / ${questions.length} · score ${score}`}
           {best && <span style={{ color: FAINT }}> · best {best.score}/{best.total}</span>}
         </span>

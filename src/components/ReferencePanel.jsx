@@ -1,14 +1,14 @@
 import { memo, useState } from 'react';
-import { K, PANEL, EDGE, MONO, MUTED, FAINT, TEXT, TEXT_2 } from '../theme.js';
+import { K, PANEL, EDGE, MONO, MUTED, FAINT, TEXT, TEXT_2, DIVIDER } from '../theme.js';
 import GlossaryPanel from './GlossaryPanel.jsx';
 
 function QosTable({ title, rows, colorFor }) {
   return (
     <div className="rounded p-3" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
-      <h3 style={{ fontFamily: MONO, fontSize: 11, color: FAINT, letterSpacing: '0.12em' }}>{title}</h3>
+      <h3 style={{ fontFamily: MONO, fontSize: 12, color: FAINT, letterSpacing: '0.12em' }}>{title}</h3>
       <div className="mt-2 space-y-2">
         {rows.map((row, i) => (
-          <div key={i} className="flex items-baseline gap-3 text-xs" style={{ borderBottom: '1px solid #131d33', paddingBottom: 6 }}>
+          <div key={i} className="flex items-baseline gap-3 text-xs" style={{ borderBottom: `1px solid ${DIVIDER}`, paddingBottom: 6 }}>
             <span style={{ fontFamily: MONO, color: colorFor(row), fontSize: 13, fontWeight: 700, width: 24 }}>{row[0]}</span>
             <span className="flex-1">
               <span style={{ color: TEXT }}>{row[2]}</span>
@@ -45,13 +45,13 @@ function ReferencePanel({ nodeNaming, qci, fiveQi, eirStatus, glossary, beyond, 
       {open && (
         <div className="mt-2 grid gap-3 lg:grid-cols-3">
           <div className="rounded p-3" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
-            <h3 style={{ fontFamily: MONO, fontSize: 11, color: FAINT, letterSpacing: '0.12em' }}>IN PRACTICE — 3GPP FUNCTION → ERICSSON PRODUCT</h3>
+            <h3 style={{ fontFamily: MONO, fontSize: 12, color: FAINT, letterSpacing: '0.12em' }}>IN PRACTICE — 3GPP FUNCTION → ERICSSON PRODUCT</h3>
             <p className="mt-1 text-xs" style={{ color: MUTED }}>
               One vendor’s product names, which the call-flow diagrams use for some nodes. They are deployment names, not 3GPP terms.
             </p>
             <div className="mt-2 max-h-80 space-y-2 overflow-y-auto pr-1">
               {nodeNaming.map((row, i) => (
-                <div key={i} className="text-xs" style={{ borderBottom: '1px solid #131d33', paddingBottom: 6 }}>
+                <div key={i} className="text-xs" style={{ borderBottom: `1px solid ${DIVIDER}`, paddingBottom: 6 }}>
                   <div className="flex flex-wrap items-baseline gap-2">
                     <span style={{ color: MUTED }}>{row[0]}</span>
                     <span style={{ color: '#3d5178' }}>→</span>
@@ -59,7 +59,7 @@ function ReferencePanel({ nodeNaming, qci, fiveQi, eirStatus, glossary, beyond, 
                       {row[1]}
                     </span>
                   </div>
-                  <div style={{ color: MUTED, fontSize: 11 }}>{row[2]}</div>
+                  <div style={{ color: MUTED, fontSize: 12 }}>{row[2]}</div>
                 </div>
               ))}
             </div>
@@ -75,10 +75,10 @@ function ReferencePanel({ nodeNaming, qci, fiveQi, eirStatus, glossary, beyond, 
           </div>
 
           <div className="rounded p-3" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
-            <h3 style={{ fontFamily: MONO, fontSize: 11, color: FAINT, letterSpacing: '0.12em' }}>EIR — EQUIPMENT STATUS</h3>
+            <h3 style={{ fontFamily: MONO, fontSize: 12, color: FAINT, letterSpacing: '0.12em' }}>EIR — EQUIPMENT STATUS</h3>
             <div className="mt-2 space-y-2">
               {eirStatus.map((row, i) => (
-                <div key={i} className="text-xs" style={{ borderBottom: '1px solid #131d33', paddingBottom: 6 }}>
+                <div key={i} className="text-xs" style={{ borderBottom: `1px solid ${DIVIDER}`, paddingBottom: 6 }}>
                   <span style={{ fontFamily: MONO, color: row[1], fontWeight: 700 }}>{row[0]}</span>
                   <div style={{ color: TEXT_2 }}>{row[2]}</div>
                 </div>
@@ -101,7 +101,7 @@ function ReferencePanel({ nodeNaming, qci, fiveQi, eirStatus, glossary, beyond, 
 
       {open && (
         <div className="mt-3 rounded p-3" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
-          <h3 style={{ fontFamily: MONO, fontSize: 11, color: FAINT, letterSpacing: '0.12em' }}>BEYOND THESE FLOWS</h3>
+          <h3 style={{ fontFamily: MONO, fontSize: 12, color: FAINT, letterSpacing: '0.12em' }}>BEYOND THESE FLOWS</h3>
           <p className="mt-2 text-xs leading-relaxed" style={{ color: MUTED }}>
             {beyond}
           </p>

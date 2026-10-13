@@ -40,7 +40,7 @@ export default function QuickCheck({ questions, best, onScore }) {
         <h2 id="check-title" className="text-base font-semibold" style={{ color: TEXT }}>
           Quick check
         </h2>
-        <span style={{ fontFamily: MONO, fontSize: 11, color: FAINT }}>
+        <span style={{ fontFamily: MONO, fontSize: 12, color: FAINT }}>
           {answered === questions.length ? `${score} / ${questions.length}` : `${answered} of ${questions.length} answered`}
           {best && ` · best ${best.score}/${best.total}`}
         </span>

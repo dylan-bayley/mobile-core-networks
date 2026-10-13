@@ -49,7 +49,7 @@ export default function VignettePlayer({ vignette, highlight }) {
         <h2 id="vignette-title" className="text-base font-semibold" style={{ color: TEXT }}>
           See it work: {vignette.title}
         </h2>
-        <span className="ml-auto" style={{ fontFamily: MONO, fontSize: 11, color: FAINT }}>
+        <span className="ml-auto" style={{ fontFamily: MONO, fontSize: 12, color: FAINT }}>
           {i + 1}/{scenes.length}
         </span>
       </div>

@@ -15,6 +15,10 @@ export const K = {
 export const BG = '#070b14';
 export const PANEL = '#0d1424';
 export const EDGE = '#1e2a42';
+export const SURFACE = '#0a1120'; // inputs and inset blocks, a step darker than PANEL
+export const DIVIDER = '#131d33'; // row separators inside a panel
+export const RULE = '#2a3958'; // inline separators between controls
+export const TRACK = '#26334f'; // an off switch's track
 
 /* Text tokens, all checked against PANEL for WCAG AA (≥ 4.5:1 for body text). */
 export const TEXT = '#e6edfa'; // headings, primary
@@ -41,3 +45,4 @@ export const NODE_FILL_ON = '#16233d';
 export const ACTIVE_BG = '#152441';
 export const ACTIVE_EDGE = '#3d6ba8';
 export const FOCUS = '#7cc4ff';
+export const DONE = '#3fd6a0'; // completed / success ticks (same hue as the user plane)

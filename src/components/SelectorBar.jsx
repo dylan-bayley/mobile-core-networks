@@ -1,4 +1,4 @@
-import { PANEL, EDGE, MONO, MUTED, FAINT, ACTIVE_BG, ACTIVE_EDGE, TEXT } from '../theme.js';
+import { PANEL, EDGE, MONO, MUTED, FAINT, ACTIVE_BG, ACTIVE_EDGE, TEXT, DONE, RULE } from '../theme.js';
 import { sessionForFlow, variantsFor } from '../data/sessions.js';
 import { isCompleted } from '../lib/progress.js';
 import Switch from './Switch.jsx';
@@ -27,7 +27,7 @@ function Row({ items, activeId, onSelect, size = 'md', ariaLabel, doneIds }) {
           >
             {item.label}
             {done && (
-              <span title="You have watched this flow to the end" style={{ color: '#3fd6a0', marginLeft: 6, fontSize: 11 }}>
+              <span title="You have watched this flow to the end" style={{ color: DONE, marginLeft: 6, fontSize: 12 }}>
                 <span aria-hidden="true">✓</span>
                 <span className="sr-only"> (completed)</span>
               </span>
@@ -72,7 +72,7 @@ export default function SelectorBar({
       <div className="flex flex-wrap items-center gap-2">
         <span className="sr-only">Network</span>
         <Row items={networks} activeId={networkId} onSelect={onNetwork} ariaLabel="Network" />
-        <span aria-hidden="true" className="hidden sm:inline" style={{ color: '#2a3958' }}>|</span>
+        <span aria-hidden="true" className="hidden sm:inline" style={{ color: RULE }}>|</span>
         <Row items={sessions} activeId={session.id} onSelect={(id) => onFlow(id)} ariaLabel="Session type" doneIds={doneSessions} />
         <div className="flex items-center gap-2 sm:ml-auto">
           <div className="flex items-center rounded" role="group" aria-label="Diagram view" style={{ border: `1px solid ${EDGE}` }}>
