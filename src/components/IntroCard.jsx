@@ -1,4 +1,4 @@
-import { PANEL, EDGE, MONO, MUTED, FAINT, TEXT_2, ACTIVE_BG, ACTIVE_EDGE, K } from '../theme.js';
+import { PANEL, EDGE, MONO, MUTED, FAINT, TEXT_2, ACTIVE_BG, ACTIVE_EDGE, K, DONE } from '../theme.js';
 import { isCompleted } from '../lib/progress.js';
 
 /**
@@ -21,22 +21,20 @@ export default function IntroCard({ path, progress, networkId, networkLabel, cur
             New here? This is a guided tour of the signalling inside a mobile network.
           </h2>
           <p className="mt-1 text-sm leading-relaxed" style={{ color: TEXT_2 }}>
-            Every time a phone joins a network, makes a call or sends a text, a dozen boxes in the operator's core exchange
-            messages in a fixed order. This site plays those exchanges one message at a time on a map of the core, with a
-            plain-English note on what each message does and why it matters.
+            Each message a phone triggers on the network is played one step at a time, with a plain-English note on what it does.
           </p>
           <ol className="mt-2 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-3" style={{ color: TEXT_2 }}>
             <li className="flex gap-2">
               <span style={{ fontFamily: MONO, color: K.control.c }}>1</span>
-              <span>Pick a <strong style={{ color: '#fff' }}>network</strong> (4G first) and a <strong style={{ color: '#fff' }}>session type</strong> above.</span>
+              <span>Pick a <strong style={{ color: '#fff' }}>network</strong> and a <strong style={{ color: '#fff' }}>session</strong>.</span>
             </li>
             <li className="flex gap-2">
               <span style={{ fontFamily: MONO, color: K.control.c }}>2</span>
-              <span>Watch the dot travel; the text on the right explains each step. Use <kbd style={{ fontFamily: MONO }}>←</kbd> <kbd style={{ fontFamily: MONO }}>→</kbd> to go at your own pace.</span>
+              <span>Watch the dot travel, or use <kbd style={{ fontFamily: MONO }}>←</kbd> <kbd style={{ fontFamily: MONO }}>→</kbd> to step.</span>
             </li>
             <li className="flex gap-2">
               <span style={{ fontFamily: MONO, color: K.control.c }}>3</span>
-              <span>Click any <span className="underline decoration-dotted underline-offset-2">underlined acronym</span> or box for a definition. Try the quiz when a flow feels familiar.</span>
+              <span>Click an <span className="underline decoration-dotted underline-offset-2">underlined acronym</span> for a definition.</span>
             </li>
           </ol>
         </div>
@@ -52,7 +50,7 @@ export default function IntroCard({ path, progress, networkId, networkLabel, cur
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1.5">
-        <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', color: FAINT }}>SUGGESTED ORDER · {networkLabel.toUpperCase()}</span>
+        <span style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.08em', color: FAINT }}>SUGGESTED ORDER · {networkLabel.toUpperCase()}</span>
         {path.map((f, i) => {
           const finished = isCompleted(progress, networkId, f.id);
           const current = f.id === currentFlowId;
@@ -66,10 +64,10 @@ export default function IntroCard({ path, progress, networkId, networkLabel, cur
               style={{
                 background: current ? ACTIVE_BG : 'transparent',
                 border: `1px solid ${current ? ACTIVE_EDGE : EDGE}`,
-                color: finished ? '#3fd6a0' : current ? '#fff' : MUTED,
+                color: finished ? DONE : current ? '#fff' : MUTED,
               }}
             >
-              <span style={{ fontFamily: MONO, fontSize: 9, marginRight: 5, color: FAINT }}>{i + 1}</span>
+              <span style={{ fontFamily: MONO, fontSize: 12, marginRight: 5, color: FAINT }}>{i + 1}</span>
               {f.label}
               {finished && ' ✓'}
             </button>
@@ -97,9 +95,6 @@ export default function IntroCard({ path, progress, networkId, networkLabel, cur
         >
           I know my way around
         </button>
-        <span className="text-xs" style={{ color: FAINT }}>
-          Press <kbd style={{ fontFamily: MONO }}>?</kbd> any time for the keyboard shortcuts.
-        </span>
       </div>
     </section>
   );

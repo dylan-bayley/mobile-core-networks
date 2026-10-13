@@ -1,9 +1,14 @@
 import { PANEL, EDGE, MONO, MUTED, FAINT, ACTIVE_BG, ACTIVE_EDGE, TEXT } from '../theme.js';
 import { SPEEDS } from '../engine/useStepPlayer.js';
+import Popover from './ui/Popover.jsx';
 import Switch from './Switch.jsx';
 
 const btn = { background: PANEL, border: `1px solid ${EDGE}`, color: TEXT, fontFamily: MONO };
 
+/**
+ * Prev / play / next stay in view; the rarely changed playback settings
+ * (auto-advance, speed, restart) live in one Options popover.
+ */
 export default function Transport({
   step,
   stepsLength,
@@ -42,7 +47,7 @@ export default function Transport({
       >
         {playLabel}
         {playing && (
-          <span className="ml-2" style={{ fontFamily: MONO, fontSize: 10, opacity: 0.7 }}>
+          <span className="ml-2" style={{ fontFamily: MONO, fontSize: 12, opacity: 0.7 }}>
             {remaining}s
           </span>
         )}
@@ -50,35 +55,58 @@ export default function Transport({
       <button onClick={onNext} disabled={step === stepsLength - 1} className="min-h-10 rounded px-3 py-2 text-sm disabled:opacity-30 sm:min-h-0" style={btn} aria-label="Next step">
         next →
       </button>
-      <button onClick={onRestart} className="min-h-10 rounded px-3 py-2 text-sm sm:min-h-0" style={{ ...btn, color: MUTED }}>
-        restart
-      </button>
       {held && !playing && (
-        <span style={{ fontFamily: MONO, fontSize: 10, color: FAINT }} aria-live="polite">
+        <span style={{ fontFamily: MONO, fontSize: 12, color: FAINT }} aria-live="polite">
           step finished · Play continues
         </span>
       )}
-      <Switch on={!pauseEach} onChange={onTogglePauseEach} title="Off: playback stops at the end of every step so you can read before moving on">
-        auto-advance
-      </Switch>
-      <div className="ml-auto flex items-center gap-1" role="group" aria-label="Playback speed">
-        {SPEEDS.map((s) => (
-          <button
-            key={s}
-            onClick={() => onSpeed(s)}
-            aria-pressed={speed === s}
-            aria-label={`${s}× speed`}
-            className="min-h-10 rounded px-2 py-1 text-xs sm:min-h-0"
-            style={{
-              background: speed === s ? ACTIVE_BG : 'transparent',
-              border: `1px solid ${speed === s ? ACTIVE_EDGE : EDGE}`,
-              color: speed === s ? '#ffffff' : MUTED,
-              fontFamily: MONO,
-            }}
-          >
-            {s}×
-          </button>
-        ))}
+
+      <div className="ml-auto">
+        <Popover label="Options" ariaLabel="Playback options">
+          {(close) => (
+            <>
+              <Switch
+                on={!pauseEach}
+                onChange={onTogglePauseEach}
+                hint="Turn off to stop at the end of every step, so you can read before moving on."
+              >
+                auto-advance
+              </Switch>
+              <div>
+                <div className="mb-1 text-xs" style={{ color: MUTED }}>Speed</div>
+                <div className="flex items-center gap-1" role="group" aria-label="Playback speed">
+                  {SPEEDS.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => onSpeed(s)}
+                      aria-pressed={speed === s}
+                      aria-label={`${s}× speed`}
+                      className="min-h-10 flex-1 rounded px-2 py-1 text-xs sm:min-h-0"
+                      style={{
+                        background: speed === s ? ACTIVE_BG : 'transparent',
+                        border: `1px solid ${speed === s ? ACTIVE_EDGE : EDGE}`,
+                        color: speed === s ? '#ffffff' : MUTED,
+                        fontFamily: MONO,
+                      }}
+                    >
+                      {s}×
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  onRestart();
+                  close();
+                }}
+                className="min-h-10 rounded px-3 py-2 text-xs sm:min-h-0"
+                style={{ ...btn, color: MUTED }}
+              >
+                Restart from the beginning
+              </button>
+            </>
+          )}
+        </Popover>
       </div>
     </div>
   );

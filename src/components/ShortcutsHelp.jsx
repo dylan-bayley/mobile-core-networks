@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { PANEL, EDGE, MONO, MUTED, FAINT, TEXT_2 } from '../theme.js';
+import { PANEL, EDGE, MONO, MUTED, FAINT, TEXT_2, SURFACE } from '../theme.js';
 import { useDialogFocus } from '../lib/useDialogFocus.js';
 
 const SHORTCUTS = [
@@ -62,7 +62,7 @@ export default function ShortcutsHelp({ open, onClose }) {
           {SHORTCUTS.map(([k, d]) => (
             <div key={k} className="contents">
               <dt>
-                <kbd className="rounded px-1.5 py-0.5" style={{ fontFamily: MONO, fontSize: 11, color: '#fff', border: `1px solid ${EDGE}`, background: '#0a1120' }}>
+                <kbd className="rounded px-1.5 py-0.5" style={{ fontFamily: MONO, fontSize: 12, color: '#fff', border: `1px solid ${EDGE}`, background: SURFACE }}>
                   {k}
                 </kbd>
               </dt>

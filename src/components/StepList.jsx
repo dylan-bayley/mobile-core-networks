@@ -2,7 +2,7 @@ import { memo, useEffect, useRef, useState } from 'react';
 import { K, PANEL, EDGE, MONO, MUTED, FAINT, ACTIVE_BG } from '../theme.js';
 
 const COMPACT_ROWS = 6;
-const ROW_PX = 30;
+const ROW_PX = 34;
 
 function StepList({ steps, step, onGo }) {
   const listRef = useRef(null);
@@ -33,8 +33,8 @@ function StepList({ steps, step, onGo }) {
 
   return (
     <div className="flex min-h-0 flex-col rounded" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
-      <div className="flex items-center px-3 py-1.5" style={{ borderBottom: `1px solid ${EDGE}`, fontFamily: MONO, fontSize: 10, letterSpacing: '0.12em', color: FAINT }}>
-        <span>STEPS · CLICK TO JUMP</span>
+      <div className="flex items-center px-3 py-1.5" style={{ borderBottom: `1px solid ${EDGE}`, fontFamily: MONO, fontSize: 12, letterSpacing: '0.1em', color: FAINT }}>
+        <span>STEPS</span>
         <span className="ml-auto" style={{ letterSpacing: 0 }}>
           {remaining === 0 ? 'last step' : `${remaining} to go`}
         </span>
@@ -44,7 +44,7 @@ function StepList({ steps, step, onGo }) {
             onClick={() => setExpanded((e) => !e)}
             aria-expanded={expanded}
             className="ml-3 rounded px-1.5 py-0.5"
-            style={{ fontFamily: MONO, fontSize: 10, letterSpacing: 0, color: MUTED, border: `1px solid ${EDGE}`, background: 'transparent' }}
+            style={{ fontFamily: MONO, fontSize: 12, letterSpacing: 0, color: MUTED, border: `1px solid ${EDGE}`, background: 'transparent' }}
           >
             {expanded ? 'compact' : `show all ${steps.length}`}
           </button>
@@ -62,17 +62,16 @@ function StepList({ steps, step, onGo }) {
               className="flex w-full items-start gap-2 rounded px-2 py-1.5 text-left"
               style={{ background: on ? ACTIVE_BG : 'transparent' }}
             >
-              <span style={{ fontFamily: MONO, fontSize: 10, color: on ? K[s.k].c : FAINT, paddingTop: 2, minWidth: 16 }}>
+              <span style={{ fontFamily: MONO, fontSize: 12, color: on ? K[s.k].c : FAINT, paddingTop: 2, minWidth: 16 }}>
                 {String(i + 1).padStart(2, '0')}
               </span>
               {/* Steps still to come are dimmer (FAINT), not faded with opacity, to keep AA contrast. */}
-              <span className="text-xs leading-snug" style={{ color: on ? '#ffffff' : i < step ? MUTED : FAINT }}>
+              <span className="text-sm leading-snug" style={{ color: on ? '#ffffff' : i < step ? MUTED : FAINT }}>
                 {s.t}
                 {s.tag && (
                   <span
                     className="ml-1.5 rounded px-1 align-middle"
-                    style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.08em', color: K[s.k].c, border: `1px solid ${K[s.k].c}55` }}
-                    title={`Specific to this variant (${s.tag})`}
+                    style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.06em', color: K[s.k].c, border: `1px solid ${K[s.k].c}55` }}
                   >
                     {s.tag.toUpperCase()}
                   </span>

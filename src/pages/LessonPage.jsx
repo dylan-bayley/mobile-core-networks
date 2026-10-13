@@ -5,7 +5,7 @@ import { GLOSSARY } from '../data/reference/glossary.js';
 import { layoutFor } from '../engine/arch.js';
 import { durationFor, useStepPlayer, validSpeed } from '../engine/useStepPlayer.js';
 import { useGlossary } from '../lib/glossaryContext.js';
-import { useReducedMotion } from '../lib/useMediaQuery.js';
+import { useMediaQuery, useReducedMotion } from '../lib/useMediaQuery.js';
 import { useElementWidth, useViewportHeight } from '../lib/useElementWidth.js';
 import { hashQuery, urlWithHashQuery } from '../lib/route.js';
 import { readStored, store } from '../lib/storage.js';
@@ -129,6 +129,7 @@ function CompareDiagrams({ lesson, scenes, labels, reducedMotion }) {
 export default function LessonPage({ lessonId, query }) {
   const lesson = LESSONS[lessonId];
   const reducedMotion = useReducedMotion();
+  const isWide = useMediaQuery('(min-width: 1280px)'); // Tailwind `xl`: the scene list sits beside the player
   const { openTerm, activeKey } = useGlossary();
   const [boxRef, boxWidth] = useElementWidth();
   const vh = useViewportHeight();
@@ -256,7 +257,7 @@ export default function LessonPage({ lessonId, query }) {
 
   const caption = (
     <section className="rounded p-4" style={{ background: PANEL, border: `1px solid ${EDGE}`, borderLeft: `3px solid ${accent}` }}>
-      <p style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.1em', color: FAINT }}>
+      <p style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.1em', color: FAINT }}>
         SCENE {index + 1} OF {lesson.scenes.length}
       </p>
       <h2 className="mt-1 text-lg font-semibold leading-snug" style={{ color: TEXT }}>
@@ -293,7 +294,7 @@ export default function LessonPage({ lessonId, query }) {
       </p>
 
       <header className="mt-4 mb-3">
-        <p style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.12em', color: FAINT }}>
+        <p style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.12em', color: FAINT }}>
           LESSON {meta.n} OF {LESSON_META.length} · ABOUT {meta.minutes} MIN
         </p>
         <h1 tabIndex={-1} className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl" style={{ color: TEXT }}>
@@ -307,15 +308,14 @@ export default function LessonPage({ lessonId, query }) {
       <div data-player className="xl:grid xl:grid-cols-[minmax(0,1fr)_400px] xl:items-start xl:gap-4">
         <div className="min-w-0">
           <div className="rounded" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
-            <div className="flex flex-wrap items-center gap-2 px-3 pt-2.5 pb-1">
-              <span className="text-sm font-medium" style={{ color: TEXT }}>
-                {scene.title}
-              </span>
-              <span className="hidden sm:inline" style={{ fontFamily: MONO, fontSize: 11, color: FAINT }}>
-                {index + 1}/{lesson.scenes.length}
-              </span>
-              {hasReps && (
-                <div role="group" aria-label="Diagram style (m)" className="ml-auto flex gap-1">
+            {hasReps && (
+              <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 px-3 pt-2.5 pb-1">
+                {!sceneRep && (
+                  <span className="text-xs" style={{ color: MUTED }}>
+                    This scene has its own layout.
+                  </span>
+                )}
+                <div role="group" aria-label="Diagram style (m)" className="flex gap-1">
                   {REPS.map((r) => {
                     const on = shownRep === r.id;
                     return (
@@ -325,7 +325,6 @@ export default function LessonPage({ lessonId, query }) {
                         disabled={!sceneRep}
                         aria-pressed={on}
                         onClick={() => setRep(r.id)}
-                        title={sceneRep ? 'Switch how the 5G core is drawn (m)' : 'This scene uses its own layout'}
                         className="min-h-9 rounded px-2.5 py-1 text-xs disabled:opacity-40 sm:min-h-0"
                         style={{ background: on ? ACTIVE_BG : 'transparent', border: `1px solid ${on ? ACTIVE_EDGE : EDGE}`, color: on ? TEXT : MUTED, fontFamily: MONO }}
                       >
@@ -334,9 +333,9 @@ export default function LessonPage({ lessonId, query }) {
                     );
                   })}
                 </div>
-              )}
-            </div>
-            <div ref={boxRef} className="px-1 pb-2">
+              </div>
+            )}
+            <div ref={boxRef} className="px-1 pt-2 pb-2">
               {boxWidth > 0 && (
                 <ArchDiagram
                   diagram={lesson.diagram}
@@ -382,31 +381,45 @@ export default function LessonPage({ lessonId, query }) {
 
         <aside className="mt-3 flex flex-col gap-3 xl:sticky xl:top-16 xl:mt-0">
           <div className="hidden xl:block">{caption}</div>
-          <nav aria-label="Scenes in this lesson" className="rounded p-2" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
-            <ol className="grid gap-0.5">
-              {lesson.scenes.map((s, i) => {
-                const on = i === index;
-                return (
-                  <li key={s.id}>
-                    <button
-                      type="button"
-                      onClick={() => go(i)}
-                      aria-current={on ? 'step' : undefined}
-                      className="flex w-full items-baseline gap-2 rounded px-2 py-1.5 text-left text-sm"
-                      style={{ background: on ? ACTIVE_BG : 'transparent', border: 0, color: on ? TEXT : i < index ? TEXT_2 : MUTED }}
-                    >
-                      <span style={{ fontFamily: MONO, fontSize: 11, color: on ? K[s.k ?? 'control'].c : FAINT, minWidth: 18 }}>{String(i + 1).padStart(2, '0')}</span>
-                      {s.title}
-                    </button>
-                  </li>
-                );
-              })}
-            </ol>
-          </nav>
+          {(() => {
+            const sceneNav = (
+            <nav aria-label="Scenes in this lesson" className="rounded p-2" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
+              <ol className="grid gap-0.5">
+                {lesson.scenes.map((s, i) => {
+                  const on = i === index;
+                  return (
+                    <li key={s.id}>
+                      <button
+                        type="button"
+                        onClick={() => go(i)}
+                        aria-current={on ? 'step' : undefined}
+                        className="flex w-full items-baseline gap-2 rounded px-2 py-1.5 text-left text-sm"
+                        style={{ background: on ? ACTIVE_BG : 'transparent', border: 0, color: on ? TEXT : i < index ? TEXT_2 : MUTED }}
+                      >
+                        <span style={{ fontFamily: MONO, fontSize: 12, color: on ? K[s.k ?? 'control'].c : FAINT, minWidth: 18 }}>{String(i + 1).padStart(2, '0')}</span>
+                        {s.title}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+            </nav>
+            );
+            return isWide ? (
+              sceneNav
+            ) : (
+              <details>
+                <summary className="cursor-pointer rounded px-3 py-2 text-sm" style={{ background: PANEL, border: `1px solid ${EDGE}`, color: MUTED }}>
+                  All {lesson.scenes.length} scenes
+                </summary>
+                <div className="mt-2">{sceneNav}</div>
+              </details>
+            );
+          })()}
         </aside>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         {lesson.compare && (
           <div className="lg:col-span-2">
             <CompareDiagrams lesson={lesson} scenes={lesson.compare.scenes} labels={lesson.compare.labels} reducedMotion={reducedMotion} />
@@ -418,7 +431,11 @@ export default function LessonPage({ lessonId, query }) {
           </div>
         )}
         {lesson.options && (
-          <div className="lg:col-span-2">
+          <details className="lg:col-span-2">
+            <summary className="cursor-pointer rounded px-3 py-2 text-sm" style={{ background: PANEL, border: `1px solid ${EDGE}`, color: MUTED }}>
+              All the deployment options, for reference
+            </summary>
+            <div className="mt-2">
             <DataTable
               title="All the deployment options, for reference"
               caption="Operators mostly deployed option 3 (NSA) first, then option 2 (SA). The other options are defined but less common."
@@ -426,7 +443,8 @@ export default function LessonPage({ lessonId, query }) {
               rows={lesson.options.rows}
               cites={lesson.options.cites}
             />
-          </div>
+            </div>
+          </details>
         )}
         <section className="rounded p-4" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
           <h2 className="text-base font-semibold" style={{ color: TEXT }}>
@@ -502,7 +520,7 @@ function Legend({ diagram }) {
   return (
     <ul className="flex flex-wrap gap-x-4 gap-y-1 px-3 pb-2.5" aria-label="Diagram key">
       {items.map(([label, c, kind]) => (
-        <li key={label} className="flex items-center gap-1.5" style={{ fontFamily: MONO, fontSize: 11, color: MUTED }}>
+        <li key={label} className="flex items-center gap-1.5" style={{ fontFamily: MONO, fontSize: 12, color: MUTED }}>
           {kind === 'box' ? (
             <span aria-hidden="true" style={{ width: 12, height: 9, border: `1.5px solid ${c}`, borderRadius: 2, display: 'inline-block' }} />
           ) : (

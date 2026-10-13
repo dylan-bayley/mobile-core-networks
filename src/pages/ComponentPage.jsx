@@ -10,7 +10,7 @@ import { useGlossary } from '../lib/glossaryContext.js';
 import { useReducedMotion } from '../lib/useMediaQuery.js';
 import { useElementWidth } from '../lib/useElementWidth.js';
 import { autolinkAcronyms } from '../lib/autolinkAcronyms.jsx';
-import { PANEL, EDGE, MONO, FAINT, MUTED, TEXT, TEXT_2, GEN, K } from '../theme.js';
+import { PANEL, EDGE, MONO, FAINT, MUTED, TEXT, TEXT_2, GEN, K, DIVIDER } from '../theme.js';
 import ArchDiagram from '../components/arch/ArchDiagram.jsx';
 import VignettePlayer from '../components/arch/VignettePlayer.jsx';
 import Sources from '../components/SourceChip.jsx';
@@ -79,8 +79,8 @@ function ComponentDiagram({ component }) {
 
 function Panel({ title, children, className = '' }) {
   return (
-    <section className={`rounded p-4 ${className}`} style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
-      <h2 className="text-base font-semibold" style={{ color: TEXT }}>
+    <section className={`pt-4 first:pt-0 ${className}`} style={{ borderTop: `1px solid ${DIVIDER}` }}>
+      <h2 className="text-lg font-semibold" style={{ color: TEXT }}>
         {title}
       </h2>
       {children}
@@ -121,17 +121,14 @@ export default function ComponentPage({ component: c }) {
       </nav>
 
       <header className="mt-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded px-2 py-0.5 text-xs" style={{ border: `1px solid ${gen.c}`, color: gen.c, fontFamily: MONO }}>
-            {gen.n}
-          </span>
-          <span className="rounded px-2 py-0.5 text-xs" style={{ border: `1px solid ${EDGE}`, color: MUTED, fontFamily: MONO }}>
-            {PLANE[c.plane]}
-          </span>
-          <span className="rounded px-2 py-0.5 text-xs" style={{ border: `1px solid ${EDGE}`, color: MUTED, fontFamily: MONO }}>
-            {c.group}
-          </span>
-        </div>
+        <p className="flex flex-wrap items-center gap-x-2 text-sm" style={{ color: MUTED }}>
+          <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: 2, background: gen.c, display: 'inline-block' }} />
+          <span style={{ color: TEXT_2 }}>{gen.n}</span>
+          <span aria-hidden="true">/</span>
+          <span>{PLANE[c.plane]}</span>
+          <span aria-hidden="true">/</span>
+          <span>{c.group}</span>
+        </p>
         <h1 tabIndex={-1} className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl" style={{ color: TEXT, fontFamily: MONO }}>
           {c.label}
         </h1>
@@ -164,7 +161,7 @@ export default function ComponentPage({ component: c }) {
                 <thead>
                   <tr>
                     {['Interface', 'Connects to', 'Protocol'].map((h) => (
-                      <th key={h} scope="col" className="px-2 py-1.5" style={{ fontFamily: MONO, fontSize: 11, color: FAINT, borderBottom: `1px solid ${EDGE}` }}>
+                      <th key={h} scope="col" className="px-2 py-1.5" style={{ fontFamily: MONO, fontSize: 12, color: FAINT, borderBottom: `1px solid ${EDGE}` }}>
                         {h}
                       </th>
                     ))}
@@ -173,13 +170,13 @@ export default function ComponentPage({ component: c }) {
                 <tbody>
                   {c.interfaces.map((i) => (
                     <tr key={i.name + i.peer}>
-                      <th scope="row" className="px-2 py-1.5 font-medium" style={{ fontFamily: MONO, color: TEXT, borderBottom: '1px solid #131d33' }}>
+                      <th scope="row" className="px-2 py-1.5 font-medium" style={{ fontFamily: MONO, color: TEXT, borderBottom: `1px solid ${DIVIDER}` }}>
                         {link(i.name)}
                       </th>
-                      <td className="px-2 py-1.5" style={{ color: TEXT_2, borderBottom: '1px solid #131d33' }}>
+                      <td className="px-2 py-1.5" style={{ color: TEXT_2, borderBottom: `1px solid ${DIVIDER}` }}>
                         {link(i.peer)}
                       </td>
-                      <td className="px-2 py-1.5" style={{ color: MUTED, borderBottom: '1px solid #131d33' }}>
+                      <td className="px-2 py-1.5" style={{ color: MUTED, borderBottom: `1px solid ${DIVIDER}` }}>
                         {link(i.protocol)}
                       </td>
                     </tr>
@@ -233,7 +230,7 @@ export default function ComponentPage({ component: c }) {
                       className="rounded px-2.5 py-1 text-sm"
                       style={{ fontFamily: MONO, border: `1px solid ${(GEN[p.gen] ?? GEN.ext).c}`, color: TEXT }}
                     >
-                      {p.label} →
+                      {p.label}
                     </a>
                   ))}
                 </div>
@@ -247,9 +244,9 @@ export default function ComponentPage({ component: c }) {
                 {flows.map((a) => (
                   <li key={`${a.net}/${a.flowId}`}>
                     <a href={flowHref(a)} className="flex items-baseline gap-2 rounded px-1 py-1 text-sm hover:underline" style={{ color: TEXT_2 }}>
-                      <span style={{ fontFamily: MONO, fontSize: 11, color: FAINT, minWidth: 34 }}>{a.network.label.split(' ')[0]}</span>
+                      <span style={{ fontFamily: MONO, fontSize: 12, color: FAINT, minWidth: 34 }}>{a.network.label.split(' ')[0]}</span>
                       <span className="min-w-0 flex-1">{a.flowLabel}</span>
-                      <span style={{ fontFamily: MONO, fontSize: 11, color: MUTED }}>
+                      <span style={{ fontFamily: MONO, fontSize: 12, color: MUTED }}>
                         {a.count} step{a.count > 1 ? 's' : ''}
                       </span>
                     </a>

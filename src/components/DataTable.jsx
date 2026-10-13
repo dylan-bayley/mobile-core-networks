@@ -1,4 +1,4 @@
-import { PANEL, EDGE, MONO, FAINT, TEXT, TEXT_2 } from '../theme.js';
+import { PANEL, EDGE, MONO, FAINT, TEXT, TEXT_2, DIVIDER } from '../theme.js';
 import Sources from './SourceChip.jsx';
 
 /** A simple comparison/reference table that scrolls sideways inside itself on narrow screens. */
@@ -18,7 +18,7 @@ export default function DataTable({ title, caption, columns, rows, cites, rowHea
           <thead>
             <tr>
               {columns.map((c) => (
-                <th key={c} scope="col" className="px-2 py-1.5" style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', color: FAINT, borderBottom: `1px solid ${EDGE}` }}>
+                <th key={c} scope="col" className="px-2 py-1.5" style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.06em', color: FAINT, borderBottom: `1px solid ${EDGE}` }}>
                   {c}
                 </th>
               ))}
@@ -29,11 +29,11 @@ export default function DataTable({ title, caption, columns, rows, cites, rowHea
               <tr key={r[0]}>
                 {r.map((cell, i) =>
                   i === 0 && rowHeader ? (
-                    <th key={i} scope="row" className="px-2 py-2 align-top font-medium" style={{ color: TEXT, borderBottom: '1px solid #131d33' }}>
+                    <th key={i} scope="row" className="px-2 py-2 align-top font-medium" style={{ color: TEXT, borderBottom: `1px solid ${DIVIDER}` }}>
                       {cell}
                     </th>
                   ) : (
-                    <td key={i} className="px-2 py-2 align-top" style={{ color: TEXT_2, borderBottom: '1px solid #131d33' }}>
+                    <td key={i} className="px-2 py-2 align-top" style={{ color: TEXT_2, borderBottom: `1px solid ${DIVIDER}` }}>
                       {cell}
                     </td>
                   ),

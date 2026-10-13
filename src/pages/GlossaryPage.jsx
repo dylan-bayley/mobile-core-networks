@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { GLOSSARY } from '../data/reference/glossary.js';
 import { componentForTerm } from '../data/components/index.js';
 import { filterGlossary, glossaryEntries } from '../lib/filterGlossary.js';
-import { PANEL, EDGE, MONO, FAINT, MUTED, TEXT, TEXT_2, K, ACTIVE_EDGE, BG } from '../theme.js';
+import { EDGE, DIVIDER, MONO, MUTED, TEXT, TEXT_2, K, ACTIVE_BG, ACTIVE_EDGE, BG, SURFACE } from '../theme.js';
 
 const idFor = (key) => `term-${key.replace(/[^A-Za-z0-9]+/g, '-')}`;
 
@@ -11,7 +11,6 @@ export default function GlossaryPage({ term }) {
   const [query, setQuery] = useState('');
   const entries = useMemo(() => glossaryEntries(GLOSSARY), []);
   const filtered = useMemo(() => filterGlossary(entries, query), [entries, query]);
-  const listRef = useRef(null);
 
   // Deferred, so it runs after the app's scroll-to-top for a new page
   // (parent effects run after this child's) rather than being undone by it.
@@ -22,12 +21,22 @@ export default function GlossaryPage({ term }) {
   }, [term]);
 
   const letters = useMemo(() => [...new Set(filtered.map(([k]) => k[0].toUpperCase()))], [filtered]);
+  // Browsing groups the list under letter headings; a search shows one flat result list.
+  const groups = useMemo(() => {
+    if (query.trim()) return [[null, filtered]];
+    const byLetter = new Map();
+    for (const item of filtered) {
+      const l = item[0][0].toUpperCase();
+      if (!byLetter.has(l)) byLetter.set(l, []);
+      byLetter.get(l).push(item);
+    }
+    return [...byLetter];
+  }, [filtered, query]);
 
   return (
     <div className="mx-auto max-w-[1100px] px-3 py-5 sm:px-4 sm:py-6">
       <header>
-        <p style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.14em', color: FAINT }}>REFERENCE</p>
-        <h1 tabIndex={-1} className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl" style={{ color: TEXT }}>
+        <h1 tabIndex={-1} className="text-2xl font-semibold tracking-tight sm:text-3xl" style={{ color: TEXT }}>
           Acronym glossary
         </h1>
         <p className="mt-1 max-w-[70ch] text-sm sm:text-base" style={{ color: TEXT_2 }}>
@@ -42,7 +51,7 @@ export default function GlossaryPage({ term }) {
           placeholder="Filter by acronym, name or description…"
           aria-label="Filter the glossary"
           className="w-full rounded px-3 py-2 text-sm"
-          style={{ background: '#0a1120', border: `1px solid ${EDGE}`, color: TEXT, fontFamily: MONO }}
+          style={{ background: SURFACE, border: `1px solid ${EDGE}`, color: TEXT }}
         />
         {!query && (
           <nav aria-label="Jump to letter" className="mt-2 flex flex-wrap gap-1">
@@ -54,55 +63,71 @@ export default function GlossaryPage({ term }) {
           </nav>
         )}
       </div>
-      <dl ref={listRef} className="mt-2 grid gap-2">
-        {filtered.map(([key, e]) => {
-          const on = key === term;
-          const comp = componentForTerm(key);
-          return (
-            <div
-              key={key}
-              id={idFor(key)}
-              className="scroll-mt-32 rounded px-3 py-2.5"
-              style={{ background: PANEL, border: `1px solid ${on ? ACTIVE_EDGE : EDGE}`, boxShadow: on ? `0 0 0 1px ${ACTIVE_EDGE}` : 'none' }}
-            >
-              <dt className="flex flex-wrap items-baseline gap-x-2">
-                <a href={`#/glossary/${encodeURIComponent(key)}`} className="hover:underline" style={{ fontFamily: MONO, fontWeight: 700, color: TEXT }}>
-                  {key}
-                </a>
-                <span className="text-sm" style={{ color: TEXT_2 }}>
-                  {e.expansion}
-                </span>
-                {e.kind && K[e.kind] && (
-                  <span className="rounded px-1.5" style={{ fontFamily: MONO, fontSize: 10, color: K[e.kind].c, border: `1px solid ${K[e.kind].c}55` }}>
-                    {K[e.kind].n}
-                  </span>
-                )}
-                {comp && (
-                  <a href={`#/components/${comp}`} className="ml-auto text-xs underline" style={{ color: MUTED }}>
-                    component page →
-                  </a>
-                )}
-              </dt>
-              {e.note && (
-                <dd className="mt-0.5 text-sm" style={{ color: MUTED }}>
-                  {e.note}
-                </dd>
-              )}
-              {e.inPractice && (
-                <dd className="mt-0.5 text-sm" style={{ color: MUTED }}>
-                  <span style={{ color: TEXT_2 }}>In practice: </span>
-                  {e.inPractice}
-                </dd>
-              )}
-            </div>
-          );
-        })}
-        {filtered.length === 0 && (
-          <p className="text-sm" style={{ color: MUTED }}>
-            Nothing matches “{query}”.
-          </p>
-        )}
-      </dl>
+      {groups.map(([letter, items]) => (
+        <section key={letter ?? 'results'} aria-label={letter ? `Terms starting with ${letter}` : 'Matching terms'} className="mt-4">
+          {letter && (
+            <h2 className="pb-1 text-lg font-semibold tabular-nums" style={{ color: TEXT, borderBottom: `1px solid ${EDGE}` }}>
+              {letter}
+            </h2>
+          )}
+          <dl>
+            {items.map(([key, e]) => {
+              const on = key === term;
+              const comp = componentForTerm(key);
+              return (
+                <div
+                  key={key}
+                  id={idFor(key)}
+                  className="scroll-mt-32 rounded px-3 py-2.5"
+                  style={{
+                    borderBottom: `1px solid ${DIVIDER}`,
+                    background: on ? ACTIVE_BG : 'transparent',
+                    boxShadow: on ? `0 0 0 1px ${ACTIVE_EDGE}` : 'none',
+                    // Rows far off screen aren't painted until scrolled near, but stay in the page for links and find.
+                    contentVisibility: 'auto',
+                    containIntrinsicSize: 'auto 64px',
+                  }}
+                >
+                  <dt className="flex flex-wrap items-baseline gap-x-2">
+                    <a href={`#/glossary/${encodeURIComponent(key)}`} className="hover:underline" style={{ fontFamily: MONO, fontWeight: 700, color: TEXT }}>
+                      {key}
+                    </a>
+                    <span className="text-sm" style={{ color: TEXT_2 }}>
+                      {e.expansion}
+                    </span>
+                    {e.kind && K[e.kind] && (
+                      <span className="rounded px-1.5 text-xs" style={{ color: K[e.kind].c, border: `1px solid ${K[e.kind].c}55` }}>
+                        {K[e.kind].n}
+                      </span>
+                    )}
+                    {comp && (
+                      <a href={`#/components/${comp}`} className="ml-auto text-xs underline" style={{ color: MUTED }}>
+                        Component page
+                      </a>
+                    )}
+                  </dt>
+                  {e.note && (
+                    <dd className="mt-0.5 max-w-[80ch] text-sm" style={{ color: MUTED }}>
+                      {e.note}
+                    </dd>
+                  )}
+                  {e.inPractice && (
+                    <dd className="mt-0.5 max-w-[80ch] text-sm" style={{ color: MUTED }}>
+                      <span style={{ color: TEXT_2 }}>In practice: </span>
+                      {e.inPractice}
+                    </dd>
+                  )}
+                </div>
+              );
+            })}
+          </dl>
+        </section>
+      ))}
+      {filtered.length === 0 && (
+        <p className="mt-4 text-sm" style={{ color: MUTED }} role="status">
+          Nothing matches “{query}”.
+        </p>
+      )}
     </div>
   );
 }

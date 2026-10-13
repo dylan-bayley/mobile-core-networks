@@ -1,4 +1,4 @@
-import { K, PANEL, EDGE, MONO, MUTED, FAINT, ACTIVE_BG, ACTIVE_EDGE, TEXT } from '../theme.js';
+import { PANEL, EDGE, MONO, MUTED, FAINT, ACTIVE_BG, ACTIVE_EDGE, TEXT } from '../theme.js';
 import { GLOSSARY } from '../data/reference/glossary.js';
 import { autolinkAcronyms } from '../lib/autolinkAcronyms.jsx';
 
@@ -9,7 +9,6 @@ import { autolinkAcronyms } from '../lib/autolinkAcronyms.jsx';
  * the step data, nothing extra to author.
  */
 export default function FlowOverview({ scenario, networks, flows, networkId, onSwitch, onGlossaryOpen, activeGlossaryKey, tagline }) {
-  const kinds = [...new Set(scenario.steps.map((s) => s.k))];
   const nodes = new Set(scenario.steps.flatMap((s) => s.p));
   const tagged = scenario.steps.filter((s) => s.tag);
   const tagNames = [...new Set(tagged.map((s) => s.tag))];
@@ -20,10 +19,10 @@ export default function FlowOverview({ scenario, networks, flows, networkId, onS
   return (
     <div className="rounded px-3 py-2" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
       <div className="flex flex-wrap items-baseline gap-x-2">
-        <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.12em', color: FAINT }}>
+        <span style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.12em', color: FAINT }}>
           {scenario.network.label.toUpperCase()} · {scenario.label.toUpperCase()}
         </span>
-        <span style={{ fontFamily: MONO, fontSize: 10, color: FAINT }}>
+        <span style={{ fontFamily: MONO, fontSize: 12, color: FAINT }}>
           {scenario.steps.length} steps · {nodes.size} nodes
         </span>
       </div>
@@ -35,23 +34,15 @@ export default function FlowOverview({ scenario, networks, flows, networkId, onS
       <p className="mt-1 text-xs leading-relaxed" style={{ color: MUTED }}>
         {autolinkAcronyms(scenario.blurb, GLOSSARY, { activeKey: activeGlossaryKey, onOpen: onGlossaryOpen })}
       </p>
-      <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
-        {kinds.map((k) => (
-          <span key={k} className="flex items-center gap-1" style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}>
-            <span style={{ width: 8, height: 8, borderRadius: 2, background: K[k].c, display: 'inline-block' }} />
-            {K[k].n}
-          </span>
-        ))}
-      </div>
       {tagged.length > 0 && (
         <p className="mt-1.5 text-xs" style={{ color: MUTED }}>
-          <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em' }}>{tagNames.map((t) => t.toUpperCase()).join(' · ')}</span>
+          <span style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.08em' }}>{tagNames.map((t) => t.toUpperCase()).join(' · ')}</span>
           {' '}— {tagged.length} of these steps are specific to this variant; the rest are shared with the base flow.
         </p>
       )}
       {elsewhere.length > 0 && (
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', color: FAINT }}>SAME SESSION IN</span>
+          <span style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.12em', color: FAINT }}>SAME SESSION IN</span>
           {elsewhere.map(({ network, flow }) => (
             <button
               key={network.id}
@@ -61,10 +52,9 @@ export default function FlowOverview({ scenario, networks, flows, networkId, onS
               style={{ background: ACTIVE_BG, border: `1px solid ${EDGE}`, color: TEXT }}
               onMouseEnter={(e) => (e.currentTarget.style.borderColor = ACTIVE_EDGE)}
               onMouseLeave={(e) => (e.currentTarget.style.borderColor = EDGE)}
-              title={`${network.label}: ${flow.label} (${flow.steps.length} steps)`}
             >
               {network.label}
-              <span style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}> · {flow.steps.length}</span>
+              <span style={{ fontFamily: MONO, fontSize: 12, color: MUTED }}> · {flow.steps.length}</span>
             </button>
           ))}
         </div>

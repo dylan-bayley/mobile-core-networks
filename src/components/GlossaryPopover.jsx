@@ -117,7 +117,7 @@ export default function GlossaryPopover({ target, glossary, onClose, topology, o
           {entry.kind && K[entry.kind] && (
             <span
               className="rounded px-1.5 py-0.5"
-              style={{ fontFamily: MONO, fontSize: 9, color: K[entry.kind].c, border: `1px solid ${K[entry.kind].c}55` }}
+              style={{ fontFamily: MONO, fontSize: 12, color: K[entry.kind].c, border: `1px solid ${K[entry.kind].c}55` }}
             >
               {K[entry.kind].n}
             </span>
