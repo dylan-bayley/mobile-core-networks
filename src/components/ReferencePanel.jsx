@@ -41,7 +41,12 @@ function NamesTab({ nodeNaming }) {
       <p className="mt-1 max-w-[70ch] text-sm" style={{ color: MUTED }}>
         One vendor’s product names, which the call-flow diagrams use for some nodes. They are deployment names, not 3GPP terms.
       </p>
-      <div className="mt-3 grid max-h-96 gap-x-8 gap-y-2 overflow-y-auto pr-1 md:grid-cols-2">
+      <div
+        role="region"
+        aria-label="Vendor node names"
+        tabIndex={0}
+        className="mt-3 grid max-h-96 gap-x-8 gap-y-2 overflow-y-auto pr-1 md:grid-cols-2"
+      >
         {nodeNaming.map((row, i) => (
           <div key={i} className="text-sm" style={{ borderBottom: `1px solid ${DIVIDER}`, paddingBottom: 6 }}>
             <div className="flex flex-wrap items-baseline gap-2">

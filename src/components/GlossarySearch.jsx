@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { PANEL, EDGE, MONO, MUTED, FAINT, ACTIVE_BG, TEXT, SURFACE } from '../theme.js';
+import { PANEL, EDGE, MONO, MUTED, FAINT, ACTIVE_BG, TEXT, SURFACE, CONTROL_EDGE } from '../theme.js';
 import { filterGlossary, glossaryEntries } from '../lib/filterGlossary.js';
 
 const LIMIT = 8;
@@ -73,7 +73,7 @@ export default function GlossarySearch({ glossary, onPick, ref }) {
         role="combobox"
         autoComplete="off"
         className="w-44 rounded px-2 py-1.5 text-xs sm:w-52"
-        style={{ background: SURFACE, border: `1px solid ${EDGE}`, color: TEXT, fontFamily: MONO }}
+        style={{ background: SURFACE, border: `1px solid ${CONTROL_EDGE}`, color: TEXT, fontFamily: MONO }}
       />
       {open && results.length > 0 && (
         <ul

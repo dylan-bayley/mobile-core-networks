@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import { ACTIVE_EDGE, EDGE, MONO, MUTED, PANEL, TEXT, TRACK } from '../theme.js';
+import { ACTIVE_EDGE, CONTROL_EDGE, MONO, MUTED, PANEL, TEXT, TRACK } from '../theme.js';
 
 /**
  * A labelled on/off control that reads as a switch, not a mystery glyph.
@@ -18,7 +18,7 @@ export default function Switch({ on, onChange, children, title, hint, size = 'md
       title={title}
       onClick={onChange}
       className={`inline-flex min-h-10 items-center gap-2 rounded sm:min-h-0 ${pad}`}
-      style={{ background: PANEL, border: `1px solid ${on ? ACTIVE_EDGE : EDGE}`, color: on ? TEXT : MUTED, fontFamily: MONO }}
+      style={{ background: PANEL, border: `1px solid ${on ? ACTIVE_EDGE : CONTROL_EDGE}`, color: on ? TEXT : MUTED, fontFamily: MONO }}
     >
       <span
         aria-hidden="true"

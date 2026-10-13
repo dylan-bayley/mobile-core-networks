@@ -10,7 +10,7 @@ import { useGlossary } from '../lib/glossaryContext.js';
 import { useReducedMotion } from '../lib/useMediaQuery.js';
 import { useElementWidth } from '../lib/useElementWidth.js';
 import { autolinkAcronyms } from '../lib/autolinkAcronyms.jsx';
-import { PANEL, EDGE, MONO, FAINT, MUTED, TEXT, TEXT_2, GEN, K, DIVIDER } from '../theme.js';
+import { PANEL, EDGE, MONO, FAINT, MUTED, TEXT, TEXT_2, GEN, K, DIVIDER, CONTROL_EDGE } from '../theme.js';
 import ArchDiagram from '../components/arch/ArchDiagram.jsx';
 import VignettePlayer from '../components/arch/VignettePlayer.jsx';
 import Sources from '../components/SourceChip.jsx';
@@ -31,18 +31,20 @@ function ComponentDiagram({ component }) {
     [lesson, base, node],
   );
   const [tick, setTick] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const still = reducedMotion || paused;
   useEffect(() => {
-    if (reducedMotion || own.length < 2) return undefined;
+    if (still || own.length < 2) return undefined;
     const t = setInterval(() => setTick((x) => x + 1), CYCLE_MS);
     return () => clearInterval(t);
-  }, [reducedMotion, own.length]);
+  }, [still, own.length]);
 
   const lit = own.length ? own[tick % own.length] : null;
   const current = useMemo(() => {
-    const focus = { nodes: [node], links: reducedMotion ? own.map((l) => l.l) : lit ? [lit.l] : [] };
-    const traffic = !reducedMotion && lit ? [{ p: lit.a === node ? [lit.a, lit.b] : [lit.b, lit.a], k: lit.k, n: 1, speed: 0.5 }] : [];
+    const focus = { nodes: [node], links: still ? own.map((l) => l.l) : lit ? [lit.l] : [] };
+    const traffic = !still && lit ? [{ p: lit.a === node ? [lit.a, lit.b] : [lit.b, lit.a], k: lit.k, n: 1, speed: 0.5 }] : [];
     return { ...base, added: [], scene: { ...base.scene, focus, traffic } };
-  }, [base, node, lit, own, reducedMotion]);
+  }, [base, node, lit, own, still]);
 
   const mode = width >= 720 ? 'wide' : 'narrow';
   return (
@@ -67,10 +69,20 @@ function ComponentDiagram({ component }) {
         <span>
           From lesson {lesson.n}: <a href={hrefFor(`/learn/${lessonId}`, { scene: sceneId })} className="underline" style={{ color: TEXT_2 }}>{lesson.title}</a>
         </span>
-        {lit && !reducedMotion && (
+        {lit && !still && (
           <span className="ml-auto" style={{ fontFamily: MONO, color: K[lit.k].c }}>
             {lit.l}
           </span>
+        )}
+        {!reducedMotion && own.length > 1 && (
+          <button
+            type="button"
+            onClick={() => setPaused((x) => !x)}
+            className={`min-h-8 rounded px-2.5 py-1 ${lit && !still ? '' : 'ml-auto'}`}
+            style={{ border: `1px solid ${CONTROL_EDGE}`, background: 'transparent', color: TEXT_2, fontFamily: MONO }}
+          >
+            {paused ? 'Resume animation' : 'Pause animation'}
+          </button>
         )}
       </figcaption>
     </figure>
