@@ -19,6 +19,7 @@ export const SURFACE = '#0a1120'; // inputs and inset blocks, a step darker than
 export const DIVIDER = '#131d33'; // row separators inside a panel
 export const RULE = '#2a3958'; // inline separators between controls
 export const TRACK = '#26334f'; // an off switch's track
+export const CONTROL_EDGE = '#5f7399'; // outline of inputs and toggles (WCAG 1.4.11: ≈3.9:1 on PANEL, 3.2:1 on ACTIVE_BG)
 
 /* Text tokens, all checked against PANEL for WCAG AA (≥ 4.5:1 for body text). */
 export const TEXT = '#e6edfa'; // headings, primary

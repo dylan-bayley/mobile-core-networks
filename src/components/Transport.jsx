@@ -1,4 +1,4 @@
-import { PANEL, EDGE, MONO, MUTED, FAINT, ACTIVE_BG, ACTIVE_EDGE, TEXT } from '../theme.js';
+import { PANEL, EDGE, MONO, MUTED, FAINT, ACTIVE_BG, ACTIVE_EDGE, TEXT, CONTROL_EDGE } from '../theme.js';
 import { SPEEDS } from '../engine/useStepPlayer.js';
 import Popover from './ui/Popover.jsx';
 import Switch from './Switch.jsx';
@@ -84,7 +84,7 @@ export default function Transport({
                       className="min-h-10 flex-1 rounded px-2 py-1 text-xs sm:min-h-0"
                       style={{
                         background: speed === s ? ACTIVE_BG : 'transparent',
-                        border: `1px solid ${speed === s ? ACTIVE_EDGE : EDGE}`,
+                        border: `1px solid ${speed === s ? ACTIVE_EDGE : CONTROL_EDGE}`,
                         color: speed === s ? '#ffffff' : MUTED,
                         fontFamily: MONO,
                       }}

@@ -3,6 +3,7 @@ import { K, GEN, MONO, SANS, PANEL, EDGE, FAINT, MUTED, TEXT, CONTROL_BAND, USER
 import { GLOSSARY } from '../../data/reference/glossary.js';
 import { resolveGlossaryKey } from '../../lib/resolveGlossaryKey.js';
 import { svgTermProps } from '../../lib/svgTermProps.js';
+import { KindMark } from '../KindMark.jsx';
 import { control, bez } from '../../engine/geometry.js';
 import { NODE_SIZE, MIN_TITLE_FONT, nodeBoxWidth, targetState, interpolate, linksFor, linkKey, pointAlong, labelTFor } from '../../engine/arch.js';
 
@@ -297,7 +298,7 @@ export default function ArchDiagram({
         const dim = hasFocus && !on;
         const col = K[l.k].c;
         const mid = bez(p0, c, p1, labelTFor(l, mode));
-        const lw = l.l.length * smallFont * 0.62 + 10;
+        const lw = l.l.length * smallFont * 0.62 + 10 + smallFont * 1.1; // room for the family mark
         const lkey = resolveGlossaryKey(l.l, GLOSSARY);
         const props = liveLinks.has(k) ? svgTermProps(lkey, activeKey, onOpenTerm) : null;
         const drawIn = ls.draw < 1 && !l.dash;
@@ -316,7 +317,8 @@ export default function ArchDiagram({
             {ls.draw > 0.6 && (
               <g {...(props ?? {})} style={{ cursor: props ? 'help' : 'default' }}>
                 <rect x={mid.x - lw / 2} y={mid.y - smallFont * 0.8} width={lw} height={smallFont * 1.6} rx={4} fill={PANEL} stroke={on ? col : EDGE} strokeWidth={1} />
-                <text x={mid.x} y={mid.y + smallFont * 0.35} textAnchor="middle" style={{ fontFamily: MONO, fontSize: smallFont }} fill={on ? TEXT : MUTED}>
+                <KindMark kind={l.k} cx={mid.x - lw / 2 + smallFont * 0.85} cy={mid.y} r={smallFont * 0.3} colour={col} />
+                <text x={mid.x + smallFont * 0.55} y={mid.y + smallFont * 0.35} textAnchor="middle" style={{ fontFamily: MONO, fontSize: smallFont }} fill={on ? TEXT : MUTED}>
                   {l.l}
                 </text>
               </g>

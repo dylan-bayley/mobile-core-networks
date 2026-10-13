@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { PANEL, EDGE, MONO, MUTED, FAINT, ACTIVE_BG, ACTIVE_EDGE, TEXT, DONE, RULE } from '../theme.js';
+import { PANEL, EDGE, MONO, MUTED, FAINT, ACTIVE_BG, ACTIVE_EDGE, TEXT, DONE, RULE, CONTROL_EDGE } from '../theme.js';
 import { sessionForFlow, variantsFor } from '../data/sessions.js';
 import { isCompleted } from '../lib/progress.js';
 import { useMediaQuery } from '../lib/useMediaQuery.js';
@@ -94,7 +94,7 @@ const SectionLabel = ({ children }) => (
 
 function ViewToggle({ view, onView }) {
   return (
-    <div className="flex items-center rounded" role="group" aria-label="Diagram view" style={{ border: `1px solid ${EDGE}` }}>
+    <div className="flex items-center rounded" role="group" aria-label="Diagram view" style={{ border: `1px solid ${CONTROL_EDGE}` }}>
       {VIEWS.map(([id, label, description]) => (
         <button
           key={id}

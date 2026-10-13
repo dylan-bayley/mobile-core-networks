@@ -13,13 +13,13 @@ export default function DataTable({ title, caption, columns, rows, cites, rowHea
           {caption}
         </p>
       )}
-      <div className="mt-3 overflow-x-auto">
+      <div role="region" aria-label={title} tabIndex={0} className="mt-3 overflow-x-auto">
         <table className="w-full min-w-[520px] border-collapse text-left text-sm">
           <thead>
             <tr>
               {columns.map((c) => (
                 <th key={c} scope="col" className="px-2 py-1.5" style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.06em', color: FAINT, borderBottom: `1px solid ${EDGE}` }}>
-                  {c}
+                  {c || <span className="sr-only">Item</span>}
                 </th>
               ))}
             </tr>

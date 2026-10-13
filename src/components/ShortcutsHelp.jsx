@@ -52,7 +52,7 @@ export default function ShortcutsHelp({ open, onClose }) {
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="ml-auto rounded px-2 py-1"
+            className="ml-auto min-h-8 min-w-8 rounded px-2 py-1"
             style={{ color: MUTED, background: 'none', border: `1px solid ${EDGE}`, fontSize: 12, lineHeight: 1 }}
           >
             ✕
