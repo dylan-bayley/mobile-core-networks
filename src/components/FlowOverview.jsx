@@ -1,4 +1,4 @@
-import { K, PANEL, EDGE, MONO, MUTED, FAINT, ACTIVE_BG, ACTIVE_EDGE, TEXT } from '../theme.js';
+import { PANEL, EDGE, MONO, MUTED, FAINT, ACTIVE_BG, ACTIVE_EDGE, TEXT } from '../theme.js';
 import { GLOSSARY } from '../data/reference/glossary.js';
 import { autolinkAcronyms } from '../lib/autolinkAcronyms.jsx';
 
@@ -9,7 +9,6 @@ import { autolinkAcronyms } from '../lib/autolinkAcronyms.jsx';
  * the step data, nothing extra to author.
  */
 export default function FlowOverview({ scenario, networks, flows, networkId, onSwitch, onGlossaryOpen, activeGlossaryKey, tagline }) {
-  const kinds = [...new Set(scenario.steps.map((s) => s.k))];
   const nodes = new Set(scenario.steps.flatMap((s) => s.p));
   const tagged = scenario.steps.filter((s) => s.tag);
   const tagNames = [...new Set(tagged.map((s) => s.tag))];
@@ -35,14 +34,6 @@ export default function FlowOverview({ scenario, networks, flows, networkId, onS
       <p className="mt-1 text-xs leading-relaxed" style={{ color: MUTED }}>
         {autolinkAcronyms(scenario.blurb, GLOSSARY, { activeKey: activeGlossaryKey, onOpen: onGlossaryOpen })}
       </p>
-      <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
-        {kinds.map((k) => (
-          <span key={k} className="flex items-center gap-1" style={{ fontFamily: MONO, fontSize: 9, color: MUTED }}>
-            <span style={{ width: 8, height: 8, borderRadius: 2, background: K[k].c, display: 'inline-block' }} />
-            {K[k].n}
-          </span>
-        ))}
-      </div>
       {tagged.length > 0 && (
         <p className="mt-1.5 text-xs" style={{ color: MUTED }}>
           <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em' }}>{tagNames.map((t) => t.toUpperCase()).join(' · ')}</span>

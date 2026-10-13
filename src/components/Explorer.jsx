@@ -312,6 +312,7 @@ export default function Explorer() {
     document.title = `${scenario.label} (${net.label}) · Call flows · Mobile Core`;
   }, [networkId, scenario.label]);
 
+  const flowKinds = useMemo(() => [...new Set(scenario.steps.map((s) => s.k))], [scenario.steps]);
   const analogs = useMemo(() => analogsOf(cur, { networkId, flowId: scenario.flowId }), [cur, networkId, scenario.flowId]);
   const networkFlows = FLOWS[networkId] ?? {};
   const network = NETWORKS.find((n) => n.id === networkId) ?? NETWORKS[0];
@@ -344,7 +345,7 @@ export default function Explorer() {
           <h1 tabIndex={-1} className="text-lg font-semibold tracking-tight text-white outline-none sm:text-xl">
             How a mobile core actually carries a session
           </h1>
-          <p className="hidden md:block" style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.16em', color: FAINT }}>
+          <p className="hidden md:block" style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.16em', color: FAINT }}>
             4G EPC · 5G NSA / SA · IMS · MESSAGING
           </p>
           <div className="ml-auto flex items-center gap-2">
@@ -361,12 +362,8 @@ export default function Explorer() {
             </button>
           </div>
           <p className="basis-full text-xs" style={{ color: MUTED }}>
-            Pick a network and a session type, then watch the signalling walk the reference points one message at a time.
-            <span className="hidden sm:inline" style={{ fontFamily: MONO, color: FAINT }}> Space play/pause · ←/→ step · ? for all shortcuts</span>
-          </p>
-          <p className="basis-full text-xs" style={{ color: MUTED }}>
-            In practice: some nodes carry one vendor’s product names (Ericsson’s SBG, MTAS, EPG, M-MGw). The Reference panel below maps
-            them to the 3GPP functions.
+            Pick a network and a session, then step through the signalling. Some nodes use Ericsson’s product names (SBG, MTAS, EPG,
+            M-MGw); the Reference panel below maps them to 3GPP functions. Press <kbd style={{ fontFamily: MONO }}>?</kbd> for shortcuts.
           </p>
         </header>
 
@@ -454,7 +451,7 @@ export default function Explorer() {
             {/* Narrow screens: the reading surface sits right under the controls. */}
             {!quizOpen && <div className="mt-3 xl:hidden">{stepDetail(!isWide)}</div>}
 
-            <Legend />
+            <Legend kinds={flowKinds} />
           </div>
 
           <aside className="mt-3 flex min-h-0 flex-col gap-3 xl:sticky xl:top-3 xl:mt-0 xl:max-h-[calc(100vh-1.5rem)] xl:overflow-y-auto xl:pr-0.5">
