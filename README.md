@@ -2,12 +2,12 @@
 
 An animated, interactive guide to the mobile core network, in four sections:
 
-- **Learn** — five animated architecture lessons: the 4G EPC, the 5G core (service-based and reference-point views, CUPS, slicing), EPC/5GC interworking, 5G SA vs NSA (options 2, 3, 3a, 3x), and IMS (registration, service triggers, VoLTE vs VoNR QoS, breakout and interconnect).
+- **Learn** — five animated architecture lessons: the 4G EPC, the 5G core (service-based and reference-point views, CUPS, slicing), EPC/5GC interworking, 5G SA vs NSA (options 2, 3, 3a, 3x), and IMS (registration, service triggers, VoLTE vs VoNR QoS, breakout and interconnect). Then a sixth, protocol lesson on SIP and SDP, drawn as ladder diagrams: messages, transactions and dialogs, offer/answer, CANCEL and failure codes, and the IMS profile (IMS AKA, P-headers, preconditions).
 - **Components** — one page per network element (8 EPC, 19 5GC, 9 IMS, plus the eNodeB and gNB): responsibilities, interfaces, services, 4G/5G counterparts, where it appears in the flows, and short animated vignettes.
 - **Flows** — the call-flow explorer described below.
 - **Glossary** — every acronym, each with its own link.
 
-Lesson and component content cites the official documents (3GPP specifications via their free ETSI copies, and the GSMA migration white paper) down to the clause; the registry is `src/data/reference/sources.js`. The diagrams are original.
+Lesson and component content cites the official documents (3GPP specifications via their free ETSI copies, the IETF RFCs for SIP and SDP, and GSMA documents) down to the clause; the registry is `src/data/reference/sources.js`. The diagrams are original.
 
 The Flows explorer is an animated, interactive explainer of 4G, 5G NSA and 5G SA signalling flows —
 voice (originating, terminating, EPS fallback), video, data (attach, idle mode
@@ -70,6 +70,19 @@ scene = {
 A lesson may also export `compare = { scenes: [a, b], labels, title, columns, rows, cites }`: the two scenes are drawn side by side (a toggle on narrow screens) above a comparison table. Component vignettes (`src/data/components/vignettes.js`) play on the 5G core diagram unless they name another `lesson` and `layout`.
 
 Moving between scenes tweens node positions and fades, draws new links in, and streams traffic dots along routes; under `prefers-reduced-motion` (tracked live) everything snaps to its end state and autoplay stops. Every diagram has a `wide` layout and a portrait `narrow` one for phones. `npm test` validates lessons, vignettes and components: known sources, node boxes (at their drawn width) inside the viewBox in both modes, unique scene ids, scenes that only reference drawn nodes and links (traffic hops included), spawn sources shown in the previous scene, complete quick-check questions, and cross-links and lesson links that resolve.
+
+### Ladder lessons
+
+A lesson module that exports `kind = 'ladder'` (the SIP lesson, `src/data/arch/sip.js`) has `ladders` and `panels` instead of a `diagram`. `LessonPage` keeps the same player, progress, `?scene=` links and quick check, and draws `src/components/arch/LadderDiagram.jsx` with an optional `LadderPanel` beside it; the pure layout and scene resolution are in `src/engine/ladder.js`.
+
+```js
+ladders = { basic: { proto?: 'ims', actors: [{ id, t, s? }], rows: [{ id, f, t, m, k: 'req' | 'res' | 'media' | 'diameter', both? } | { id, note, a, b }] } }
+panels = { invite: { type: 'message', lines: [{ text, key?, label?, note? }] }, sdp: { type: 'sdp', offer, answer }, codes: { type: 'table', columns, rows, cites } }
+scene = { id, k, title, d, cites, ladder, upto?: rowId, focus?: [rowId], panel?, highlight?: [lineKey] }
+tryIt = [{ t, href? }]   // hands-on suggestions, the only place tool names appear in Learn
+```
+
+Rows are drawn down to `upto` (all of them without it); rows new since the previous scene draw themselves in. The validator checks actors, unique row ids, `upto` / `focus` / `panel` / `highlight` references, citations (table panels included) and unused panels.
 
 ### Authored vs. composed
 

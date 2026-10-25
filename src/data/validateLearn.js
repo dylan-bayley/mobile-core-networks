@@ -8,6 +8,7 @@ import { resolveGlossaryKey } from '../lib/resolveGlossaryKey.js';
 import { parseHash } from '../lib/route.js';
 import { K } from '../theme.js';
 import { layoutFor, resolveScenes, linksFor, cellToXY, NODE_SIZE, nodeBoxWidth } from '../engine/arch.js';
+import { resolveLadderScenes } from '../engine/ladder.js';
 
 const checkCites = (where, cites, warnings) => {
   if (!cites?.length) warnings.push(`${where}: has no sources`);
@@ -86,6 +87,79 @@ export function checkScenes(where, diagram, scenes, warnings) {
   });
 }
 
+const ROW_KINDS = new Set(['req', 'res', 'media', 'diameter']);
+
+/**
+ * Checks a ladder lesson: rows join known actors and have unique ids,
+ * scenes name real ladders, rows and panels, highlights exist in their
+ * panel, and everything is cited. Resolution errors (an unknown ladder or
+ * row) are reported per scene so one typo doesn't hide the rest.
+ */
+export function checkLadderLesson(where, { ladders, panels = {}, scenes, tryIt = [] }, warnings) {
+  for (const [name, ladder] of Object.entries(ladders)) {
+    const at = `${where}, ladder "${name}"`;
+    const actors = new Set(ladder.actors.map((a) => a.id));
+    if (actors.size !== ladder.actors.length) warnings.push(`${at}: duplicate actor id`);
+    if (ladder.proto && !K[ladder.proto]) warnings.push(`${at}: unknown protocol colour "${ladder.proto}"`);
+    const ids = new Set();
+    for (const r of ladder.rows) {
+      if (!r.id) warnings.push(`${at}: a row has no id`);
+      else if (ids.has(r.id)) warnings.push(`${at}: duplicate row id "${r.id}"`);
+      ids.add(r.id);
+      const ends = r.note ? [r.a, r.b] : [r.f, r.t];
+      for (const id of ends) if (!actors.has(id)) warnings.push(`${at}, row "${r.id}": unknown actor "${id}"`);
+      if (!r.note && !ROW_KINDS.has(r.k)) warnings.push(`${at}, row "${r.id}": unknown kind "${r.k}"`);
+      if (!r.note && !r.m) warnings.push(`${at}, row "${r.id}": has no message label`);
+    }
+  }
+
+  const sceneIds = new Set();
+  let prev = [];
+  for (const s of scenes) {
+    const at = `${where}, scene "${s.id}"`;
+    if (sceneIds.has(s.id)) warnings.push(`${where}: duplicate scene id "${s.id}" (breaks ?scene= links)`);
+    sceneIds.add(s.id);
+    checkCites(at, s.cites, warnings);
+    if (!s.title || !s.d) warnings.push(`${at}: needs a title and a caption`);
+    if (s.k && !K[s.k]) warnings.push(`${at}: unknown colour kind "${s.k}"`);
+    try {
+      resolveLadderScenes(ladders, [...prev, s]);
+      prev = [s];
+    } catch (e) {
+      warnings.push(`${where}: ${e.message}`);
+      continue;
+    }
+    if (s.panel == null) {
+      if (s.highlight?.length) warnings.push(`${at}: highlights lines but has no panel`);
+      continue;
+    }
+    const panel = panels[s.panel];
+    if (!panel) {
+      warnings.push(`${at}: unknown panel "${s.panel}"`);
+      continue;
+    }
+    const lines = panel.type === 'sdp' ? [...panel.offer.lines, ...panel.answer.lines] : (panel.lines ?? []);
+    const keys = new Set(lines.map((l) => l.key).filter(Boolean));
+    for (const k of s.highlight ?? []) if (!keys.has(k)) warnings.push(`${at}: panel "${s.panel}" has no line "${k}"`);
+  }
+
+  for (const [name, panel] of Object.entries(panels)) {
+    const at = `${where}, panel "${name}"`;
+    if (!['message', 'sdp', 'table'].includes(panel.type)) warnings.push(`${at}: unknown type "${panel.type}"`);
+    if (panel.type === 'table') {
+      checkCites(at, panel.cites, warnings);
+      for (const r of panel.rows) if (r.length !== panel.columns.length) warnings.push(`${at}: row "${r[0]}" has ${r.length} cells for ${panel.columns.length} columns`);
+      if (new Set(panel.rows.map((r) => r[0])).size !== panel.rows.length) warnings.push(`${at}: repeats a row (they're React keys)`);
+    }
+    if (!scenes.some((s) => s.panel === name)) warnings.push(`${at}: isn't used by any scene`);
+  }
+
+  for (const [i, item] of tryIt.entries()) {
+    if (!item.t?.trim()) warnings.push(`${where}: try-it item ${i + 1} is empty`);
+    if (item.href && !/^https:\/\//.test(item.href)) warnings.push(`${where}: try-it item ${i + 1} links to a non-https URL`);
+  }
+}
+
 /** Does an in-app link (`#/learn/…`, `#/components/…`, `#/flows?…`, `#/glossary/…`) lead somewhere real? */
 export function hrefProblem(href) {
   if (!href.startsWith('#/')) return null; // external links aren't checked
@@ -137,6 +211,15 @@ export function collectLearnWarnings() {
   for (const lesson of Object.values(LESSONS)) {
     const { diagram } = lesson;
     const where = `Lesson "${lesson.id}"`;
+    checkQuickCheck(where, lesson.check, warnings);
+    for (const l of lesson.links ?? []) {
+      const problem = hrefProblem(l.href);
+      if (problem) warnings.push(`${where}: link "${l.label}" → ${l.href}: ${problem}`);
+    }
+    if (lesson.kind === 'ladder') {
+      checkLadderLesson(where, lesson, warnings);
+      continue;
+    }
     for (const [name, lay] of Object.entries(diagram.layouts)) {
       let full;
       try {
@@ -176,11 +259,6 @@ export function collectLearnWarnings() {
       if (!nodeTerm(n)) warnings.push(`${where}: node "${id}" (${n.t}) has no glossary entry`);
     }
     checkScenes(where, diagram, lesson.scenes, warnings);
-    checkQuickCheck(where, lesson.check, warnings);
-    for (const l of lesson.links ?? []) {
-      const problem = hrefProblem(l.href);
-      if (problem) warnings.push(`${where}: link "${l.label}" → ${l.href}: ${problem}`);
-    }
     if (lesson.compare) {
       checkCites(`${where} comparison table`, lesson.compare.cites, warnings);
       for (const id of lesson.compare.scenes ?? []) if (!lesson.scenes.some((s) => s.id === id)) warnings.push(`${where}: comparison names unknown scene "${id}"`);
@@ -191,8 +269,8 @@ export function collectLearnWarnings() {
 
   for (const [id, v] of Object.entries(VIGNETTES)) {
     const lesson = LESSONS[v.lesson ?? '5gc'];
-    if (!lesson) {
-      warnings.push(`Vignette "${id}": unknown lesson "${v.lesson}"`);
+    if (!lesson?.diagram) {
+      warnings.push(`Vignette "${id}": unknown lesson "${v.lesson}", or one without an architecture diagram`);
       continue;
     }
     const scenes = v.steps.map((s) => ({ ...s, layout: v.layout ?? 'sba', show: v.show }));
@@ -211,7 +289,7 @@ export function collectLearnWarnings() {
     if (c.diagram) {
       const lesson = LESSONS[c.diagram.lesson];
       const i = lesson ? lesson.scenes.findIndex((s) => s.id === c.diagram.scene) : -1;
-      if (i < 0) warnings.push(`${where}: diagram scene ${c.diagram.lesson}/${c.diagram.scene} not found`);
+      if (i < 0 || !lesson.diagram) warnings.push(`${where}: diagram scene ${c.diagram.lesson}/${c.diagram.scene} not found in an architecture lesson`);
       else if (!lesson.resolved[i].visible.has(c.diagram.node)) warnings.push(`${where}: node "${c.diagram.node}" isn't shown in ${c.diagram.lesson}/${c.diagram.scene}`);
     }
     for (const [net, nodeId] of Object.entries(c.inFlows ?? {})) {

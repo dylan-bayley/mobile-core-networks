@@ -1,0 +1,495 @@
+/* Lesson 6 — SIP and SDP as a protocol, message by message, ending with
+   the IMS profile of SIP that VoLTE and VoNR use. Generic SIP follows the
+   IETF RFCs (RFC 3261 and its extensions, RFC 3264 and RFC 8866 for SDP);
+   the IMS parts follow TS 24.229 and the GSMA IR.92 (VoLTE) and NG.114
+   (VoNR) profiles. The ladders are simplified for teaching: the IMS ones
+   fold each side's P-CSCF and S-CSCF into one column. Addresses are from
+   the documentation ranges (RFC 5737) and domains from RFC 2606. */
+
+export const kind = 'ladder';
+
+const ALICE = { id: 'alice', t: 'Alice', s: 'caller' };
+const BOB = { id: 'bob', t: 'Bob', s: 'callee' };
+const PROXY = { id: 'proxy', t: 'Proxy', s: 'and registrar' };
+
+export const ladders = {
+  http: {
+    proto: 'sbi',
+    actors: [
+      { id: 'browser', t: 'Browser', s: 'client' },
+      { id: 'server', t: 'Web server', s: 'server' },
+    ],
+    rows: [
+      { id: 'get', f: 'browser', t: 'server', m: 'GET /index.html', k: 'req' },
+      { id: 'ok', f: 'server', t: 'browser', m: '200 OK (the page)', k: 'res' },
+    ],
+  },
+  basic: {
+    actors: [ALICE, BOB],
+    rows: [
+      { id: 'invite', f: 'alice', t: 'bob', m: 'INVITE (SDP offer)', k: 'req' },
+      { id: 'ringing', f: 'bob', t: 'alice', m: '180 Ringing', k: 'res' },
+      { id: 'ok', f: 'bob', t: 'alice', m: '200 OK (SDP answer)', k: 'res' },
+      { id: 'ack', f: 'alice', t: 'bob', m: 'ACK', k: 'req' },
+      { id: 'rtp', f: 'alice', t: 'bob', m: 'RTP voice, both ways', k: 'media', both: true },
+      { id: 'bye', f: 'bob', t: 'alice', m: 'BYE', k: 'req' },
+      { id: 'bye-ok', f: 'alice', t: 'bob', m: '200 OK', k: 'res' },
+    ],
+  },
+  proxy: {
+    actors: [ALICE, PROXY, BOB],
+    rows: [
+      { id: 'register', f: 'bob', t: 'proxy', m: 'REGISTER', k: 'req' },
+      { id: 'register-ok', f: 'proxy', t: 'bob', m: '200 OK', k: 'res' },
+      { id: 'invite', f: 'alice', t: 'proxy', m: 'INVITE', k: 'req' },
+      { id: 'trying', f: 'proxy', t: 'alice', m: '100 Trying', k: 'res' },
+      { id: 'invite-2', f: 'proxy', t: 'bob', m: 'INVITE', k: 'req' },
+      { id: 'ringing-2', f: 'bob', t: 'proxy', m: '180 Ringing', k: 'res' },
+      { id: 'ringing', f: 'proxy', t: 'alice', m: '180 Ringing', k: 'res' },
+      { id: 'ok-2', f: 'bob', t: 'proxy', m: '200 OK', k: 'res' },
+      { id: 'ok', f: 'proxy', t: 'alice', m: '200 OK', k: 'res' },
+      { id: 'ack', f: 'alice', t: 'bob', m: 'ACK, straight to Bob’s Contact', k: 'req' },
+      { id: 'rtp', f: 'alice', t: 'bob', m: 'RTP voice', k: 'media', both: true },
+    ],
+  },
+  cancel: {
+    actors: [ALICE, { ...PROXY, s: 'stateful' }, BOB],
+    rows: [
+      { id: 'invite', f: 'alice', t: 'proxy', m: 'INVITE', k: 'req' },
+      { id: 'trying', f: 'proxy', t: 'alice', m: '100 Trying', k: 'res' },
+      { id: 'invite-2', f: 'proxy', t: 'bob', m: 'INVITE', k: 'req' },
+      { id: 'ringing-2', f: 'bob', t: 'proxy', m: '180 Ringing', k: 'res' },
+      { id: 'ringing', f: 'proxy', t: 'alice', m: '180 Ringing', k: 'res' },
+      { id: 'hangup', note: 'Alice hangs up before Bob answers', a: 'alice', b: 'alice' },
+      { id: 'cancel', f: 'alice', t: 'proxy', m: 'CANCEL', k: 'req' },
+      { id: 'cancel-ok', f: 'proxy', t: 'alice', m: '200 OK (CANCEL)', k: 'res' },
+      { id: 'cancel-2', f: 'proxy', t: 'bob', m: 'CANCEL', k: 'req' },
+      { id: 'cancel-ok-2', f: 'bob', t: 'proxy', m: '200 OK (CANCEL)', k: 'res' },
+      { id: 'terminated-2', f: 'bob', t: 'proxy', m: '487 Request Terminated', k: 'res' },
+      { id: 'ack-2', f: 'proxy', t: 'bob', m: 'ACK', k: 'req' },
+      { id: 'terminated', f: 'proxy', t: 'alice', m: '487 Request Terminated', k: 'res' },
+      { id: 'ack', f: 'alice', t: 'proxy', m: 'ACK', k: 'req' },
+    ],
+  },
+  register: {
+    actors: [
+      { id: 'ue', t: 'UE', s: 'phone + ISIM' },
+      { id: 'pcscf', t: 'P-CSCF', s: 'first hop' },
+      { id: 'icscf', t: 'I-CSCF', s: 'home entry' },
+      { id: 'scscf', t: 'S-CSCF', s: 'registrar' },
+      { id: 'hss', t: 'HSS', s: 'subscriber data' },
+    ],
+    rows: [
+      { id: 'register', f: 'ue', t: 'pcscf', m: 'REGISTER', k: 'req' },
+      { id: 'register-i', f: 'pcscf', t: 'icscf', m: 'REGISTER', k: 'req' },
+      { id: 'cx-select', f: 'icscf', t: 'hss', m: 'Cx: which S-CSCF?', k: 'diameter', both: true },
+      { id: 'register-s', f: 'icscf', t: 'scscf', m: 'REGISTER', k: 'req' },
+      { id: 'cx-auth', f: 'scscf', t: 'hss', m: 'Cx: auth vectors', k: 'diameter', both: true },
+      { id: 'challenge-s', f: 'scscf', t: 'icscf', m: '401 Unauthorized', k: 'res' },
+      { id: 'challenge-i', f: 'icscf', t: 'pcscf', m: '401', k: 'res' },
+      { id: 'challenge', f: 'pcscf', t: 'ue', m: '401 (AKA challenge)', k: 'res' },
+      { id: 'isim', note: 'The ISIM computes the answer; IPsec to the P-CSCF', a: 'ue', b: 'pcscf' },
+      { id: 'register-2', f: 'ue', t: 'pcscf', m: 'REGISTER (answer)', k: 'req' },
+      { id: 'register-2i', f: 'pcscf', t: 'icscf', m: 'REGISTER', k: 'req' },
+      { id: 'cx-select-2', f: 'icscf', t: 'hss', m: 'Cx: which S-CSCF?', k: 'diameter', both: true },
+      { id: 'register-2s', f: 'icscf', t: 'scscf', m: 'REGISTER', k: 'req' },
+      { id: 'cx-profile', f: 'scscf', t: 'hss', m: 'Cx: user profile', k: 'diameter', both: true },
+      { id: 'ok-s', f: 'scscf', t: 'icscf', m: '200 OK', k: 'res' },
+      { id: 'ok-i', f: 'icscf', t: 'pcscf', m: '200 OK', k: 'res' },
+      { id: 'ok', f: 'pcscf', t: 'ue', m: '200 OK (Service-Route)', k: 'res' },
+    ],
+  },
+  precond: {
+    actors: [
+      { id: 'uea', t: 'UE (A)', s: 'caller' },
+      { id: 'imsa', t: 'IMS (A)', s: 'P- and S-CSCF' },
+      { id: 'imsb', t: 'IMS (B)', s: 'S- and P-CSCF' },
+      { id: 'ueb', t: 'UE (B)', s: 'callee' },
+    ],
+    rows: [
+      { id: 'invite', f: 'uea', t: 'imsa', m: 'INVITE (offer)', k: 'req' },
+      { id: 'invite-2', f: 'imsa', t: 'imsb', m: 'INVITE', k: 'req' },
+      { id: 'invite-3', f: 'imsb', t: 'ueb', m: 'INVITE', k: 'req' },
+      { id: 'progress', f: 'ueb', t: 'uea', m: '183 Session Progress (answer)', k: 'res' },
+      { id: 'reserve', note: 'Each side’s P-CSCF asks for a voice bearer or QoS flow', a: 'uea', b: 'ueb' },
+      { id: 'prack', f: 'uea', t: 'ueb', m: 'PRACK', k: 'req' },
+      { id: 'prack-ok', f: 'ueb', t: 'uea', m: '200 OK (PRACK)', k: 'res' },
+      { id: 'update', f: 'uea', t: 'ueb', m: 'UPDATE (my side is ready)', k: 'req' },
+      { id: 'update-ok', f: 'ueb', t: 'uea', m: '200 OK (UPDATE)', k: 'res' },
+      { id: 'ringing', f: 'ueb', t: 'uea', m: '180 Ringing', k: 'res' },
+      { id: 'ok', f: 'ueb', t: 'uea', m: '200 OK (INVITE)', k: 'res' },
+      { id: 'ack', f: 'uea', t: 'ueb', m: 'ACK', k: 'req' },
+      { id: 'rtp', f: 'uea', t: 'ueb', m: 'RTP voice, via the UPF or P-GW', k: 'media', both: true },
+    ],
+  },
+};
+
+const r3261 = (clause) => ({ src: 'rfc3261', clause });
+const r3264 = (clause) => ({ src: 'rfc3264', clause });
+const r8866 = (clause) => ({ src: 'rfc8866', clause });
+const r3312 = (clause) => ({ src: 'rfc3312', clause });
+const c229 = (clause) => ({ src: 'ts24229', clause });
+
+export const panels = {
+  invite: {
+    type: 'message',
+    title: 'The INVITE, as Alice sends it',
+    lines: [
+      { text: 'INVITE sip:bob@example.org SIP/2.0', key: 'request-line', label: 'Request line', note: 'The method, the Request-URI (who the request is for) and the version. Compare GET /path HTTP/1.1.' },
+      { text: 'Via: SIP/2.0/UDP 192.0.2.10:5060;branch=z9hG4bK4b43c2ff8', key: 'via', label: 'Via', note: 'Each hop adds one, and responses travel back along them. The branch value names this transaction.' },
+      { text: 'Max-Forwards: 70', key: 'max-forwards', label: 'Max-Forwards', note: 'A hop limit that stops routing loops, like the TTL in an IP header.' },
+      { text: 'From: "Alice" <sip:alice@example.com>;tag=9fxced76sl', key: 'from', label: 'From', note: 'The caller, with the caller’s tag: one third of the dialog’s identity.' },
+      { text: 'To: <sip:bob@example.org>', key: 'to', label: 'To', note: 'The callee. It has no tag yet: Bob adds one when he responds, completing the dialog’s identity.' },
+      { text: 'Call-ID: 3848276298220188511@192.0.2.10', key: 'call-id', label: 'Call-ID', note: 'The same for every message in the call. It’s the first thing to filter on in a trace.' },
+      { text: 'CSeq: 1 INVITE', key: 'cseq', label: 'CSeq', note: 'A sequence number and the method. It matches responses to requests and orders the requests in a dialog.' },
+      { text: 'Contact: <sip:alice@192.0.2.10:5060>', key: 'contact', label: 'Contact', note: 'Where Alice can be reached directly, for later requests in the call such as the BYE.' },
+      { text: 'Content-Type: application/sdp', key: 'content-type', label: 'Content-Type', note: 'What the body is. For a call it is SDP, the media offer.' },
+      { text: 'Content-Length: 142' },
+      { text: '' },
+      { text: '(the SDP offer: see the next scenes)', dim: true },
+    ],
+  },
+  sdp: {
+    type: 'sdp',
+    offer: {
+      title: 'Offer, in Alice’s INVITE',
+      lines: [
+        { text: 'v=0' },
+        { text: 'o=alice 2890844526 2890844526 IN IP4 192.0.2.10' },
+        { text: 's=-' },
+        { text: 'c=IN IP4 192.0.2.10', key: 'c', label: 'c=', note: 'The address the sender wants media sent to.' },
+        { text: 't=0 0' },
+        { text: 'm=audio 49170 RTP/AVP 0 8', key: 'm', label: 'm=', note: 'A media stream: its type, the port to send to, and the RTP payload types on offer, most preferred first.' },
+        { text: 'a=rtpmap:0 PCMU/8000', key: 'rtpmap', label: 'a=rtpmap', note: 'Names the codec and clock rate behind a payload type number.' },
+        { text: 'a=rtpmap:8 PCMA/8000', key: 'rtpmap' },
+        { text: 'a=sendrecv' },
+      ],
+    },
+    answer: {
+      title: 'Answer, in Bob’s 200 OK',
+      lines: [
+        { text: 'v=0' },
+        { text: 'o=bob 2808844564 2808844564 IN IP4 198.51.100.20' },
+        { text: 's=-' },
+        { text: 'c=IN IP4 198.51.100.20', key: 'c' },
+        { text: 't=0 0' },
+        { text: 'm=audio 3456 RTP/AVP 8', key: 'm' },
+        { text: 'a=rtpmap:8 PCMA/8000', key: 'rtpmap' },
+        { text: 'a=sendrecv' },
+      ],
+    },
+    caption: 'Bob kept only payload type 8, so the call uses PCMA (G.711 A-law). Alice sends to 198.51.100.20:3456 and Bob sends to 192.0.2.10:49170.',
+  },
+  sdpMobile: {
+    type: 'sdp',
+    offer: {
+      title: 'Offer, from a VoNR phone',
+      lines: [
+        { text: 'c=IN IP4 192.0.2.10' },
+        { text: 'm=audio 49152 RTP/AVP 116 118 97 100', key: 'm', label: 'm=', note: 'Four payload types on offer. The numbers are dynamic: each one means only what this SDP’s rtpmap lines say.' },
+        { text: 'a=rtpmap:116 EVS/16000', key: 'codecs', label: 'Codecs', note: 'EVS, then AMR-WB, then AMR, then telephone-event for keypad tones.' },
+        { text: 'a=rtpmap:118 AMR-WB/16000', key: 'codecs' },
+        { text: 'a=rtpmap:97 AMR/8000', key: 'codecs' },
+        { text: 'a=rtpmap:100 telephone-event/16000', key: 'codecs' },
+        { text: 'a=curr:qos local none', key: 'qos', label: 'a=curr / a=des', note: 'Preconditions. Neither side has its voice bearer yet (curr … none), and both are required before the call goes ahead (des … mandatory).' },
+        { text: 'a=curr:qos remote none', key: 'qos' },
+        { text: 'a=des:qos mandatory local sendrecv', key: 'qos' },
+        { text: 'a=des:qos mandatory remote sendrecv', key: 'qos' },
+      ],
+    },
+    answer: {
+      title: 'Answer, in the 183',
+      lines: [
+        { text: 'c=IN IP4 198.51.100.20' },
+        { text: 'm=audio 50000 RTP/AVP 116 100', key: 'm' },
+        { text: 'a=rtpmap:116 EVS/16000', key: 'codecs' },
+        { text: 'a=rtpmap:100 telephone-event/16000', key: 'codecs' },
+        { text: 'a=curr:qos local none', key: 'qos' },
+        { text: 'a=curr:qos remote none', key: 'qos' },
+        { text: 'a=des:qos mandatory local sendrecv', key: 'qos' },
+        { text: 'a=des:qos mandatory remote sendrecv', key: 'qos' },
+        { text: 'a=conf:qos remote sendrecv', key: 'conf', label: 'a=conf', note: 'The callee asks to be told when the caller’s side is ready. That is the UPDATE later in the call.' },
+      ],
+    },
+    caption: 'Shortened: the v=, o=, s= and t= lines and the codec parameters (a=fmtp) are left out. The payload numbers are examples; phones choose their own.',
+  },
+  methods: {
+    type: 'table',
+    title: 'The SIP methods you’ll meet',
+    columns: ['Method', 'What it does', 'Defined in'],
+    rows: [
+      ['REGISTER', 'Binds a user’s address to the device they’re on, at the registrar.', 'RFC 3261'],
+      ['INVITE / ACK', 'Starts a session (or changes one, as a re-INVITE); ACK confirms the final response.', 'RFC 3261'],
+      ['BYE / CANCEL', 'Ends an answered call; abandons one that hasn’t been answered yet.', 'RFC 3261'],
+      ['OPTIONS', 'Asks what the other side supports. Often used as a keep-alive between servers.', 'RFC 3261'],
+      ['PRACK', 'Acknowledges a provisional response, such as 183, so it can be relied on.', 'RFC 3262'],
+      ['UPDATE', 'Changes the session before the call is answered, without waiting for the INVITE to finish.', 'RFC 3311'],
+      ['SUBSCRIBE / NOTIFY', 'Asks to be told about an event, such as a change of registration state, and reports it.', 'RFC 6665'],
+      ['MESSAGE', 'Carries a one-off message outside any call, such as a text.', 'RFC 3428'],
+    ],
+    cites: [r3261('7.1'), { src: 'rfc3262', clause: '6' }, { src: 'rfc3311', clause: '7' }, { src: 'rfc6665', clause: '3' }, { src: 'rfc3428', clause: '9' }],
+  },
+  codes: {
+    type: 'table',
+    title: 'Final responses you’ll see in a trace',
+    columns: ['Code', 'Meaning', 'Usually'],
+    rows: [
+      ['401 / 407', 'Unauthorized / Proxy Authentication Required', 'Not an error: authenticate and send the request again. 401 comes from a registrar or user agent, 407 from a proxy.'],
+      ['403', 'Forbidden', 'The server knows who you are and won’t do it.'],
+      ['404', 'Not Found', 'The user doesn’t exist in that domain.'],
+      ['408', 'Request Timeout', 'No final response arrived in time.'],
+      ['480', 'Temporarily Unavailable', 'The callee was found but isn’t reachable now, for example not registered.'],
+      ['486', 'Busy Here', 'The callee’s device is busy.'],
+      ['487', 'Request Terminated', 'The INVITE was cancelled.'],
+      ['488', 'Not Acceptable Here', 'The session description was rejected, usually because there’s no codec in common.'],
+      ['503', 'Service Unavailable', 'A server is overloaded or down for maintenance.'],
+    ],
+    cites: [r3261('21.4.2'), r3261('21.4.8'), r3261('21.4.18'), r3261('21.4.24'), r3261('21.4.25'), r3261('21.4.26'), r3261('21.5.4')],
+  },
+  imsHeaders: {
+    type: 'table',
+    title: 'What the IMS profile adds to SIP',
+    columns: ['Addition', 'What it does', 'Set by'],
+    rows: [
+      ['IMS AKA in the 401', 'A challenge the ISIM answers, in place of a password, and the keys for the IPsec link to the P-CSCF.', 'S-CSCF, then UE'],
+      ['Path', 'Records the P-CSCF during registration, so calls to the user are routed back through it.', 'P-CSCF'],
+      ['Service-Route', 'Tells the phone the route for its own later requests: through the S-CSCF that registered it.', 'S-CSCF, stored by the UE'],
+      ['P-Access-Network-Info', 'The radio access technology and cell the phone is using.', 'UE'],
+      ['P-Asserted-Identity', 'The network’s trusted statement of who the caller is. The phone can put anything in From.', 'P-CSCF'],
+      ['Preconditions', 'Supported: precondition, and QoS status in the SDP: the far phone doesn’t ring until both sides have a voice bearer.', 'UE'],
+    ],
+    cites: [c229('5.1.1.2.2'), c229('5.2.2.1'), c229('5.4.1.2.2'), c229('5.1.1.2.1'), c229('5.2.6.3.3'), c229('5.1.3.1')],
+  },
+};
+
+export const scenes = [
+  {
+    id: 'not-http',
+    k: 'sbi',
+    title: 'If you know HTTP, you’re halfway there',
+    ladder: 'http',
+    focus: ['get', 'ok'],
+    d: 'SIP, the Session Initiation Protocol, looks a lot like HTTP. Messages are text: a request line or a status line, then headers, then an optional body. Responses carry three-digit status codes, as in HTTP, from 1xx to 6xx. The difference is the job. HTTP fetches a document; SIP sets up, changes and ends sessions, such as a phone call. It never carries the voice itself.',
+    cites: [r3261('7'), r3261('7.2'), r3261('2')],
+  },
+  {
+    id: 'three-way',
+    k: 'ims',
+    title: 'A call is a three-way handshake',
+    ladder: 'basic',
+    upto: 'ack',
+    d: 'Alice sends an INVITE. Bob’s phone rings and says so with 180 Ringing, a provisional response: every 1xx means “still working on it”. When Bob answers, 200 OK is the final response. Because answering can take many seconds, and SIP often runs over UDP, Alice confirms the 200 OK with an ACK. Until the ACK arrives, Bob keeps resending the 200 OK.',
+    cites: [r3261('4'), r3261('7.2'), r3261('13.2.2.4'), r3261('13.3.1.4')],
+  },
+  {
+    id: 'media-and-bye',
+    k: 'media',
+    title: 'The voice travels separately',
+    ladder: 'basic',
+    focus: ['rtp', 'bye'],
+    d: 'Once the call is set up, the voice flows as RTP packets between the two addresses the phones agreed on, not along the SIP messages’ path. SIP stays quiet until something changes. Either side ends the call with a BYE, which is its own request with its own 200 OK. Each phone acts as a client when it sends a request and as a server when it answers one: RFC 3261 calls these the UAC and UAS roles.',
+    cites: [r3261('4'), r3261('6'), r3261('15.1')],
+  },
+  {
+    id: 'anatomy',
+    k: 'ims',
+    title: 'Inside an INVITE',
+    ladder: 'basic',
+    upto: 'invite',
+    focus: ['invite'],
+    panel: 'invite',
+    highlight: ['request-line', 'via', 'max-forwards', 'cseq', 'contact', 'content-type'],
+    d: 'Here is the INVITE Alice sends, line by line. The request line names the method and the Request-URI, the address the request is for. A handful of headers must appear in every request: Via, Max-Forwards, From, To, Call-ID and CSeq. Contact says where to reach Alice directly later, and the body, described by Content-Type, is the media offer.',
+    cites: [r3261('8.1.1'), r3261('20.42'), r3261('20.10'), r3261('20.16')],
+  },
+  {
+    id: 'dialog',
+    k: 'ims',
+    title: 'Transactions and dialogs',
+    ladder: 'basic',
+    upto: 'ack',
+    focus: ['invite', 'ringing', 'ok', 'ack'],
+    panel: 'invite',
+    highlight: ['from', 'to', 'call-id'],
+    d: 'Two ideas hold a trace together. A transaction is one request and its responses; the branch value in the top Via, plus the method in CSeq, match each response to its request. A dialog is the relationship between the two phones for the whole call. It’s named by the Call-ID plus the tags on From and To. Alice’s INVITE has no To tag; Bob adds one in his response.',
+    cites: [r3261('17'), r3261('17.1.3'), r3261('12'), r3261('8.2.6.2')],
+  },
+  {
+    id: 'methods',
+    k: 'ims',
+    title: 'More than INVITE and BYE',
+    ladder: 'basic',
+    focus: ['invite', 'ack', 'bye'],
+    panel: 'methods',
+    d: 'RFC 3261 defines six methods: REGISTER, INVITE, ACK, BYE, CANCEL and OPTIONS. Extensions add the rest. IMS relies on several of them: PRACK and UPDATE to set up calls safely, and SUBSCRIBE and NOTIFY so the phone hears when its registration changes. A new method means new behaviour, so phones and servers say which ones they support.',
+    cites: [r3261('7.1'), r3261('20.5'), { src: 'rfc3262' }, { src: 'rfc3311' }, { src: 'rfc6665' }, c229('5.1.1.3')],
+  },
+  {
+    id: 'offer-answer',
+    k: 'media',
+    title: 'SDP: the offer and the answer',
+    ladder: 'basic',
+    upto: 'ack',
+    focus: ['invite', 'ok'],
+    panel: 'sdp',
+    highlight: ['c', 'm', 'rtpmap'],
+    d: 'The body of the INVITE is SDP, the Session Description Protocol. It is an offer: “send my audio here, and I can decode these codecs”. The c= line gives the address, m= the port and the payload type numbers, and a=rtpmap names the codec behind each number. The answer, in the 200 OK, accepts a subset of what was offered and gives the answerer’s own address.',
+    cites: [r3264('5.1'), r3264('6.1'), r8866('5.7'), r8866('5.14'), r8866('6.6')],
+  },
+  {
+    id: 'mobile-codecs',
+    k: 'media',
+    title: 'Codecs on a mobile network',
+    ladder: 'basic',
+    upto: 'ack',
+    focus: ['invite'],
+    panel: 'sdpMobile',
+    highlight: ['m', 'codecs'],
+    d: 'Phones on 4G and 5G use the 3GPP speech codecs, so their offers look different. A VoLTE phone must support AMR and AMR-WB (wideband), and must offer EVS if it offers super-wideband speech. A VoNR phone must support EVS. The payload type numbers are dynamic: 116 means EVS in this SDP only because its rtpmap line says so.',
+    cites: [{ src: 'ir92', clause: '3.2.1' }, { src: 'ng114', clause: '3.2.1' }, r8866('6.6')],
+  },
+  {
+    id: 'proxies',
+    k: 'ims',
+    title: 'Registrars and proxies',
+    ladder: 'proxy',
+    upto: 'register-ok',
+    d: 'Phones rarely know each other’s address. Instead, each one registers: REGISTER tells a registrar “calls for bob@example.org can reach me at this Contact address”. A proxy routes a request by looking up where the user is registered, then forwarding it. A back-to-back user agent (B2BUA) goes further: it ends the call leg it receives and starts a new one, so it controls both.',
+    cites: [r3261('10.2'), r3261('16.5'), r3261('6')],
+  },
+  {
+    id: 'routing',
+    k: 'ims',
+    title: 'Through the proxy, and around it',
+    ladder: 'proxy',
+    focus: ['invite', 'trying', 'invite-2', 'ack'],
+    d: 'Alice’s INVITE goes to the proxy, which answers 100 Trying at once so Alice stops retransmitting, then forwards it to Bob. Responses retrace the Via path. Later requests, such as the ACK for a 200 OK, go straight to Bob’s Contact address, unless the proxy added a Record-Route header asking to stay in the path. The P-CSCF always does, so every later request in an IMS call passes through it.',
+    cites: [r3261('16.6'), r3261('17.2.1'), r3261('20.30'), r3261('12.2.1.1'), c229('5.2.6.3.3')],
+  },
+  {
+    id: 'cancel',
+    k: 'ims',
+    title: 'Hanging up before an answer: CANCEL',
+    ladder: 'cancel',
+    focus: ['cancel', 'cancel-2', 'terminated-2', 'terminated'],
+    d: 'If Alice hangs up while Bob’s phone is still ringing, she can’t send BYE: there is no answered call to end. She sends CANCEL instead. Each hop answers the CANCEL with its own 200 OK and passes it on. Bob then ends the INVITE with 487 Request Terminated, and each hop acknowledges that final response with an ACK.',
+    cites: [r3261('9.1'), r3261('9.2'), r3261('16.10'), r3261('17.1.1.3')],
+  },
+  {
+    id: 'failures',
+    k: 'ims',
+    title: 'Reading failures in a trace',
+    ladder: 'cancel',
+    focus: ['terminated'],
+    panel: 'codes',
+    d: 'Final responses from 300 to 699 end a request without success. Some are routine: a 401 or 407 just asks for credentials, and the request comes again. In a voice trace the others usually point straight at the cause: 486 busy, 480 not reachable, 487 cancelled, 488 no common codec in the SDP. Size matters too: a request over 1300 bytes, on a path whose MTU is unknown, must go over TCP rather than UDP.',
+    cites: [r3261('21'), r3261('21.4.26'), r3261('18.1.1')],
+  },
+  {
+    id: 'ims-register',
+    k: 'ims',
+    title: 'Registering in IMS',
+    ladder: 'register',
+    focus: ['register', 'cx-select', 'challenge', 'register-2', 'ok'],
+    d: 'IMS is SIP with a strict profile, defined in TS 24.229. Registration is the same REGISTER, but it is challenged with a 401 carrying IMS AKA: the S-CSCF gets authentication vectors from the HSS, and the ISIM on the phone computes the answer. The second REGISTER succeeds, and its 200 OK carries the Service-Route the phone uses for everything after. Lesson 5 shows which servers do what.',
+    cites: [c229('5.1.1.2.2'), c229('5.1.1.2.1'), { src: 'ts23228', clause: '5.2.2.3' }, { src: 'ts33203', clause: '6.1.1' }],
+  },
+  {
+    id: 'ims-headers',
+    k: 'ims',
+    title: 'The headers IMS adds',
+    ladder: 'register',
+    focus: ['ok'],
+    panel: 'imsHeaders',
+    d: 'The IMS profile adds headers that let the network vouch for the user. The P-CSCF records itself with Path when the phone registers, and inserts P-Asserted-Identity on every call the phone makes: the identity the network trusts, whatever From says. The phone reports its radio access in P-Access-Network-Info. Path, and the Service-Route the S-CSCF returns, pin the P-CSCF and S-CSCF into the route of every later request.',
+    cites: [c229('5.2.2.1'), c229('5.2.6.3.3'), c229('5.1.1.2.1'), c229('5.4.1.2.2')],
+  },
+  {
+    id: 'preconditions',
+    k: 'ims',
+    title: 'Don’t ring until the voice path exists',
+    ladder: 'precond',
+    upto: 'update-ok',
+    panel: 'sdpMobile',
+    highlight: ['qos', 'conf'],
+    d: 'A plain SIP call can ring before the network is ready to carry the voice, and the first words get lost. IMS calls use preconditions instead. The SDP answer comes back early, in a 183 Session Progress, which PRACK makes reliable. That gives each P-CSCF the codec and ports it needs to ask the packet core for a voice bearer or QoS flow. An UPDATE then reports that the caller’s side is ready.',
+    cites: [r3312('3'), r3312('7'), { src: 'rfc3262', clause: '3' }, { src: 'rfc3311', clause: '5.1' }, c229('5.1.3.1'), { src: 'ir92', clause: '2.4.1' }],
+  },
+  {
+    id: 'ring-and-answer',
+    k: 'media',
+    title: 'Then ring, answer, and talk',
+    ladder: 'precond',
+    focus: ['ringing', 'ok', 'ack', 'rtp'],
+    d: 'Only when both sides have their resources does the far phone ring: 180, then 200 OK when it’s answered, and the ACK. The voice flows as RTP between the two phones through the packet core’s user plane, the P-GW on 4G or the UPF on 5G, never through the CSCFs. The same SIP runs over both cores; only the bearer underneath changes.',
+    cites: [r3312('3'), r3261('4'), { src: 'ts23228', clause: 'E.2.3.1' }, { src: 'ts23228', clause: 'Y.2.3.1' }],
+  },
+];
+
+export const takeaways = [
+  'SIP sets up, changes and ends sessions; the voice travels separately, as RTP.',
+  'An INVITE is answered with provisional 1xx responses, then a final one, then an ACK; BYE ends an answered call and CANCEL abandons an unanswered one.',
+  'A transaction is one request and its responses; a dialog, named by the Call-ID and the two tags, lasts the whole call.',
+  'SDP is an offer and an answer: addresses, ports and codecs. On mobile networks the codecs are AMR-WB and EVS.',
+  'IMS profiles SIP: IMS AKA registration, network-asserted identity, and preconditions so the phone rings only once the voice bearer exists.',
+];
+
+export const check = [
+  {
+    q: 'What does SIP itself carry during a phone call?',
+    options: ['The digitised voice', 'The signalling that sets up, changes and ends the call', 'Both the signalling and the voice', 'Only the registration'],
+    answer: 1,
+    why: 'SIP is signalling only. The media flows separately, as RTP, between the addresses in the SDP (RFC 3261 §2, §4).',
+  },
+  {
+    q: 'Which values together identify a SIP dialog?',
+    options: ['The Via branch and CSeq', 'The Call-ID and the From and To tags', 'The Contact and the Request-URI', 'The Call-ID and Max-Forwards'],
+    answer: 1,
+    why: 'A dialog ID is the Call-ID, the local tag and the remote tag. The Via branch and CSeq method identify a transaction instead (RFC 3261 §12, §17.1.3).',
+  },
+  {
+    q: 'The caller hangs up while the far phone is still ringing. What does the INVITE end with?',
+    options: ['A BYE and its 200 OK', 'A CANCEL, then 487 Request Terminated and an ACK', '486 Busy Here', 'An UPDATE'],
+    answer: 1,
+    why: 'CANCEL abandons an INVITE that has no final response yet, and the INVITE then ends with 487, which is acknowledged (RFC 3261 §9.1, §9.2).',
+  },
+  {
+    q: 'A call fails with 488 Not Acceptable Here. What is the most likely cause?',
+    options: ['The callee is busy', 'The offer and the callee have no codec in common', 'The callee isn’t registered', 'The caller must authenticate'],
+    answer: 1,
+    why: '488 means the session description in the request was not acceptable, usually the media formats (RFC 3261 §21.4.26).',
+  },
+  {
+    q: 'In an IMS call with preconditions, why does a 183 come before the 180?',
+    options: ['183 is an error that is retried', 'The 183 carries the SDP answer early, so each side can reserve a voice bearer before the phone rings', '180 isn’t used in IMS', 'The S-CSCF always sends 183 first'],
+    answer: 1,
+    why: 'With preconditions the callee doesn’t alert until resources are reserved, so the answer travels in a reliable 183 (RFC 3312 §3, TS 24.229 §5.1.3.1).',
+  },
+  {
+    q: 'Which header carries the identity the IMS network trusts for the caller?',
+    options: ['From', 'P-Asserted-Identity', 'Contact', 'Via'],
+    answer: 1,
+    why: 'The P-CSCF inserts P-Asserted-Identity on requests from the phone; From is whatever the phone wrote (TS 24.229 §5.2.6.3.3).',
+  },
+];
+
+export const links = [
+  { label: 'IMS AKA in the IMS lesson', href: '#/learn/ims?scene=aka' },
+  { label: 'A VoLTE call, step by step', href: '#/flows?net=4g&session=voice' },
+  { label: 'The same call on 5G SA (VoNR)', href: '#/flows?net=sa&session=voice' },
+  { label: 'The P-CSCF, in detail', href: '#/components/pcscf' },
+  { label: 'The S-CSCF, in detail', href: '#/components/scscf' },
+];
+
+/* Hands-on suggestions. Tool names appear only here, never in the cited
+   lesson text above. */
+export const tryIt = [
+  {
+    t: 'Open a SIP sample capture from the Wireshark wiki, filter on sip, and choose Telephony › VoIP Calls › Flow Sequence: the same ladder, drawn from real packets.',
+    href: 'https://wiki.wireshark.org/SampleCaptures',
+  },
+  { t: 'Register two softphones on an open-source SIP server such as Asterisk, capture with the filter sip || rtp, and call one from the other. Find the offer, the answer and the To tag.' },
+  { t: 'Hang up while the far phone is ringing, and find the CANCEL, the 487 and the ACK.' },
+  { t: 'Call one softphone directly from another after turning off every codec they share. The callee will typically reject the offer with 488.' },
+  { t: 'Script calls with SIPp’s built-in scenarios: run sipp -sn uas on one side and sipp -sn uac 127.0.0.1 on the other.', href: 'https://github.com/SIPp/sipp' },
+];

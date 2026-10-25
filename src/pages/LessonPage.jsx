@@ -14,6 +14,9 @@ import { ignoreShortcut } from '../lib/keys.js';
 import { autolinkAcronyms } from '../lib/autolinkAcronyms.jsx';
 import { K, PANEL, EDGE, MONO, FAINT, MUTED, TEXT, TEXT_2, ACTIVE_BG, ACTIVE_EDGE, GEN } from '../theme.js';
 import ArchDiagram from '../components/arch/ArchDiagram.jsx';
+import LadderDiagram from '../components/arch/LadderDiagram.jsx';
+import LadderPanel from '../components/arch/LadderPanel.jsx';
+import { ladderLayout } from '../engine/ladder.js';
 import QuickCheck from '../components/arch/QuickCheck.jsx';
 import Transport from '../components/Transport.jsx';
 import ProgressBar from '../components/ProgressBar.jsx';
@@ -25,6 +28,7 @@ import { KindSwatch } from '../components/KindMark.jsx';
 const inPlayer = (e) => !(e.target instanceof HTMLElement) || e.target === document.body || !!e.target.closest('[data-player]');
 
 const WIDE_MIN = 720; // below this container width the portrait layouts are used
+const PANEL_MIN = { message: 400, sdp: 400, table: 560 }; // narrowest a panel beside a ladder may get
 const REPS = [
   { id: 'sba', label: 'Service-based' },
   { id: 'refpoint', label: 'Reference points' },
@@ -199,7 +203,7 @@ export default function LessonPage({ lessonId, query }) {
     if (window.location.href !== url) window.history.replaceState(null, '', url);
   }, [lessonId, scene.id]);
 
-  const hasReps = !!(lesson.diagram.layouts.sba && lesson.diagram.layouts.refpoint);
+  const hasReps = !!(lesson.diagram?.layouts.sba && lesson.diagram?.layouts.refpoint);
   const sceneRep = scene.layout === 'sba' || scene.layout === 'refpoint' ? scene.layout : null;
   const current = useMemo(() => {
     const r = lesson.resolved[index];
@@ -337,7 +341,10 @@ export default function LessonPage({ lessonId, query }) {
               </div>
             )}
             <div ref={boxRef} className="px-1 pt-2 pb-2">
-              {boxWidth > 0 && (
+              {boxWidth > 0 && lesson.kind === 'ladder' && (
+                <LadderStage lesson={lesson} current={current} width={boxWidth} maxHeight={maxH} reducedMotion={reducedMotion} onOpenTerm={openTerm} activeKey={activeKey} />
+              )}
+              {boxWidth > 0 && lesson.kind !== 'ladder' && (
                 <ArchDiagram
                   diagram={lesson.diagram}
                   current={current}
@@ -352,7 +359,7 @@ export default function LessonPage({ lessonId, query }) {
                 />
               )}
             </div>
-            <Legend diagram={lesson.diagram} />
+            {lesson.kind === 'ladder' ? <LadderLegend ladder={lesson.ladders[scene.ladder]} /> : <Legend diagram={lesson.diagram} />}
           </div>
 
           <Transport
@@ -470,6 +477,35 @@ export default function LessonPage({ lessonId, query }) {
           )}
         </section>
         <QuickCheck key={lessonId} questions={lesson.check} best={bestQuiz} onScore={onScore} />
+        {lesson.tryIt.length > 0 && (
+          <section aria-labelledby="try-it-title" className="rounded p-4 lg:col-span-2" style={{ background: PANEL, border: `1px dashed ${EDGE}` }}>
+            <h2 id="try-it-title" className="text-base font-semibold" style={{ color: TEXT }}>
+              Try it yourself
+            </h2>
+            <p className="mt-1 text-sm" style={{ color: MUTED }}>
+              Optional, hands-on, and outside the lesson’s sources: suggestions using freely available tools.
+            </p>
+            <ul className="mt-2 grid gap-2">
+              {lesson.tryIt.map((item) => (
+                <li key={item.t} className="flex gap-2 text-sm leading-relaxed" style={{ color: TEXT_2 }}>
+                  <span aria-hidden="true" style={{ color: K.media.c }}>▸</span>
+                  <span>
+                    {item.t}
+                    {item.href && (
+                      <>
+                        {' '}
+                        <a href={item.href} target="_blank" rel="noreferrer" className="underline" style={{ color: TEXT }}>
+                          {new URL(item.href).hostname}
+                          <span className="sr-only"> (opens in a new tab)</span>
+                        </a>
+                      </>
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </div>
 
       <nav aria-label="Lesson navigation" className="mt-6 flex flex-wrap items-center justify-between gap-3">
@@ -493,6 +529,69 @@ export default function LessonPage({ lessonId, query }) {
         )}
       </nav>
     </div>
+  );
+}
+
+/**
+ * One scene of a ladder lesson: the ladder, plus the scene's panel beside it
+ * on wide screens or under it on narrow ones.
+ */
+function LadderStage({ lesson, current, width, maxHeight, reducedMotion, onOpenTerm, activeKey }) {
+  const { scene } = current;
+  const panel = scene.panel ? lesson.panels[scene.panel] : null;
+  const spec = lesson.ladders[scene.ladder];
+  // Beside a panel, the ladder takes half the width, or more if it needs it
+  // to avoid scrolling. The panel goes underneath instead when that would
+  // leave it too narrow (tables need more room than a message).
+  const sideW = Math.max(Math.floor(width * 0.5), ladderLayout(spec, 0).w + 8);
+  const side = !!panel && width - sideW - 16 >= PANEL_MIN[panel.type];
+  const ladderW = (side ? sideW : width) - 8;
+  const ladder = (
+    <LadderDiagram
+      ladder={spec}
+      current={current}
+      width={ladderW}
+      maxHeight={maxHeight}
+      reducedMotion={reducedMotion}
+      onOpenTerm={onOpenTerm}
+      activeKey={activeKey}
+      label={scene.title}
+    />
+  );
+  if (!panel) return <div className="px-1">{ladder}</div>;
+  return (
+    <div className={side ? 'grid items-start gap-4 px-1' : 'grid gap-3 px-1'} style={side ? { gridTemplateColumns: `${ladderW + 8}px minmax(0, 1fr)` } : undefined}>
+      <div className="min-w-0">{ladder}</div>
+      <div className="min-w-0" style={{ maxHeight: side ? maxHeight : undefined, overflowY: side ? 'auto' : undefined }}>
+        <LadderPanel panel={panel} highlight={scene.highlight} kind={scene.k} stack={side} glossary={{ activeKey, onOpen: onOpenTerm }} />
+      </div>
+    </div>
+  );
+}
+
+/** Key for a ladder: requests and responses in the ladder's protocol colour, plus media and Diameter where it has them. */
+function LadderLegend({ ladder }) {
+  const proto = ladder.proto ?? 'ims';
+  const kinds = new Set(ladder.rows.filter((r) => !r.note).map((r) => r.k));
+  const c = K[proto].c;
+  const items = [
+    ['Request', c, undefined, 1.6, kinds.has('req')],
+    ['Response', c, '4 3', 1.6, kinds.has('res')],
+    ['Diameter', K.diameter.c, undefined, 1.6, kinds.has('diameter')],
+    ['RTP media', K.media.c, '1 5', 3, kinds.has('media')],
+  ].filter((i) => i[4]);
+  return (
+    <ul className="flex flex-wrap gap-x-4 gap-y-1 px-3 pt-1 pb-2.5" aria-label="Diagram key">
+      {items.map(([label, colour, dash, w]) => (
+        <li key={label} className="flex items-center gap-1.5" style={{ fontFamily: MONO, fontSize: 12, color: MUTED }}>
+          <svg width="26" height="10" viewBox="0 0 26 10" aria-hidden="true">
+            <line x1="1" y1="5" x2="19" y2="5" stroke={colour} strokeWidth={w} strokeDasharray={dash} strokeLinecap={dash === '1 5' ? 'round' : undefined} />
+            <polygon points="25,5 18,1.5 18,8.5" fill={colour} />
+          </svg>
+          {label}
+        </li>
+      ))}
+    </ul>
   );
 }
 

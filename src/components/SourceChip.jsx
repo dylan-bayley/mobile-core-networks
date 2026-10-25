@@ -6,12 +6,13 @@ export function SourceChip({ cite }) {
   const s = SOURCES[cite.src];
   if (!s) return null;
   const label = citeLabel(cite);
+  const pdf = s.url.endsWith('.pdf');
   return (
     <a
       href={s.url}
       target="_blank"
       rel="noreferrer"
-      title={`${s.doc} ${s.version}: ${s.title}${cite.clause ? `, clause ${cite.clause}` : ''} (opens the official PDF)`}
+      title={`${s.doc} ${s.version}: ${s.title}${cite.clause ? `, clause ${cite.clause}` : ''} (opens the official ${pdf ? 'PDF' : 'document'})`}
       className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 hover:underline"
       style={{ border: `1px solid ${EDGE}`, fontFamily: MONO, fontSize: 12, color: MUTED, whiteSpace: 'nowrap' }}
     >
@@ -21,7 +22,7 @@ export function SourceChip({ cite }) {
       {label}
       <span className="sr-only">
         {' '}
-        ({s.doc} {s.version}, {s.title}, PDF, opens in a new tab)
+        ({s.doc} {s.version}, {s.title}{pdf ? ', PDF' : ''}, opens in a new tab)
       </span>
     </a>
   );

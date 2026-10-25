@@ -342,4 +342,5 @@ export const links = [
   { label: 'EPS fallback in the call-flow explorer', href: '#/flows?net=sa&session=voice&variant=voice-epsfb' },
   { label: 'The P-CSCF, in detail', href: '#/components/pcscf' },
   { label: 'The S-CSCF, in detail', href: '#/components/scscf' },
+  { label: 'Next: the SIP messages themselves', href: '#/learn/sip' },
 ];

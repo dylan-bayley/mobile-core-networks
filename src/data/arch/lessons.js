@@ -1,6 +1,7 @@
-/* The Learn path: five architecture lessons, then the Flows explorer. The
-   order matters — each lesson assumes the one before it. Scenes and
-   diagrams live in the per-lesson modules and are attached in ./index.js. */
+/* The Learn path: five architecture lessons and a SIP protocol lesson, then
+   the Flows explorer. The order matters — each lesson assumes the one before
+   it. Scenes and diagrams live in the per-lesson modules and are attached
+   in ./index.js. */
 export const LESSON_META = [
   {
     id: 'epc',
@@ -41,6 +42,14 @@ export const LESSON_META = [
     short: 'IMS',
     blurb: 'The SIP servers that carry voice over 4G and 5G: registration, service triggers, the voice bearer, and the way out to other networks.',
     minutes: 9,
+  },
+  {
+    id: 'sip',
+    n: 6,
+    title: 'SIP and SDP, message by message',
+    short: 'SIP',
+    blurb: 'The protocol inside IMS: requests and responses, dialogs, the SDP offer and answer, failures, and what the IMS profile adds for VoLTE and VoNR.',
+    minutes: 12,
   },
 ];
 
