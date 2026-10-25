@@ -5,6 +5,7 @@ import { resolveGlossaryKey } from '../lib/resolveGlossaryKey.js';
 import { svgTermProps } from '../lib/svgTermProps.js';
 import { useElementWidth } from '../lib/useElementWidth.js';
 import { KindMark } from './KindMark.jsx';
+import Arrow from './Arrow.jsx';
 
 const LANE_W = 104;
 const LEFT = 40;
@@ -12,19 +13,6 @@ const HEAD = 48;
 const ROW_H = 38;
 const MIN_LANE_PX = 78; // narrowest a lane renders before the ladder scrolls sideways
 const MIN_TEXT_PX = 10.5; // smallest rendered text, whatever the diagram is scaled to
-const END_GAP = 9; // keep arrowheads off the lifelines
-
-function Arrow({ x1, x2, y, colour, dashed, opacity }) {
-  const dir = x2 >= x1 ? 1 : -1;
-  const xs = x1 + dir * END_GAP;
-  const xe = x2 - dir * END_GAP;
-  return (
-    <g opacity={opacity}>
-      <line x1={xs} y1={y} x2={xe} y2={y} stroke={colour} strokeWidth={1.6} strokeDasharray={dashed ? '4 3' : undefined} />
-      <polygon points={`${xe},${y} ${xe - dir * 7},${y - 3.5} ${xe - dir * 7},${y + 3.5}`} fill={colour} />
-    </g>
-  );
-}
 
 /**
  * Ladder (sequence) view of the same step data the topology animates:

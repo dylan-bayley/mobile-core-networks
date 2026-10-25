@@ -277,7 +277,7 @@ export default function Home() {
               See how the 4G and 5G core actually fit together.
             </m.p>
             <m.p variants={RISE} className="mt-3 max-w-[48ch] text-base leading-relaxed" style={{ color: TEXT_2 }}>
-              Short animated lessons, then real call flows one message at a time. Every fact cites the 3GPP specification it comes
+              Short animated lessons, then real call flows one message at a time. Every fact cites the specification it comes
               from.
             </m.p>
             <m.div variants={RISE} className="mt-6 flex flex-wrap gap-2">
@@ -302,8 +302,9 @@ export default function Home() {
             Sources and further reading
           </summary>
           <p className="mt-2 text-sm leading-relaxed" style={{ color: TEXT_2 }}>
-            Lessons and component pages cite the 3GPP specifications (the free ETSI copies) and the GSMA migration white paper,
-            down to the clause. Vendor product names only appear in labelled “in practice” notes.
+            Lessons and component pages cite the 3GPP specifications (the free ETSI copies), the IETF RFCs that define SIP and
+            SDP, and GSMA documents, down to the clause. Vendor product names only appear in labelled “in practice” notes, and
+            tool names only in the SIP lesson’s “Try it yourself” box.
           </p>
           <ul className="mt-3 grid list-none gap-1 text-sm sm:grid-cols-2">
             {Object.values(SOURCES).map((s) => (

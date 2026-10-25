@@ -6,7 +6,9 @@
  *
  * ETSI republishes 3GPP specifications unchanged and free of charge as
  * "ETSI TS 1xx xxx"; those PDFs are linked because they're the stable,
- * openly downloadable copies.
+ * openly downloadable copies. SIP and SDP themselves are IETF protocols, so
+ * the SIP lesson also cites RFCs (an RFC never changes once published, so
+ * its number is its version) and the GSMA IMS profiles.
  */
 export const SOURCES = {
   ts23501: {
@@ -86,6 +88,72 @@ export const SOURCES = {
     title: 'Study on new radio access technology: radio access architecture and interfaces (origin of the deployment-option numbers)',
     version: 'V14.0.0 (Rel-14)',
     url: 'https://www.3gpp.org/ftp/Specs/archive/38_series/38.801/',
+  },
+  ts24229: {
+    doc: 'TS 24.229',
+    title: 'IP multimedia call control protocol based on SIP and SDP; Stage 3 (the IMS profile of SIP)',
+    version: 'V18.11.0 (Rel-18)',
+    url: 'https://www.etsi.org/deliver/etsi_ts/124200_124299/124229/18.11.00_60/ts_124229v181100p.pdf',
+  },
+  rfc3261: {
+    doc: 'RFC 3261',
+    title: 'SIP: Session Initiation Protocol',
+    version: 'IETF',
+    url: 'https://www.rfc-editor.org/rfc/rfc3261',
+  },
+  rfc3262: {
+    doc: 'RFC 3262',
+    title: 'Reliability of provisional responses in SIP (PRACK)',
+    version: 'IETF',
+    url: 'https://www.rfc-editor.org/rfc/rfc3262',
+  },
+  rfc3264: {
+    doc: 'RFC 3264',
+    title: 'An offer/answer model with the Session Description Protocol (SDP)',
+    version: 'IETF',
+    url: 'https://www.rfc-editor.org/rfc/rfc3264',
+  },
+  rfc3311: {
+    doc: 'RFC 3311',
+    title: 'The SIP UPDATE method',
+    version: 'IETF',
+    url: 'https://www.rfc-editor.org/rfc/rfc3311',
+  },
+  rfc3312: {
+    doc: 'RFC 3312',
+    title: 'Integration of resource management and SIP (preconditions)',
+    version: 'IETF',
+    url: 'https://www.rfc-editor.org/rfc/rfc3312',
+  },
+  rfc3428: {
+    doc: 'RFC 3428',
+    title: 'SIP extension for instant messaging (MESSAGE)',
+    version: 'IETF',
+    url: 'https://www.rfc-editor.org/rfc/rfc3428',
+  },
+  rfc6665: {
+    doc: 'RFC 6665',
+    title: 'SIP-specific event notification (SUBSCRIBE and NOTIFY)',
+    version: 'IETF',
+    url: 'https://www.rfc-editor.org/rfc/rfc6665',
+  },
+  rfc8866: {
+    doc: 'RFC 8866',
+    title: 'SDP: Session Description Protocol',
+    version: 'IETF',
+    url: 'https://www.rfc-editor.org/rfc/rfc8866',
+  },
+  ir92: {
+    doc: 'GSMA IR.92',
+    title: 'IMS Profile for Voice and SMS (VoLTE)',
+    version: 'V24.0 (October 2026)',
+    url: 'https://www.gsma.com/newsroom/wp-content/uploads//IR.92-v24.0.pdf',
+  },
+  ng114: {
+    doc: 'GSMA NG.114',
+    title: 'IMS Profile for Voice, Video and Messaging over 5GS (VoNR)',
+    version: 'V11.0 (September 2026)',
+    url: 'https://www.gsma.com/newsroom/wp-content/uploads//NG.114-v11.0.pdf',
   },
   gsma5g: {
     doc: 'GSMA',

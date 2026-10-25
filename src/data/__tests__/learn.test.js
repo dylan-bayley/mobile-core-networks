@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { checkQuickCheck, checkScenes, collectLearnWarnings, hrefProblem } from '../validateLearn.js';
+import { checkLadderLesson, checkQuickCheck, checkScenes, collectLearnWarnings, hrefProblem } from '../validateLearn.js';
 import { LESSONS } from '../arch/index.js';
 import { LESSON_META } from '../arch/lessons.js';
 import { COMPONENTS, componentForTerm, flowAppearances } from '../components/index.js';
@@ -70,6 +70,42 @@ describe('learn and components content', () => {
       expect(w.join('\n')).toMatch(/repeats an option/);
       expect(w.join('\n')).toMatch(/repeats an earlier question/);
     });
+    describe('ladder lessons', () => {
+      const ladders = {
+        l: {
+          actors: [{ id: 'a', t: 'A' }, { id: 'b', t: 'B' }],
+          rows: [
+            { id: 'inv', f: 'a', t: 'b', m: 'INVITE', k: 'req' },
+            { id: 'ok', f: 'b', t: 'a', m: '200 OK', k: 'res' },
+          ],
+        },
+      };
+      const panels = { msg: { type: 'message', lines: [{ text: 'Via: …', key: 'via', note: 'n' }] } };
+      const lscene = (over) => ({ id: 's1', title: 'T', d: 'D', cites: [{ src: 'rfc3261' }], ladder: 'l', panel: 'msg', ...over });
+      const runL = (over, extra = {}) => {
+        const w = [];
+        checkLadderLesson('Fixture', { ladders: extra.ladders ?? ladders, panels, scenes: over.map(lscene), tryIt: extra.tryIt }, w);
+        return w.join('\n');
+      };
+
+      it('passes a well-formed ladder lesson', () => {
+        expect(runL([{ upto: 'inv', focus: ['inv'], highlight: ['via'] }, { id: 's2' }], { tryIt: [{ t: 'Do it', href: 'https://example.org/' }] })).toBe('');
+      });
+      it('catches unknown actors and duplicate rows', () => {
+        const bad = { l: { ...ladders.l, rows: [...ladders.l.rows, { id: 'ok', f: 'a', t: 'zz', m: 'BYE', k: 'req' }] } };
+        const out = runL([{}], { ladders: bad });
+        expect(out).toMatch(/duplicate row id "ok"/);
+        expect(out).toMatch(/unknown actor "zz"/);
+      });
+      it('catches bad upto, focus, panels and highlights, and keeps going', () => {
+        const out = runL([{ upto: 'nope' }, { id: 's2', upto: 'inv', focus: ['ok'] }, { id: 's3', panel: 'nope' }, { id: 's4', highlight: ['cseq'] }]);
+        expect(out).toMatch(/no row "nope"/);
+        expect(out).toMatch(/focus row "ok" isn't drawn/);
+        expect(out).toMatch(/unknown panel "nope"/);
+        expect(out).toMatch(/panel "msg" has no line "cseq"/);
+      });
+    });
+
     it('resolves in-app links', () => {
       expect(hrefProblem('#/learn/5gc')).toBeNull();
       expect(hrefProblem('#/learn/5gc?scene=nope')).toMatch(/no scene/);
