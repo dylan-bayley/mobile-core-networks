@@ -1,5 +1,6 @@
 import { LESSONS } from './arch/index.js';
 import { COMPONENTS, VIGNETTES, componentById } from './components/index.js';
+import { PLAIN } from './components/plain.js';
 import { SOURCES } from './reference/sources.js';
 import { GLOSSARY } from './reference/glossary.js';
 import { TOPOLOGIES } from './topologies/index.js';
@@ -277,6 +278,8 @@ export function collectLearnWarnings() {
     checkScenes(`Vignette "${id}"`, lesson.diagram, scenes, warnings);
   }
 
+  for (const id of Object.keys(PLAIN)) if (!componentById(id)) warnings.push(`plain.js: "${id}" is not a component`);
+
   const ids = new Set();
   for (const c of COMPONENTS) {
     const where = `Component "${c.id}"`;
@@ -286,6 +289,12 @@ export function collectLearnWarnings() {
     if (!GLOSSARY[c.label]) warnings.push(`${where}: label "${c.label}" has no glossary entry`);
     for (const a of c.analog?.ids ?? []) if (!componentById(a)) warnings.push(`${where}: analogue "${a}" is not a component`);
     if (c.vignette && !VIGNETTES[c.vignette]) warnings.push(`${where}: unknown vignette "${c.vignette}"`);
+    // Every component needs a plain-language explanation (plain.js).
+    if (!c.plain) warnings.push(`${where}: missing plain-language explanation (plain.js)`);
+    if (c.plain) {
+      for (const f of ['job', 'analogy', 'without']) if (!c.plain[f]?.trim()) warnings.push(`${where}: plain.${f} is empty`);
+      if (c.plain.job && c.plain.job.length > 90) warnings.push(`${where}: plain.job is ${c.plain.job.length} characters; keep it to one short line (90 or fewer)`);
+    }
     if (c.diagram) {
       const lesson = LESSONS[c.diagram.lesson];
       const i = lesson ? lesson.scenes.findIndex((s) => s.id === c.diagram.scene) : -1;
