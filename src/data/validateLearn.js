@@ -1,6 +1,8 @@
 import { LESSONS } from './arch/index.js';
 import { COMPONENTS, VIGNETTES, componentById } from './components/index.js';
 import { PLAIN } from './components/plain.js';
+import { PLAIN_SCENES } from './arch/plain.js';
+import { PLAIN_FLOWS } from './flows/plain.js';
 import { SOURCES } from './reference/sources.js';
 import { GLOSSARY } from './reference/glossary.js';
 import { TOPOLOGIES } from './topologies/index.js';
@@ -206,8 +208,30 @@ export function checkQuickCheck(where, check, warnings) {
  * both width modes; scenes only reference nodes and links that exist; and
  * component cross-links (analogues, diagrams, flow nodes) resolve.
  */
+export function checkPlain(where, plain, warnings) {
+  if (!plain) {
+    warnings.push(`${where}: no plain-words entry`);
+    return;
+  }
+  for (const f of ['job', 'analogy', 'without']) if (!plain[f]?.trim()) warnings.push(`${where}: plain.${f} is empty`);
+  if (plain.job && plain.job.length > 90) warnings.push(`${where}: plain.job is over 90 characters`);
+}
+
 export function collectLearnWarnings() {
   const warnings = [];
+
+  const sceneKeys = new Set();
+  for (const lesson of Object.values(LESSONS)) {
+    for (const s of lesson.scenes) {
+      sceneKeys.add(`${lesson.id}/${s.id}`);
+      checkPlain(`Lesson "${lesson.id}" scene "${s.id}"`, s.plain, warnings);
+    }
+  }
+  for (const k of Object.keys(PLAIN_SCENES)) if (!sceneKeys.has(k)) warnings.push(`arch/plain.js: "${k}" is not a scene`);
+
+  const flowIds = new Set(Object.values(FLOWS).flatMap((n) => Object.keys(n)));
+  for (const id of flowIds) checkPlain(`Flow "${id}"`, PLAIN_FLOWS[id], warnings);
+  for (const k of Object.keys(PLAIN_FLOWS)) if (!flowIds.has(k)) warnings.push(`flows/plain.js: "${k}" is not a flow id`);
 
   for (const lesson of Object.values(LESSONS)) {
     const { diagram } = lesson;

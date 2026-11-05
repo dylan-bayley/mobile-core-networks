@@ -84,6 +84,18 @@ tryIt = [{ t, href? }]   // hands-on suggestions, the only place tool names appe
 
 Rows are drawn down to `upto` (all of them without it); rows new since the previous scene draw themselves in. The validator checks actors, unique row ids, `upto` / `focus` / `panel` / `highlight` references, citations (table panels included) and unused panels.
 
+### In plain words
+
+Three data files hold the newcomer-friendly explanations, all in the same shape (`job`, `analogy`, `without`, optional `limit`) and all using the hotel analogy from `src/data/components/plain.js`:
+
+| File | Keyed by | Shown |
+|---|---|---|
+| `src/data/components/plain.js` | component id | always-open section on each component page |
+| `src/data/arch/plain.js` | `"<lessonId>/<sceneId>"` | collapsed block under each Learn scene caption |
+| `src/data/flows/plain.js` | flow id (`data`, `voice`, `sms`...) | collapsed block in the Flows overview |
+
+The collapsed ones render through `src/components/PlainWords.jsx`. The validator warns for a missing or empty field, a `job` over 90 characters, or a key that matches no component, scene or flow.
+
 ### Authored vs. composed
 
 | Network | Authored from scratch | Composed (base + delta) | Re-exported |
