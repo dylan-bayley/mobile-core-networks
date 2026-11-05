@@ -1,5 +1,6 @@
 import { PANEL, EDGE, MONO, MUTED, FAINT, ACTIVE_BG, ACTIVE_EDGE, TEXT } from '../theme.js';
 import { GLOSSARY } from '../data/reference/glossary.js';
+import PlainWords from './PlainWords.jsx';
 import { autolinkAcronyms } from '../lib/autolinkAcronyms.jsx';
 
 /**
@@ -34,6 +35,7 @@ export default function FlowOverview({ scenario, networks, flows, networkId, onS
       <p className="mt-1 text-xs leading-relaxed" style={{ color: MUTED }}>
         {autolinkAcronyms(scenario.blurb, GLOSSARY, { activeKey: activeGlossaryKey, onOpen: onGlossaryOpen })}
       </p>
+      <PlainWords plain={scenario.plain} className="mt-2" />
       {tagged.length > 0 && (
         <p className="mt-1.5 text-xs" style={{ color: MUTED }}>
           <span style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.08em' }}>{tagNames.map((t) => t.toUpperCase()).join(' · ')}</span>

@@ -7,6 +7,7 @@ import * as interworking from './interworking.js';
 import * as sansa from './sansa.js';
 import * as ims from './ims.js';
 import * as sip from './sip.js';
+import { PLAIN_SCENES } from './plain.js';
 
 const MODULES = { epc, '5gc': fivegc, interworking, 'sa-nsa': sansa, ims, sip };
 
@@ -19,6 +20,7 @@ export const LESSONS = Object.fromEntries(
   LESSON_META.map((meta) => {
     const m = MODULES[meta.id];
     const ladder = m.kind === 'ladder';
+    const scenes = m.scenes.map((s) => (PLAIN_SCENES[`${meta.id}/${s.id}`] ? { ...s, plain: PLAIN_SCENES[`${meta.id}/${s.id}`] } : s));
     return [
       meta.id,
       {
@@ -28,8 +30,8 @@ export const LESSONS = Object.fromEntries(
         ladders: m.ladders ?? null,
         panels: m.panels ?? {},
         tryIt: m.tryIt ?? [],
-        scenes: m.scenes,
-        resolved: ladder ? resolveLadderScenes(m.ladders, m.scenes) : resolveScenes(m.diagram, m.scenes),
+        scenes,
+        resolved: ladder ? resolveLadderScenes(m.ladders, scenes) : resolveScenes(m.diagram, scenes),
         takeaways: m.takeaways ?? [],
         check: m.check ?? [],
         links: m.links ?? [],

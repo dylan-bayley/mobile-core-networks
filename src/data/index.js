@@ -32,6 +32,7 @@ export function resolveScenario(networkId, flowId) {
     steps: flow.steps,
     label: flow.label,
     blurb: flow.blurb,
+    plain: flow.plain,
     ambient,
     fallback: resolvedFlowId !== flowId,
   };

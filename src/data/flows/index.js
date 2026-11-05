@@ -20,43 +20,45 @@ import * as saVoiceEpsfb from './sa/voice-epsfb.js';
 import * as saVideo from './sa/video.js';
 import * as saSms from './sa/sms.js';
 import * as saMms from './sa/mms.js';
+import { PLAIN_FLOWS } from './plain.js';
 
-const asFlow = (mod) => ({
+const asFlow = (mod, flowId) => ({
   label: mod.label,
   blurb: mod.blurb,
   steps: mod.steps,
   ambient: mod.ambient ?? [],
   topologyId: mod.topologyId,
+  plain: PLAIN_FLOWS[flowId] ?? null,
 });
 
 /** FLOWS[networkId][flowId]. Flow ids are session ids or session-variant ids (see sessions.js). */
 export const FLOWS = {
   '4g': {
-    data: asFlow(fourgData),
-    'data-idle': asFlow(fourgIdle),
-    voice: asFlow(fourgVoice),
-    'voice-mt': asFlow(fourgVoiceMt),
-    video: asFlow(fourgVideo),
-    sms: asFlow(fourgSms),
-    mms: asFlow(fourgMms),
+    data: asFlow(fourgData, 'data'),
+    'data-idle': asFlow(fourgIdle, 'data-idle'),
+    voice: asFlow(fourgVoice, 'voice'),
+    'voice-mt': asFlow(fourgVoiceMt, 'voice-mt'),
+    video: asFlow(fourgVideo, 'video'),
+    sms: asFlow(fourgSms, 'sms'),
+    mms: asFlow(fourgMms, 'mms'),
   },
   nsa: {
-    data: asFlow(nsaData),
-    'data-idle': asFlow(nsaIdle),
-    voice: asFlow(nsaVoice),
-    'voice-mt': asFlow(nsaVoiceMt),
-    video: asFlow(nsaVideo),
-    sms: asFlow(nsaSms),
-    mms: asFlow(nsaMms),
+    data: asFlow(nsaData, 'data'),
+    'data-idle': asFlow(nsaIdle, 'data-idle'),
+    voice: asFlow(nsaVoice, 'voice'),
+    'voice-mt': asFlow(nsaVoiceMt, 'voice-mt'),
+    video: asFlow(nsaVideo, 'video'),
+    sms: asFlow(nsaSms, 'sms'),
+    mms: asFlow(nsaMms, 'mms'),
   },
   sa: {
-    data: asFlow(saData),
-    'data-idle': asFlow(saIdle),
-    voice: asFlow(saVoice),
-    'voice-mt': asFlow(saVoiceMt),
-    'voice-epsfb': asFlow(saVoiceEpsfb),
-    video: asFlow(saVideo),
-    sms: asFlow(saSms),
-    mms: asFlow(saMms),
+    data: asFlow(saData, 'data'),
+    'data-idle': asFlow(saIdle, 'data-idle'),
+    voice: asFlow(saVoice, 'voice'),
+    'voice-mt': asFlow(saVoiceMt, 'voice-mt'),
+    'voice-epsfb': asFlow(saVoiceEpsfb, 'voice-epsfb'),
+    video: asFlow(saVideo, 'video'),
+    sms: asFlow(saSms, 'sms'),
+    mms: asFlow(saMms, 'mms'),
   },
 };

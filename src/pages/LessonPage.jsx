@@ -21,6 +21,7 @@ import QuickCheck from '../components/arch/QuickCheck.jsx';
 import Transport from '../components/Transport.jsx';
 import ProgressBar from '../components/ProgressBar.jsx';
 import Sources from '../components/SourceChip.jsx';
+import PlainWords from '../components/PlainWords.jsx';
 import DataTable from '../components/DataTable.jsx';
 import { KindSwatch } from '../components/KindMark.jsx';
 
@@ -271,6 +272,7 @@ export default function LessonPage({ lessonId, query }) {
       <p className="mt-2 max-w-[68ch] text-[15px] leading-relaxed sm:text-base" style={{ color: TEXT_2 }}>
         {autolinkAcronyms(scene.d, GLOSSARY, { activeKey, onOpen: openTerm })}
       </p>
+      <PlainWords plain={scene.plain} className="mt-3" />
       <Sources cites={scene.cites} className="mt-3" />
       {/* At the end of the last scene, offer the next step right here rather
           than leave it at the bottom of a long page. */}
