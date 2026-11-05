@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { COMPONENTS, componentById } from '../data/components/index.js';
+import { BEST_MAX_TIER, rankComponents } from '../lib/filterComponents.js';
 import { hashQuery, urlWithHashQuery } from '../lib/route.js';
 import GroupIcon from '../components/GroupIcon.jsx';
 import { PANEL, EDGE, MONO, FAINT, MUTED, TEXT, TEXT_2, GEN, ACTIVE_BG, ACTIVE_EDGE, SURFACE } from '../theme.js';
@@ -21,10 +22,10 @@ const PLANE = { control: 'control plane', user: 'user plane', both: 'control + u
 
 const validFilter = (id) => (FILTERS.some((f) => f.id === id) ? id : 'all');
 
-/** Matches a component on its label, expansion or summary, ignoring case. */
-const matches = (c, q) => !q || [c.label, c.expansion, c.summary, c.plain?.job, c.plain?.analogy].some((t) => t?.toLowerCase().includes(q));
+/** The 5G section also holds the external functions (AF), so that filter includes them. */
+const inFilter = (c, filter) => filter === 'all' || c.gen === filter || (filter === '5g' && c.gen === 'ext');
 
-function Card({ c }) {
+function Card({ c, showGen = false }) {
   const peers = (c.analog?.ids ?? []).map(componentById).filter(Boolean);
   return (
     <a
@@ -35,6 +36,7 @@ function Card({ c }) {
       <span className="flex items-baseline gap-2">
         <span style={{ fontFamily: MONO, fontSize: 17, fontWeight: 700, color: TEXT }}>{c.label}</span>
         <span className="ml-auto text-xs" style={{ color: FAINT }}>
+          {showGen ? `${(GEN[c.gen] ?? GEN.ext).n} · ` : ''}
           {PLANE[c.plane] ?? ''}
         </span>
       </span>
@@ -54,6 +56,25 @@ function Card({ c }) {
   );
 }
 
+/** Flat list of ranked results; each card keeps its own generation tag in its subtitle. */
+function ResultList({ title, items }) {
+  return (
+    <section aria-label={title} className="mt-5">
+      <h2 className="flex items-center gap-2 text-lg font-semibold" style={{ color: TEXT }}>
+        {title}
+        <span className="text-sm tabular-nums" style={{ color: FAINT, fontWeight: 400 }}>{items.length}</span>
+      </h2>
+      <ul className="mt-2.5 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {items.map(({ component: c }) => (
+          <li key={c.id}>
+            <Card c={c} showGen />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export default function ComponentsIndex() {
   // The generation filter lives in the URL (?gen=), so Back from a component
   // page returns to the same filtered list.
@@ -65,9 +86,19 @@ export default function ComponentsIndex() {
   }, [filter]);
 
   const q = query.trim().toLowerCase();
-  const sections = SECTIONS.filter((s) => filter === 'all' || s.gen === filter)
-    .map((s) => ({ ...s, items: COMPONENTS.filter((c) => (s.gen === '5g' ? c.gen === '5g' || c.gen === 'ext' : c.gen === s.gen) && matches(c, q)) }))
-    .filter((s) => s.items.length > 0);
+  // With a query, show matches best first in one list. The generation sections
+  // would scatter the best match under whichever heading it happens to belong to.
+  const ranked = q ? rankComponents(COMPONENTS.filter((c) => inFilter(c, filter)), q) : null;
+  const best = ranked?.filter((r) => r.tier <= BEST_MAX_TIER) ?? [];
+  const also = ranked?.filter((r) => r.tier > BEST_MAX_TIER) ?? [];
+  const sections = ranked
+    ? []
+    : SECTIONS.filter((s) => filter === 'all' || s.gen === filter)
+        .map((s) => ({ ...s, items: COMPONENTS.filter((c) => (s.gen === '5g' ? c.gen === '5g' || c.gen === 'ext' : c.gen === s.gen)) }))
+        .filter((s) => s.items.length > 0);
+  const openTopResult = (e) => {
+    if (e.key === 'Enter' && ranked?.length) window.location.hash = `#/components/${ranked[0].component.id}`;
+  };
   return (
     <div className="mx-auto max-w-[1500px] px-3 py-5 sm:px-4 sm:py-6">
       <header>
@@ -98,17 +129,22 @@ export default function ComponentsIndex() {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={openTopResult}
           placeholder="Search components…"
           aria-label="Search components by name or description"
           className="min-h-10 w-full rounded px-3 py-1.5 text-sm sm:ml-auto sm:min-h-0 sm:w-64"
           style={{ background: SURFACE, border: `1px solid ${EDGE}`, color: TEXT }}
         />
       </div>
-      {sections.length === 0 && (
-        <p className="mt-6 text-sm" style={{ color: MUTED }} role="status">
-          No component matches “{query}”.
+      {ranked && (
+        <p className="mt-4 text-sm" style={{ color: MUTED }} role="status">
+          {ranked.length === 0
+            ? `No component matches “${query.trim()}”.`
+            : `${ranked.length} ${ranked.length === 1 ? 'component matches' : 'components match'} “${query.trim()}”. Press Enter to open the first.`}
         </p>
       )}
+      {best.length > 0 && <ResultList title="Best matches" items={best} />}
+      {also.length > 0 && <ResultList title={best.length > 0 ? 'Also mentions it' : 'Mentions it'} items={also} />}
       {sections.map((s) => {
         const { items } = s;
         const groups = [...new Set(items.map((c) => c.group))];
