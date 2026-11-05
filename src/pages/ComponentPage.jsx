@@ -152,6 +152,32 @@ export default function ComponentPage({ component: c }) {
         </p>
       </header>
 
+      {c.plain && (
+        <section aria-labelledby="plain-words" className="mt-5 rounded p-4 sm:p-5" style={{ background: PANEL, border: `1px solid ${EDGE}` }}>
+          <h2 id="plain-words" className="text-xs font-semibold uppercase tracking-wide" style={{ color: FAINT }}>
+            In plain words
+          </h2>
+          <p className="mt-1.5 max-w-[60ch] text-xl font-medium leading-snug sm:text-2xl" style={{ color: TEXT }}>
+            {c.plain.job}
+          </p>
+          <dl className="mt-3 grid max-w-[80ch] gap-x-6 gap-y-2.5 text-sm leading-relaxed sm:grid-cols-[auto_minmax(0,1fr)]" style={{ color: TEXT_2 }}>
+            <dt style={{ color: MUTED }}>Think of it as</dt>
+            <dd>{c.plain.analogy}</dd>
+            <dt style={{ color: MUTED }}>Without it</dt>
+            <dd>{c.plain.without}</dd>
+            {c.plain.limit && (
+              <>
+                <dt style={{ color: MUTED }}>Where the analogy stops</dt>
+                <dd>{c.plain.limit}</dd>
+              </>
+            )}
+          </dl>
+          <p className="mt-3 text-xs" style={{ color: FAINT }}>
+            The hotel picture is an analogy to help you learn, not part of the specification. The technical detail follows below.
+          </p>
+        </section>
+      )}
+
       <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
         <div className="flex min-w-0 flex-col gap-4">
           {c.diagram ? (

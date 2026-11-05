@@ -22,7 +22,7 @@ const PLANE = { control: 'control plane', user: 'user plane', both: 'control + u
 const validFilter = (id) => (FILTERS.some((f) => f.id === id) ? id : 'all');
 
 /** Matches a component on its label, expansion or summary, ignoring case. */
-const matches = (c, q) => !q || [c.label, c.expansion, c.summary].some((t) => t?.toLowerCase().includes(q));
+const matches = (c, q) => !q || [c.label, c.expansion, c.summary, c.plain?.job, c.plain?.analogy].some((t) => t?.toLowerCase().includes(q));
 
 function Card({ c }) {
   const peers = (c.analog?.ids ?? []).map(componentById).filter(Boolean);
@@ -42,7 +42,7 @@ function Card({ c }) {
         {c.expansion}
       </span>
       <span className="mt-2 line-clamp-2 text-sm leading-relaxed" style={{ color: TEXT_2 }}>
-        {c.summary}
+        {c.plain?.job ?? c.summary}
       </span>
       {peers.length > 0 && (
         <span className="mt-auto pt-2.5 text-xs" style={{ color: MUTED }}>

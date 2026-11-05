@@ -1,6 +1,7 @@
 import { EPC_COMPONENTS } from './epc.js';
 import { FIVEGC_COMPONENTS } from './fivegc.js';
 import { IMS_COMPONENTS } from './ims.js';
+import { PLAIN } from './plain.js';
 import { VIGNETTES } from './vignettes.js';
 import { FLOWS, NETWORKS } from '../index.js';
 
@@ -12,7 +13,10 @@ const SERVICES_CITE = { src: 'ts23502', clause: '5.2' };
 const withServiceCite = (c) =>
   c.services?.length && !c.sources.some((s) => s.src === 'ts23502' && s.clause === '5.2') ? { ...c, sources: [...c.sources, SERVICES_CITE] } : c;
 
-export const COMPONENTS = [...EPC_COMPONENTS, ...FIVEGC_COMPONENTS, ...IMS_COMPONENTS].map(withServiceCite);
+/** Attaches the plain-language explanation from plain.js, where one exists. */
+const withPlain = (c) => (PLAIN[c.id] ? { ...c, plain: PLAIN[c.id] } : c);
+
+export const COMPONENTS = [...EPC_COMPONENTS, ...FIVEGC_COMPONENTS, ...IMS_COMPONENTS].map(withServiceCite).map(withPlain);
 
 const BY_ID = new Map(COMPONENTS.map((c) => [c.id, c]));
 export const componentById = (id) => BY_ID.get(id) ?? null;
