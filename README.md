@@ -15,6 +15,10 @@ and TAU), SMS and MMS — hosted on GitHub Pages. Built to *learn* from, whether
 step has a description, a clickable acronym glossary, an "in practice" note
 where there is one, and a link to the same step in the other generation.
 
+## Contributing
+
+Corrections and improvements are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md) (also on the site at `#/contribute`). Changes to `main` go through a pull request.
+
 ## Development
 
 ```

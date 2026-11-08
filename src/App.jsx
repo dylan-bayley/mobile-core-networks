@@ -6,6 +6,7 @@ import { lessonMeta } from './data/arch/lessons.js';
 import { componentById } from './data/components/index.js';
 import { BG, SANS, MUTED, TEXT } from './theme.js';
 import SiteHeader, { MobileTabBar } from './components/shell/SiteHeader.jsx';
+import SiteFooter from './components/shell/SiteFooter.jsx';
 import GlossaryPopover from './components/GlossaryPopover.jsx';
 import ShortcutsHelp from './components/ShortcutsHelp.jsx';
 import Home from './pages/Home.jsx';
@@ -17,6 +18,7 @@ const LessonPage = lazy(() => import('./pages/LessonPage.jsx'));
 const ComponentsIndex = lazy(() => import('./pages/ComponentsIndex.jsx'));
 const ComponentPage = lazy(() => import('./pages/ComponentPage.jsx'));
 const GlossaryPage = lazy(() => import('./pages/GlossaryPage.jsx'));
+const ContributePage = lazy(() => import('./pages/ContributePage.jsx'));
 const Explorer = lazy(() => import('./components/Explorer.jsx'));
 
 const SITE = 'The Mobile Core';
@@ -47,6 +49,7 @@ function resolvePage(segments, query) {
   // The explorer names the flow in the title itself, as it changes flow without a route change.
   if (section === 'flows') return { key: 'flows', section: 'flows', title: null, el: <Explorer /> };
   if (section === 'glossary') return { key: 'glossary', section: 'glossary', title: `Glossary · ${SITE}`, el: <GlossaryPage term={id ?? null} /> };
+  if (section === 'contribute') return { key: 'contribute', section: null, title: `How to contribute · ${SITE}`, el: <ContributePage /> };
   return { key: 'missing', section: null, title: `Not found · ${SITE}`, el: <NotFound /> };
 }
 
@@ -115,13 +118,14 @@ export default function App() {
           Skip to content
         </a>
         <SiteHeader section={page.section} searchRef={searchRef} onPickTerm={openTerm} onShortcuts={() => setShortcutsOpen(true)} />
-        <main id="main" ref={mainRef} className="flex-1 pb-20 sm:pb-6">
+        <main id="main" ref={mainRef} className="flex-1 pb-6">
           {/* Keyed so each lesson or component gets a fresh page: no state
               (player position, tweens) carries over from the last one. */}
           <Fragment key={page.key}>
             <Suspense fallback={<PageLoading />}>{page.el}</Suspense>
           </Fragment>
         </main>
+        <SiteFooter />
         <MobileTabBar section={page.section} />
       </div>
       <GlossaryPopover
